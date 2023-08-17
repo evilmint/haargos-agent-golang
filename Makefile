@@ -22,4 +22,8 @@ $(OS_ARCH): $(DIST_DIR)
 clean:
 	rm -rf $(DIST_DIR)
 
+dev:
+	go build -ldflags "-X 'client.API_URL=${API_URL}'" -o haargos-dev
+	DEBUG=true ./haargos-dev run
+
 .PHONY: distribute clean

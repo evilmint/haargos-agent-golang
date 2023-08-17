@@ -4,10 +4,14 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/evilmint/haargos-agent-golang/haargos"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
 const version = "1.0.0"
+
+var log = logrus.New()
 
 func main() {
 	var rootCmd = &cobra.Command{Use: "myapp"}
@@ -30,9 +34,26 @@ func main() {
 		},
 	}
 
-	rootCmd.AddCommand(cmdVersion, cmdHelp)
+	haargosClient := &haargos.Haargos{}
+
+	var cmdRun = &cobra.Command{
+		Use:   "run",
+		Short: "Run Haargos",
+		Run: func(cmd *cobra.Command, args []string) {
+			haargosClient.Run(
+				haargos.RunParams{
+					UserID:         "07957eee-0d3d-4e09-8d25-465bb1a82806",
+					InstallationID: "f2687b3e-d6f7-4cbd-a58b-48000752c2a9",
+					Token:          "ba4d8180-88b1-4645-9d0b-d4980a86be05",
+					HaConfigPath:   "/Volumes/haconfig/ha-config/",
+				},
+			)
+		},
+	}
+
+	rootCmd.AddCommand(cmdVersion, cmdHelp, cmdRun)
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
+		log.Errorf("Error sending request request: %v", err)
 		os.Exit(1)
 	}
 }
