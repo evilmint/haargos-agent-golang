@@ -121,11 +121,12 @@ func parseDockerPsOutput(output string) []types.DockerPsEntry {
 	var entries []types.DockerPsEntry
 	for _, jsonStr := range jsonStringArray {
 		var entry types.DockerPsEntry
+		log.Infof("Try to decode: %s", jsonStr)
 		err := json.Unmarshal([]byte(jsonStr), &entry)
 		if err == nil {
 			entries = append(entries, entry)
 		} else {
-			fmt.Printf("Failed to decode JSON: %s\n", jsonStr)
+			log.Infof("Failed to decode JSON: %s\n", jsonStr)
 		}
 	}
 
