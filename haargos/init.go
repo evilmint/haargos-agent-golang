@@ -408,7 +408,7 @@ func calculateScripts(
 			var lastTriggered time.Time
 			var err error
 
-			if *restoreStateForScript.State.Attributes.LastTriggered != "" {
+			if restoreStateForScript.State.Attributes.LastTriggered != nil {
 				lastTriggered, err = time.Parse(
 					time.RFC3339,
 					*restoreStateForScript.State.Attributes.LastTriggered,
