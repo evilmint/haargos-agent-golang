@@ -439,7 +439,7 @@ func (h *Haargos) Run(params RunParams) {
 		go calculateHAConfig(params.HaConfigPath, haConfigCh, &wg)
 		go calculateAutomations(params.HaConfigPath, restoreStateResponse, automationsCh, &wg)
 		go calculateScripts(scriptsCh, &wg)
-		go calculateScenes(scenesCh, &wg)
+		go calculateScenes(params.HaConfigPath, restoreStateResponse, scenesCh, &wg)
 		go fetchLogs(params.HaConfigPath, logsCh, &wg)
 
 		wg.Wait()
