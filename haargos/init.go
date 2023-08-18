@@ -96,7 +96,7 @@ func calculateDocker(ch chan types.Docker, wg *sync.WaitGroup) {
 		inspectData := []types.DockerInspectResult{}
 		err := json.Unmarshal([]byte(inspectString), &inspectData)
 		if err != nil || len(inspectData) == 0 {
-			log.Errorf("Failed to inspect entry %s", entry.Names)
+			log.Errorf("Failed to inspect entry %s %s", entry.Names, err)
 			continue
 		}
 		inspect := inspectData[0]
