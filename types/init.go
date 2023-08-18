@@ -108,26 +108,26 @@ type HAConfig struct {
 }
 
 type Automation struct {
-	LastTriggered time.Time `yaml:"last_triggered"`
-	Description   string    `yaml:"description"`
-	ID            string    `yaml:"id"`
-	State         string    `yaml:"state"`
-	Alias         string    `yaml:"alias"`
-	FriendlyName  string    `yaml:"friendly_name"`
+	LastTriggered time.Time `json:"last_triggered" yaml:"last_triggered"`
+	Description   string    `json:"description" yaml:"description"`
+	ID            string    `json:"id" yaml:"id"`
+	State         string    `json:"state" yaml:"state"`
+	Alias         string    `json:"alias" yaml:"alias"`
+	FriendlyName  string    `json:"friendly_name" yaml:"friendly_name"`
 }
 
 type Script struct {
-	FriendlyName  string    `yaml:"friendlyName,omitempty"`
-	State         string    `yaml:"state,omitempty"`
-	Alias         string    `yaml:"alias"`
-	LastTriggered time.Time `yaml:"lastTriggered,omitempty"`
+	FriendlyName  string    `json:"friendlyName,omitempty" yaml:"friendlyName,omitempty"`
+	State         string    `json:"state,omitempty" yaml:"state,omitempty"`
+	Alias         string    `json:"alias" yaml:"alias"`
+	LastTriggered time.Time `json:"lastTriggered,omitempty" yaml:"lastTriggered,omitempty"`
 }
 
 type Scene struct {
-	Name         string    `yaml:"name"`
-	ID           string    `yaml:"id"`
-	State        time.Time `yaml:"state"`
-	FriendlyName string    `yaml:"friendly_name"`
+	Name         string    `json:"name" yaml:"name"`
+	ID           string    `json:"id" yaml:"id"`
+	State        time.Time `json:"state" yaml:"state"`
+	FriendlyName string    `json:"friendly_name" yaml:"friendly_name"`
 }
 
 type EntityRegistry struct {
