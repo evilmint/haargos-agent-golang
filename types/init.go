@@ -109,24 +109,24 @@ type HAConfig struct {
 
 type Automation struct {
 	LastTriggered time.Time `json:"last_triggered" yaml:"last_triggered"`
-	Description   string    `json:"description" yaml:"description"`
-	ID            string    `json:"id" yaml:"id"`
-	State         string    `json:"state" yaml:"state"`
-	Alias         string    `json:"alias" yaml:"alias"`
-	FriendlyName  string    `json:"friendly_name" yaml:"friendly_name"`
+	Description   string    `json:"description"    yaml:"description"`
+	ID            string    `json:"id"             yaml:"id"`
+	State         string    `json:"state"          yaml:"state"`
+	Alias         string    `json:"alias"          yaml:"alias"`
+	FriendlyName  string    `json:"friendly_name"  yaml:"friendly_name"`
 }
 
 type Script struct {
-	FriendlyName  string    `json:"friendlyName,omitempty" yaml:"friendlyName,omitempty"`
-	State         string    `json:"state,omitempty" yaml:"state,omitempty"`
-	Alias         string    `json:"alias" yaml:"alias"`
+	FriendlyName  string    `json:"friendlyName,omitempty"  yaml:"friendlyName,omitempty"`
+	State         string    `json:"state,omitempty"         yaml:"state,omitempty"`
+	Alias         string    `json:"alias"                   yaml:"alias"`
 	LastTriggered time.Time `json:"lastTriggered,omitempty" yaml:"lastTriggered,omitempty"`
 }
 
 type Scene struct {
-	Name         string    `json:"name" yaml:"name"`
-	ID           string    `json:"id" yaml:"id"`
-	State        time.Time `json:"state" yaml:"state"`
+	Name         string    `json:"name"          yaml:"name"`
+	ID           string    `json:"id"            yaml:"id"`
+	State        time.Time `json:"state"         yaml:"state"`
 	FriendlyName string    `json:"friendly_name" yaml:"friendly_name"`
 }
 

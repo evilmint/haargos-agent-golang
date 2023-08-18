@@ -158,14 +158,16 @@ func getFileSystems() ([]types.Storage, error) {
 }
 
 func getCPUDetails() (types.CPU, error) {
-	topOut, err := exec.Command("bash", "-c", "top -bn 1 | awk 'NR == 3 {printf \"%.2f\", 100 - $8}'").Output()
+	topOut, err := exec.Command("bash", "-c", "top -bn 1 | awk 'NR == 3 {printf \"%.2f\", 100 - $8}'").
+		Output()
 	if err != nil {
 		return types.CPU{}, err
 	}
 
 	load, _ := strconv.ParseFloat(strings.TrimSpace(string(topOut)), 64)
 
-	cpuOut, err := exec.Command("bash", "-c", "lscpu | grep -E 'Architecture|Model name|CPU MHz|CPU(s)' | sed 's/   *//g'").Output()
+	cpuOut, err := exec.Command("bash", "-c", "lscpu | grep -E 'Architecture|Model name|CPU MHz|CPU(s)' | sed 's/   *//g'").
+		Output()
 	if err != nil {
 		return types.CPU{}, err
 	}
@@ -208,7 +210,11 @@ func readRestoreStateResponse(filePath string) (types.RestoreStateResponse, erro
 	var response types.RestoreStateResponse
 	decoder := json.NewDecoder(file)
 	if err := decoder.Decode(&response); err != nil {
-		return types.RestoreStateResponse{}, fmt.Errorf("Error decoding JSON from file %s: %w", filePath, err)
+		return types.RestoreStateResponse{}, fmt.Errorf(
+			"Error decoding JSON from file %s: %w",
+			filePath,
+			err,
+		)
 	}
 
 	return response, nil
@@ -284,7 +290,12 @@ func calculateHAConfig(haConfigPath string, ch chan types.HAConfig, wg *sync.Wai
 	ch <- haConfig
 }
 
-func calculateAutomations(configPath string, restoreState types.RestoreStateResponse, ch chan []types.Automation, wg *sync.WaitGroup) {
+func calculateAutomations(
+	configPath string,
+	restoreState types.RestoreStateResponse,
+	ch chan []types.Automation,
+	wg *sync.WaitGroup,
+) {
 	defer wg.Done()
 
 	// Read automations from YAML file
@@ -309,11 +320,18 @@ func calculateAutomations(configPath string, restoreState types.RestoreStateResp
 			var err error
 
 			if restoreStateForAutomation.State.Attributes.LastTriggered != nil {
-				lastTriggered, err = time.Parse(time.RFC3339, *restoreStateForAutomation.State.Attributes.LastTriggered)
+				lastTriggered, err = time.Parse(
+					time.RFC3339,
+					*restoreStateForAutomation.State.Attributes.LastTriggered,
+				)
 			}
 
 			if err != nil {
-				log.Printf("Error parsing lastTriggered for automation ID %s: %v", automation.ID, err)
+				log.Printf(
+					"Error parsing lastTriggered for automation ID %s: %v",
+					automation.ID,
+					err,
+				)
 			} else {
 				automations[i].LastTriggered = lastTriggered
 			}
@@ -326,7 +344,10 @@ func calculateAutomations(configPath string, restoreState types.RestoreStateResp
 }
 
 // Helper function to find restore state by ID
-func findRestoreStateByID(restoreState types.RestoreStateResponse, id string) (*types.RestoreStateData, bool) {
+func findRestoreStateByID(
+	restoreState types.RestoreStateResponse,
+	id string,
+) (*types.RestoreStateData, bool) {
 	for _, data := range restoreState.Data {
 		if data.State.Attributes.ID != nil {
 			if *data.State.Attributes.ID == id {
@@ -338,16 +359,80 @@ func findRestoreStateByID(restoreState types.RestoreStateResponse, id string) (*
 	return nil, false
 }
 
-func calculateScripts(ch chan []types.Script, wg *sync.WaitGroup) {
-	defer wg.Done()
-	// Calculate Scripts information here
-	scripts := []types.Script{
-		{LastTriggered: time.Now(), State: "on", Alias: "alias", FriendlyName: "Friendly name"},
+func findRestoreStateForScript(
+	scriptAlias string,
+	restoreState types.RestoreStateResponse,
+) *types.RestoreStateData {
+	for _, data := range restoreState.Data {
+		if data.State.EntityID == scriptAlias {
+			return &data
+		}
 	}
+	return nil
+}
+
+func calculateScripts(
+	configPath string,
+	restoreState types.RestoreStateResponse,
+	ch chan []types.Script,
+	wg *sync.WaitGroup,
+) {
+	defer wg.Done()
+
+	// Read scripts data from file
+	scriptsFilePath := configPath + "scripts.yaml"
+	scriptsData, err := os.ReadFile(scriptsFilePath)
+	if err != nil {
+		log.Println("Error reading scripts file:", err)
+		ch <- []types.Script{}
+		return
+	}
+
+	// Unmarshal scripts from YAML
+	var scriptsMap map[string]types.Script
+	if err := yaml.Unmarshal(scriptsData, &scriptsMap); err != nil {
+		log.Println("Error unmarshaling scripts data:", err)
+		ch <- []types.Script{}
+		return
+	}
+
+	// Convert map to slice
+	scripts := make([]types.Script, 0, len(scriptsMap))
+	for _, script := range scriptsMap {
+		scripts = append(scripts, script)
+	}
+
+	// Modify scripts based on restore state
+	for i, script := range scripts {
+		if restoreStateForScript := findRestoreStateForScript("script."+script.Alias, restoreState); restoreStateForScript != nil {
+			var lastTriggered time.Time
+			var err error
+
+			if *restoreStateForScript.State.Attributes.LastTriggered != "" {
+				lastTriggered, err = time.Parse(
+					time.RFC3339,
+					*restoreStateForScript.State.Attributes.LastTriggered,
+				)
+			}
+			if err != nil {
+			} else {
+				scripts[i].LastTriggered = lastTriggered
+			}
+
+			scripts[i].FriendlyName = *restoreStateForScript.State.Attributes.FriendlyName
+			scripts[i].State = restoreStateForScript.State.State // Assuming state is of a compatible type
+		}
+	}
+
 	ch <- scripts
 }
 
-func calculateScenes(configPath string, restoreState types.RestoreStateResponse, ch chan []types.Scene, wg *sync.WaitGroup) {
+func calculateScenes(
+	configPath string,
+	restoreState types.RestoreStateResponse,
+	ch chan []types.Scene,
+	wg *sync.WaitGroup,
+) {
 	defer wg.Done()
 
 	// Read scenes data from file
@@ -389,7 +474,10 @@ func calculateScenes(configPath string, restoreState types.RestoreStateResponse,
 }
 
 // Helper function to find corresponding restore state for a scene
-func findRestoreStateForScene(sceneID string, restoreState types.RestoreStateResponse) *types.RestoreStateData {
+func findRestoreStateForScene(
+	sceneID string,
+	restoreState types.RestoreStateResponse,
+) *types.RestoreStateData {
 	for _, data := range restoreState.Data {
 		if data.State.Attributes.ID != nil {
 			if *data.State.Attributes.ID == sceneID {
@@ -417,7 +505,9 @@ func (h *Haargos) Run(params RunParams) {
 		var wg sync.WaitGroup
 		var observation types.Observation
 
-		restoreStateResponse, err := readRestoreStateResponse(params.HaConfigPath + ".storage/core.restore_state")
+		restoreStateResponse, err := readRestoreStateResponse(
+			params.HaConfigPath + ".storage/core.restore_state",
+		)
 		if err != nil {
 			fmt.Println(err)
 			return

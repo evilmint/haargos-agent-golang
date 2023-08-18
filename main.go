@@ -57,7 +57,8 @@ func main() {
 		},
 	}
 
-	cmdRun.Flags().StringVarP(&haConfigPath, "ha-config", "c", "", "Path to the Home Assistant configuration")
+	cmdRun.Flags().
+		StringVarP(&haConfigPath, "ha-config", "c", "", "Path to the Home Assistant configuration")
 	rootCmd.AddCommand(cmdVersion, cmdHelp, cmdRun)
 	if err := rootCmd.Execute(); err != nil {
 		log.Errorf("Error sending request request: %v", err)
