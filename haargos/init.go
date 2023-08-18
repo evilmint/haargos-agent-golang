@@ -528,7 +528,7 @@ func (h *Haargos) Run(params RunParams) {
 		go calculateZigbee(zigbeeCh, &wg)
 		go calculateHAConfig(params.HaConfigPath, haConfigCh, &wg)
 		go calculateAutomations(params.HaConfigPath, restoreStateResponse, automationsCh, &wg)
-		go calculateScripts(scriptsCh, &wg)
+		go calculateScripts(params.HaConfigPath, restoreStateResponse, scriptsCh, &wg)
 		go calculateScenes(params.HaConfigPath, restoreStateResponse, scenesCh, &wg)
 		go fetchLogs(params.HaConfigPath, logsCh, &wg)
 
