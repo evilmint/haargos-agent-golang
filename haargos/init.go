@@ -70,12 +70,66 @@ func fetchLogs(haConfigPath string, ch chan string, wg *sync.WaitGroup) {
 	logContent := strings.Join(logLines, "\n")
 	ch <- logContent
 }
+func executeShellCommand(command string) string {
+	cmd := exec.Command("/bin/bash", "-c", command)
+
+	// Get the output of the command
+	output, err := cmd.Output()
+	if err != nil {
+		log.Printf("Failed to execute command: %s, error: %v", command, err)
+		return ""
+	}
+
+	return string(output)
+}
 
 func calculateDocker(ch chan types.Docker, wg *sync.WaitGroup) {
 	defer wg.Done()
-	// Calculate Docker information here
-	docker := types.Docker{Containers: []types.DockerContainer{}}
-	ch <- docker
+
+	// Simulating shell command execution
+	dockerPs := executeShellCommand("docker ps --format json")
+	entries := parseDockerPsOutput(dockerPs)
+
+	var containers []types.DockerContainer
+	for _, entry := range entries {
+		inspectString := executeShellCommand("docker inspect " + entry.ID)
+		inspectData := []types.DockerInspectResult{}
+		err := json.Unmarshal([]byte(inspectString), &inspectData)
+		if err != nil || len(inspectData) == 0 {
+			continue
+		}
+		inspect := inspectData[0]
+
+		containers = append(containers, types.DockerContainer{
+			Name:       inspect.Name,
+			Image:      entry.Image,
+			State:      entry.State,
+			Status:     entry.Status,
+			Running:    inspect.State.IsRunning,
+			Restarting: inspect.State.IsRestarting,
+			StartedAt:  inspect.State.StartedAt,
+			FinishedAt: inspect.State.FinishedAt,
+		})
+	}
+
+	ch <- types.Docker{Containers: containers}
+}
+
+func parseDockerPsOutput(output string) []types.DockerPsEntry {
+	jsonStringArray := strings.Split(output, "\n")
+
+	var entries []types.DockerPsEntry
+	for _, jsonStr := range jsonStringArray {
+		var entry types.DockerPsEntry
+		err := json.Unmarshal([]byte(jsonStr), &entry)
+		if err == nil {
+			entries = append(entries, entry)
+		} else {
+			fmt.Printf("Failed to decode JSON: %s\n", jsonStr)
+		}
+	}
+
+	return entries
 }
 
 func getMemoryInfo() (types.Memory, error) {

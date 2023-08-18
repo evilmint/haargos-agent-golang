@@ -241,3 +241,83 @@ type RestoreStateData struct {
 type RestoreStateResponse struct {
 	Data []RestoreStateData `json:"data"`
 }
+
+type DockerInspectState struct {
+	Status       string `json:"Status"`
+	IsRunning    bool   `json:"Running"`
+	IsRestarting bool   `json:"Restarting"`
+	StartedAt    string `json:"StartedAt"`
+	FinishedAt   string `json:"FinishedAt"`
+}
+
+type DockerInspectLogConfig struct {
+	Type   string            `json:"Type"`
+	Config map[string]string `json:"Config"`
+}
+
+type DockerInspectRestartPolicy struct {
+	Name              string `json:"Name"`
+	MaximumRetryCount int    `json:"MaximumRetryCount"`
+}
+
+type DockerInspectDevice struct {
+	PathOnHost        string `json:"PathOnHost"`
+	PathInContainer   string `json:"PathInContainer"`
+	CgroupPermissions string `json:"CgroupPermissions"`
+}
+
+type DockerInspectMount struct {
+	Type        string `json:"Type"`
+	Source      string `json:"Source"`
+	Destination string `json:"Destination"`
+	Mode        string `json:"Mode"`
+	RW          bool   `json:"RW"`
+	Propagation string `json:"Propagation"`
+}
+
+type DockerInspectConfig struct {
+	Image      string                       `json:"Image"`
+	Volumes    map[string]map[string]string `json:"Volumes"`
+	Entrypoint []string                     `json:"Entrypoint"`
+	// Add other fields as needed from the "Config" section
+}
+
+type DockerInspectNetworkSettings struct {
+	Ports map[string][][]string `json:"Ports"`
+	// Add other fields as needed from the "NetworkSettings" section
+}
+
+type DockerInspectHostConfig struct {
+	Binds         []string                   `json:"Binds"`
+	LogConfig     DockerInspectLogConfig     `json:"LogConfig"`
+	NetworkMode   string                     `json:"NetworkMode"`
+	PortBindings  map[string][][]string      `json:"PortBindings"`
+	RestartPolicy DockerInspectRestartPolicy `json:"RestartPolicy"`
+	// Add other fields as needed from the "HostConfig" section
+}
+
+type DockerInspectResult struct {
+	State           DockerInspectState           `json:"State"`
+	HostConfig      DockerInspectHostConfig      `json:"HostConfig"`
+	Mounts          []DockerInspectMount         `json:"Mounts"`
+	Config          DockerInspectConfig          `json:"Config"`
+	NetworkSettings DockerInspectNetworkSettings `json:"NetworkSettings"`
+	Name            string                       `json:"Name"`
+}
+
+type DockerPsEntry struct {
+	Command      string `json:"Command"`
+	CreatedAt    string `json:"CreatedAt"`
+	ID           string `json:"ID"`
+	Image        string `json:"Image"`
+	Labels       string `json:"Labels"`
+	LocalVolumes string `json:"LocalVolumes"`
+	Mounts       string `json:"Mounts"`
+	Names        string `json:"Names"`
+	Networks     string `json:"Networks"`
+	Ports        string `json:"Ports"`
+	RunningFor   string `json:"RunningFor"`
+	Size         string `json:"Size"`
+	State        string `json:"State"`
+	Status       string `json:"Status"`
+}
