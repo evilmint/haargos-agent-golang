@@ -1,6 +1,10 @@
 package types
 
-import "time"
+import (
+	"encoding/json"
+	"fmt"
+	"time"
+)
 
 // Define the structs to match the provided JSON structure
 type Memory struct {
@@ -104,24 +108,136 @@ type HAConfig struct {
 }
 
 type Automation struct {
-	LastTriggered time.Time `json:"last_triggered"`
-	Description   string    `json:"description"`
-	ID            string    `json:"id"`
-	State         string    `json:"state"`
-	Alias         string    `json:"alias"`
-	FriendlyName  string    `json:"friendly_name"`
+	LastTriggered time.Time `yaml:"last_triggered"`
+	Description   string    `yaml:"description"`
+	ID            string    `yaml:"id"`
+	State         string    `yaml:"state"`
+	Alias         string    `yaml:"alias"`
+	FriendlyName  string    `yaml:"friendly_name"`
 }
 
 type Script struct {
-	FriendlyName  string    `json:"friendlyName,omitempty"`
-	State         string    `json:"state,omitempty"`
-	Alias         string    `json:"alias"`
-	LastTriggered time.Time `json:"lastTriggered,omitempty"`
+	FriendlyName  string    `yaml:"friendlyName,omitempty"`
+	State         string    `yaml:"state,omitempty"`
+	Alias         string    `yaml:"alias"`
+	LastTriggered time.Time `yaml:"lastTriggered,omitempty"`
 }
 
 type Scene struct {
-	Name         string    `json:"name"`
-	ID           string    `json:"id"`
-	State        time.Time `json:"state"`
-	FriendlyName string    `json:"friendly_name"`
+	Name         string    `yaml:"name"`
+	ID           string    `yaml:"id"`
+	State        time.Time `yaml:"state"`
+	FriendlyName string    `yaml:"friendly_name"`
+}
+
+type EntityRegistry struct {
+	Version      int                     `json:"version"`
+	MinorVersion int                     `json:"minor_version"`
+	Key          string                  `json:"key"`
+	Data         EntityRegistryDataClass `json:"data"`
+}
+
+type EntityRegistryDataClass struct {
+	Entities []EntityRegistryEntity `json:"entities"`
+}
+
+type EntityRegistryEntity struct {
+	DeviceClass         *string `json:"device_class,omitempty"`
+	DeviceID            *string `json:"device_id,omitempty"`
+	EntityID            string  `json:"entity_id"`
+	ID                  string  `json:"id"`
+	Name                *string `json:"name,omitempty"`
+	OriginalDeviceClass *string `json:"original_device_class,omitempty"`
+}
+
+type DeviceRegistry struct {
+	Version      int                     `json:"version"`
+	MinorVersion int                     `json:"minor_version"`
+	Key          string                  `json:"key"`
+	Data         DeviceRegistryDataClass `json:"data"`
+}
+
+type DeviceRegistryDataClass struct {
+	Devices []DeviceRegistryDevice `json:"devices"`
+}
+
+type DeviceRegistryDevice struct {
+	AreaId           *string    `json:"area_id,omitempty"`
+	ConfigEntries    []string   `json:"config_entries"`
+	ConfigurationUrl *string    `json:"configuration_url,omitempty"`
+	Connections      [][]string `json:"connections"`
+	DisabledBy       *string    `json:"disabled_by,omitempty"`
+	EntryType        *string    `json:"entry_type,omitempty"`
+	HwVersion        *string    `json:"hw_version,omitempty"`
+	ID               string     `json:"id"`
+	Identifiers      [][]string
+	Manufacturer     *string `json:"manufacturer,omitempty"`
+	Model            *string `json:"model,omitempty"`
+	NameByUser       *string `json:"name_by_user,omitempty"`
+	Name             string  `json:"name"`
+	SwVersion        *string `json:"sw_version,omitempty"`
+	ViaDeviceId      *string `json:"via_device_id,omitempty"`
+}
+
+func (d *DeviceRegistryDevice) UnmarshalJSON(data []byte) error {
+	type alias DeviceRegistryDevice // Define an alias with the same structure but without custom unmarshaler
+	aux := &struct {
+		Identifiers [][]interface{} `yaml:"identifiers"`
+		*alias
+	}{
+		alias: (*alias)(d), // Point to the receiver to avoid stack overflow
+	}
+
+	// Use the unmarshal func to decode into the auxiliary struct
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+
+	// Convert identifiers from interface{} to string
+	for _, identifierPair := range aux.Identifiers {
+		var stringPair []string
+		for _, identifier := range identifierPair {
+			switch v := identifier.(type) {
+			case string:
+				stringPair = append(stringPair, v)
+			case int:
+				stringPair = append(stringPair, fmt.Sprintf("%d", v))
+			case float64:
+				stringPair = append(stringPair, fmt.Sprintf("%.0f", v)) // handle unmarshaling into float64, common with YAML/JSON
+			}
+		}
+		d.Identifiers = append(d.Identifiers, stringPair)
+	}
+
+	return nil
+}
+
+type RestoreStateAttributes struct {
+	ID            *string `json:"id,omitempty"`
+	FriendlyName  *string `json:"friendly_name,omitempty"`
+	LastTriggered *string `json:"last_triggered,omitempty"`
+}
+
+type RestoreStateContext struct {
+	ID       string  `json:"id"`
+	ParentID *string `json:"parent_id,omitempty"`
+	UserID   *string `json:"user_id,omitempty"`
+}
+
+type RestoreStateState struct {
+	EntityID    string                 `json:"entity_id"`
+	State       string                 `json:"state"`
+	Attributes  RestoreStateAttributes `json:"attributes"`
+	LastChanged string                 `json:"last_changed"`
+	LastUpdated string                 `json:"last_updated"`
+	Context     RestoreStateContext    `json:"context"`
+}
+
+type RestoreStateData struct {
+	State    RestoreStateState `json:"state"`
+	LastSeen string            `json:"last_seen"`
+}
+
+type RestoreStateResponse struct {
+	Data []RestoreStateData `json:"data"`
 }

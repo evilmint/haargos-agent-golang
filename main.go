@@ -41,6 +41,11 @@ func main() {
 		Use:   "run",
 		Short: "Run Haargos",
 		Run: func(cmd *cobra.Command, args []string) {
+			if haConfigPath == "" {
+				log.Error("The --ha-config flag must be provided")
+				os.Exit(1)
+			}
+
 			haargosClient.Run(
 				haargos.RunParams{
 					UserID:         "07957eee-0d3d-4e09-8d25-465bb1a82806",
