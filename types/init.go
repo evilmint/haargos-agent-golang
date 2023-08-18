@@ -291,7 +291,6 @@ type DockerInspectHostConfig struct {
 	Binds         []string                   `json:"Binds"`
 	LogConfig     DockerInspectLogConfig     `json:"LogConfig"`
 	NetworkMode   string                     `json:"NetworkMode"`
-	PortBindings  map[string][][]string      `json:"PortBindings"`
 	RestartPolicy DockerInspectRestartPolicy `json:"RestartPolicy"`
 	// Add other fields as needed from the "HostConfig" section
 }
