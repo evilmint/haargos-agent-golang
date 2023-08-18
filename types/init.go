@@ -282,11 +282,6 @@ type DockerInspectConfig struct {
 	// Add other fields as needed from the "Config" section
 }
 
-type DockerInspectNetworkSettings struct {
-	Ports map[string][][]string `json:"Ports"`
-	// Add other fields as needed from the "NetworkSettings" section
-}
-
 type DockerInspectHostConfig struct {
 	Binds         []string                   `json:"Binds"`
 	LogConfig     DockerInspectLogConfig     `json:"LogConfig"`
@@ -296,12 +291,11 @@ type DockerInspectHostConfig struct {
 }
 
 type DockerInspectResult struct {
-	State           DockerInspectState           `json:"State"`
-	HostConfig      DockerInspectHostConfig      `json:"HostConfig"`
-	Mounts          []DockerInspectMount         `json:"Mounts"`
-	Config          DockerInspectConfig          `json:"Config"`
-	NetworkSettings DockerInspectNetworkSettings `json:"NetworkSettings"`
-	Name            string                       `json:"Name"`
+	State      DockerInspectState      `json:"State"`
+	HostConfig DockerInspectHostConfig `json:"HostConfig"`
+	Mounts     []DockerInspectMount    `json:"Mounts"`
+	Config     DockerInspectConfig     `json:"Config"`
+	Name       string                  `json:"Name"`
 }
 
 type DockerPsEntry struct {
