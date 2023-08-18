@@ -7,9 +7,11 @@ import (
 	"net/http"
 
 	"github.com/evilmint/haargos-agent-golang/types"
+	"github.com/sirupsen/logrus"
 )
 
 var API_URL = "https://api.haargos.smartrezydencja.pl/"
+var log = logrus.New()
 
 func SendObservation(observation types.Observation, userID, token string) (*http.Response, error) {
 	url := API_URL + "observations?installation_id=f2687b3e-d6f7-4cbd-a58b-48000752c2a9"
@@ -19,6 +21,7 @@ func SendObservation(observation types.Observation, userID, token string) (*http
 		return nil, fmt.Errorf("error marshaling JSON: %v", err)
 	}
 
+	log.Infof("Sending %s", string(jsonData))
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
 	if err != nil {
 		return nil, fmt.Errorf("error creating request: %v", err)
