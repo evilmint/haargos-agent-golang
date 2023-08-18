@@ -35,6 +35,7 @@ func main() {
 	}
 
 	haargosClient := &haargos.Haargos{}
+	var haConfigPath string
 
 	var cmdRun = &cobra.Command{
 		Use:   "run",
@@ -45,12 +46,13 @@ func main() {
 					UserID:         "07957eee-0d3d-4e09-8d25-465bb1a82806",
 					InstallationID: "f2687b3e-d6f7-4cbd-a58b-48000752c2a9",
 					Token:          "ba4d8180-88b1-4645-9d0b-d4980a86be05",
-					HaConfigPath:   "/Volumes/haconfig/ha-config/",
+					HaConfigPath:   haConfigPath,
 				},
 			)
 		},
 	}
 
+	cmdRun.Flags().StringVarP(&haConfigPath, "ha-config", "c", "", "Path to the Home Assistant configuration")
 	rootCmd.AddCommand(cmdVersion, cmdHelp, cmdRun)
 	if err := rootCmd.Execute(); err != nil {
 		log.Errorf("Error sending request request: %v", err)

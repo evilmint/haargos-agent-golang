@@ -24,6 +24,6 @@ clean:
 
 dev:
 	go build -ldflags "-X 'client.API_URL=${API_URL}'" -o haargos-dev
-	DEBUG=true ./haargos-dev run
+	DEBUG=true ./haargos-dev run --ha-config /Volumes/haconfig/ha-config/
 
 .PHONY: distribute clean
