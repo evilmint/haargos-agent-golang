@@ -288,7 +288,7 @@ func calculateAutomations(configPath string, restoreState types.RestoreStateResp
 	defer wg.Done()
 
 	// Read automations from YAML file
-	automationsData, err := ioutil.ReadFile(filepath.Join(configPath, "automations.yaml"))
+	automationsData, err := os.ReadFile(filepath.Join(configPath, "automations.yaml"))
 	if err != nil {
 		log.Printf("=== No automations data: %v", err)
 		ch <- []types.Automation{}
@@ -347,13 +347,57 @@ func calculateScripts(ch chan []types.Script, wg *sync.WaitGroup) {
 	ch <- scripts
 }
 
-func calculateScenes(ch chan []types.Scene, wg *sync.WaitGroup) {
+func calculateScenes(configPath string, restoreState types.RestoreStateResponse, ch chan []types.Scene, wg *sync.WaitGroup) {
 	defer wg.Done()
-	// Calculate Scenes information here
-	scenes := []types.Scene{
-		{Name: "Scene name", ID: "Some id", FriendlyName: "Friendly name"},
+
+	// Read scenes data from file
+	scenesFilePath := configPath + "scenes.yaml"
+	scenesData, err := ioutil.ReadFile(scenesFilePath)
+	if err != nil {
+		log.Println("Error reading scenes file:", err)
+		ch <- []types.Scene{}
+		return
 	}
+
+	// Unmarshal scenes from YAML
+	var scenes []types.Scene
+	if err := yaml.Unmarshal(scenesData, &scenes); err != nil {
+		log.Println("Error unmarshaling scenes data:", err)
+		ch <- []types.Scene{}
+		return
+	}
+
+	// Modify scenes based on restore state
+	for i, scene := range scenes {
+		if restoreStateForScene := findRestoreStateForScene(scene.ID, restoreState); restoreStateForScene != nil {
+			scenes[i].FriendlyName = *restoreStateForScene.State.Attributes.FriendlyName
+
+			var lastTriggered time.Time
+			var err error
+
+			if restoreStateForScene.State.State != "" {
+				lastTriggered, err = time.Parse(time.RFC3339, restoreStateForScene.State.State)
+			}
+			if err != nil {
+			} else {
+				scenes[i].State = lastTriggered
+			}
+		}
+	}
+
 	ch <- scenes
+}
+
+// Helper function to find corresponding restore state for a scene
+func findRestoreStateForScene(sceneID string, restoreState types.RestoreStateResponse) *types.RestoreStateData {
+	for _, data := range restoreState.Data {
+		if data.State.Attributes.ID != nil {
+			if *data.State.Attributes.ID == sceneID {
+				return &data
+			}
+		}
+	}
+	return nil
 }
 
 func (h *Haargos) Run(params RunParams) {
