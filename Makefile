@@ -26,4 +26,16 @@ dev:
 	go build -ldflags "-X 'client.API_URL=${API_URL}'" -o haargos-dev
 	DEBUG=true ./haargos-dev run --ha-config /Volumes/haconfig/ha-config/
 
+install:
+	@echo "Building Haargos"
+	@go build -ldflags "-X 'client.API_URL=${API_URL}'" -o haargos
+	@echo "Reloading daemons"
+	@systemctl daemon-reload
+	@echo "Stopping service..."
+	@systemctl stop haargos.service
+	@cp haargos /usr/local/bin/haargos
+	@echo "Starting service..."
+	@systemctl start haargos.service
+	@echo "Haargos service replaced"
+
 .PHONY: distribute clean
