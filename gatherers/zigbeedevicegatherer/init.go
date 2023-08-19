@@ -3,11 +3,13 @@ package zigbeedevicegatherer
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/evilmint/haargos-agent-golang/types"
 	_ "github.com/mattn/go-sqlite3"
@@ -92,9 +94,6 @@ func (z *ZigbeeDeviceGatherer) GatherDevices(z2mPath *string, zhaPath *string, d
 					nameByUser = *device.NameByUser
 				}
 				nameByIEEE[connection[1]] = nameByUser
-
-				log.Infof("Assigning name %s", nameByUser)
-
 				ieeeByDeviceId[device.ID] = connection[1]
 			}
 		}
@@ -113,8 +112,6 @@ func (z *ZigbeeDeviceGatherer) GatherDevices(z2mPath *string, zhaPath *string, d
 		// log.Infof("Setting deviceid of %s with entityid %s", *entity.DeviceID, entity.EntityID)
 		entityIds = append(entityIds, entity.EntityID)
 	}
-
-	log.Infof("Opening zigbee")
 
 	dbPath := configPath + "home-assistant_v2.db"
 
@@ -176,7 +173,6 @@ func (z *ZigbeeDeviceGatherer) GatherDevices(z2mPath *string, zhaPath *string, d
 			log.Fatal(err)
 		}
 		if state.Valid {
-			log.Infof("Look %s", state.String)
 			stateByMetadataId[metadataId2] = state.String
 		}
 	}
@@ -204,11 +200,17 @@ func (z *ZigbeeDeviceGatherer) GatherDevices(z2mPath *string, zhaPath *string, d
 
 	log.Infof("States %v", stateByIeee)
 
+	var zigbeeDevices []types.ZigbeeDevice
+
 	if z2mPath != nil && *z2mPath != "" {
-		return z.gatherFromZ2M(*z2mPath, nameByIEEE, stateByIeee), nil
+		zigbeeDevices = append(zigbeeDevices, z.gatherFromZ2M(*z2mPath, nameByIEEE, stateByIeee)...)
 	}
 
-	return []types.ZigbeeDevice{}, nil
+	if zhaPath != nil && *zhaPath != "" {
+		zigbeeDevices = append(zigbeeDevices, z.gatherFromZHA(*zhaPath, nameByIEEE, stateByIeee)...)
+	}
+
+	return zigbeeDevices, nil
 }
 
 func convertHex(hexStr string) string {
@@ -271,4 +273,102 @@ func (z *ZigbeeDeviceGatherer) gatherFromZ2M(path string, nameByIEEE map[string]
 		))
 	}
 	return zigbeeDevices
+}
+func (z *ZigbeeDeviceGatherer) gatherFromZHA(databasePath string, nameByIEEE map[string]string, stateByIeee map[string]string) ([]types.ZigbeeDevice, error) {
+	db, err := sql.Open("sqlite3", databasePath)
+	if err != nil {
+		return nil, err
+	}
+	defer db.Close()
+
+	attributesTable := "attributes_cache_v12"
+	devicesTable := "devices_v12"
+	neighborsTable := "neighbors_v12"
+	nodeDescriptorsTable := "node_descriptors_v12"
+	ieee := "ieee"
+	attrid := "attrid"
+	value := "value"
+	lastSeen := "last_seen"
+	lqi := "lqi"
+	logicalType := "logical_type"
+
+	var deviceMap = map[string]types.ZigbeeDevice{}
+
+	rows, err := db.Query(fmt.Sprintf("SELECT * FROM %s", attributesTable))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var deviceIeee string
+		var attridValue int
+		var valueStr string
+		if err := rows.Scan(&deviceIeee, &attridValue, &valueStr); err != nil {
+			return nil, err
+		}
+
+		batteryLevelStr := stateByIeee[deviceIeee]
+		batteryLevel := 0
+		if batteryLevelStr != "" {
+			batteryLevel, err = strconv.Atoi(batteryLevelStr)
+			if err != nil {
+				batteryLevel = 0
+			}
+		}
+
+		defaultDevice := types.NewZigbeeDevice(types.Z2MDevice{
+			IEEEAddr:    deviceIeee,
+			LastSeen:    0,
+			PowerSource: "Battery",
+		}, nil, batteryLevel)
+
+		device := deviceMap[deviceIeee]
+		if (types.ZigbeeDevice{}) == device {
+			device = defaultDevice
+		}
+
+		if attridValue == 4 {
+			device.Brand = valueStr
+		} else if attridValue == 5 {
+			device.EntityName = valueStr
+		}
+
+		deviceRow := db.QueryRow(fmt.Sprintf("SELECT %s FROM %s WHERE %s = ?", lastSeen, devicesTable, ieee), deviceIeee)
+		var timestamp int64
+		if err := deviceRow.Scan(&timestamp); err == nil {
+			lastUpdated := time.Unix(int64(timestamp/1000), 0)
+			if lastUpdated.After(device.LastUpdated) {
+				device.LastUpdated = lastUpdated
+			}
+		}
+
+		nodeDescriptorRow := db.QueryRow(fmt.Sprintf("SELECT %s FROM %s WHERE %s = ?", logicalType, nodeDescriptorsTable, ieee), deviceIeee)
+		var logicalTypeValue int
+		if err := nodeDescriptorRow.Scan(&logicalTypeValue); err == nil {
+			powerSource := "Battery"
+			if logicalTypeValue == 1 {
+				powerSource = "Mains"
+			}
+			device.PowerSource = &powerSource
+		}
+
+		lqiRow := db.QueryRow(fmt.Sprintf("SELECT %s FROM %s WHERE %s = ?", lqi, neighborsTable, ieee), deviceIeee)
+		if err := lqiRow.Scan(&device.Lqi); err != nil {
+			device.Lqi = 0
+		}
+
+		if name, ok := nameByIEEE[deviceIeee]; ok {
+			device.NameByUser = &name
+		}
+
+		deviceMap[deviceIeee] = device
+	}
+
+	var zigbeeDevices []types.ZigbeeDevice
+	for _, device := range deviceMap {
+		zigbeeDevices = append(zigbeeDevices, device)
+	}
+
+	return zigbeeDevices, nil
 }
