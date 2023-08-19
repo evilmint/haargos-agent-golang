@@ -177,19 +177,12 @@ func (z *ZigbeeDeviceGatherer) GatherDevices(z2mPath *string, zhaPath *string, d
 		}
 	}
 
-	// Fill stateByIeee map using results and other maps
 	for metaId, stateValue := range stateByMetadataId {
-		//log.Infof("x1")
 		for entityID, metadataID := range results {
-			//log.Infof("x2")
 			if metadataID == metaId {
-				//log.Infof("x3")
 				for deviceID, entityIDInMap := range deviceIDToEntityIDMap {
 					if entityIDInMap == entityID {
-						//log.Infof("x4")
-						log.Infof("Looking for IEEE with device id: %s", deviceID)
 						if ieee, exists := ieeeByDeviceId[deviceID]; exists {
-							log.Infof("x5")
 							stateByIeee[ieee] = stateValue
 						}
 					}
@@ -277,10 +270,11 @@ func (z *ZigbeeDeviceGatherer) gatherFromZ2M(path string, nameByIEEE map[string]
 
 func (z *ZigbeeDeviceGatherer) gatherFromZHA(databasePath string, nameByIEEE map[string]string, stateByIeee map[string]string) []types.ZigbeeDevice {
 	db, err := sql.Open("sqlite3", databasePath)
+	defer db.Close()
+
 	if err != nil {
 		return []types.ZigbeeDevice{}
 	}
-	defer db.Close()
 
 	attributesTable := "attributes_cache_v12"
 	devicesTable := "devices_v12"
