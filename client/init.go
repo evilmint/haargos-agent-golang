@@ -21,7 +21,7 @@ func SendObservation(observation types.Observation, userID, token string) (*http
 		return nil, fmt.Errorf("error marshaling JSON: %v", err)
 	}
 
-	// log.Infof("Sending %s", string(jsonData))
+	log.Infof("Sending %s", string(jsonData))
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
 	if err != nil {
 		return nil, fmt.Errorf("error creating request: %v", err)
