@@ -3,9 +3,7 @@ package zigbeedevicegatherer
 import (
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -94,12 +92,13 @@ func (z *ZigbeeDeviceGatherer) GatherDevices(z2mPath *string, zhaPath *string, d
 					nameByUser = *device.NameByUser
 				}
 				nameByIEEE[connection[1]] = nameByUser
+
 				ieeeByDeviceId[device.ID] = connection[1]
 			}
 		}
 	}
 
-	stateByIeee := make(map[string]*string)
+	stateByIeee := make(map[string]string)
 	deviceIDToEntityIDMap := make(map[string]string)
 	var entityIds = []string{}
 
@@ -109,6 +108,7 @@ func (z *ZigbeeDeviceGatherer) GatherDevices(z2mPath *string, zhaPath *string, d
 		}
 
 		deviceIDToEntityIDMap[*entity.DeviceID] = entity.EntityID
+		// log.Infof("Setting deviceid of %s with entityid %s", *entity.DeviceID, entity.EntityID)
 		entityIds = append(entityIds, entity.EntityID)
 	}
 
@@ -117,7 +117,7 @@ func (z *ZigbeeDeviceGatherer) GatherDevices(z2mPath *string, zhaPath *string, d
 	dbPath := configPath + "home-assistant_v2.db"
 
 	// Create a temporary directory
-	tempDir, err := ioutil.TempDir("", "home-assistant-")
+	tempDir, err := os.MkdirTemp("", "home-assistant-")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -144,22 +144,72 @@ func (z *ZigbeeDeviceGatherer) GatherDevices(z2mPath *string, zhaPath *string, d
 		log.Fatal(err)
 	}
 
-	for entityID, metadataID := range results {
-		fmt.Println(entityID, metadataID)
+	var metadataIDs []int
+	for _, metadataID := range results {
+		metadataIDs = append(metadataIDs, metadataID)
 	}
 
-	// Handle SQLite database connection, query execution, and data retrieval
-	// Assuming you have the appropriate Go packages and logic for handling SQLite
-	// You'll have to implement this part based on your specific database structure and requirements
+	// Construct stateQuery with ? placeholders
+	placeholders := strings.Repeat(",?", len(metadataIDs)-1)
+	stateQuery := "SELECT metadata_id, state FROM states WHERE state IS NOT NULL AND metadata_id IN (?" + placeholders + ")"
 
-	if z2mPath != nil {
+	// Convert metadataIDs to []interface{} for db.Query
+	stateParams := make([]interface{}, len(metadataIDs))
+	for i, v := range metadataIDs {
+		stateParams[i] = v
+	}
+
+	stateRows, err := db.Query(stateQuery, stateParams...)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer stateRows.Close()
+
+	stateByMetadataId := make(map[int]string)
+	for stateRows.Next() {
+		var metadataId2 int
+		var state sql.NullString
+		err = stateRows.Scan(&metadataId2, &state)
+		if err != nil {
+			log.Fatal(err)
+		}
+		if state.Valid {
+			log.Infof("Look %s", state.String)
+			stateByMetadataId[metadataId2] = state.String
+		}
+	}
+
+	// Fill stateByIeee map using results and other maps
+	for metaId, stateValue := range stateByMetadataId {
+		//log.Infof("x1")
+		for entityID, metadataID := range results {
+			//log.Infof("x2")
+			if metadataID == metaId {
+				//log.Infof("x3")
+				for deviceID, entityIDInMap := range deviceIDToEntityIDMap {
+					if entityIDInMap == entityID {
+						//log.Infof("x4")
+						log.Infof("Looking for IEEE with device id: %s", deviceID)
+						if ieee, exists := ieeeByDeviceId[deviceID]; exists {
+							log.Infof("x5")
+							stateByIeee[ieee] = stateValue
+						}
+					}
+				}
+			}
+		}
+	}
+
+	log.Infof("States %v", stateByIeee)
+
+	if z2mPath != nil && *z2mPath != "" {
 		return z.gatherFromZ2M(*z2mPath, nameByIEEE, stateByIeee), nil
 	}
 
 	return []types.ZigbeeDevice{}, nil
 }
 
-func (z *ZigbeeDeviceGatherer) gatherFromZ2M(path string, nameByIEEE map[string]string, stateByIeee map[string]*string) []types.ZigbeeDevice {
+func (z *ZigbeeDeviceGatherer) gatherFromZ2M(path string, nameByIEEE map[string]string, stateByIeee map[string]string) []types.ZigbeeDevice {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		log.Fatalf("Can not parse z2m database at: %s", path)
@@ -181,8 +231,8 @@ func (z *ZigbeeDeviceGatherer) gatherFromZ2M(path string, nameByIEEE map[string]
 	for _, device := range devices {
 		batteryLevelStr, ok := stateByIeee[device.IEEEAddr]
 		batteryLevel := 0
-		if ok && batteryLevelStr != nil {
-			batteryLevel, err = strconv.Atoi(*batteryLevelStr)
+		if ok && batteryLevelStr != "" {
+			batteryLevel, err = strconv.Atoi(batteryLevelStr)
 			if err != nil {
 				log.Errorf("Failed converting battery level to integer.")
 			}

@@ -175,8 +175,6 @@ type DeviceRegistryDevice struct {
 	Model            *string `json:"model,omitempty"`
 	NameByUser       *string `json:"name_by_user,omitempty"`
 	Name             string  `json:"name"`
-	SwVersion        *string `json:"sw_version,omitempty"`
-	ViaDeviceId      *string `json:"via_device_id,omitempty"`
 }
 
 func (d *DeviceRegistryDevice) UnmarshalJSON(data []byte) error {

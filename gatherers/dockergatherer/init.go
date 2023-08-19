@@ -54,7 +54,7 @@ func (dg *DockerGatherer) parseDockerPsOutput(output string) []types.DockerPsEnt
 		if err == nil {
 			entries = append(entries, entry)
 		} else {
-			log.Infof("Failed to decode docker JSON: [%s] %s\n", jsonStr, err)
+			log.Errorf("Failed to decode docker JSON: [%s] %s\n", jsonStr, err)
 		}
 	}
 
