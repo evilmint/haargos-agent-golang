@@ -209,6 +209,22 @@ func (z *ZigbeeDeviceGatherer) GatherDevices(z2mPath *string, zhaPath *string, d
 	return []types.ZigbeeDevice{}, nil
 }
 
+func convertHex(hexStr string) string {
+	// Remove the 0x prefix if present
+	if strings.HasPrefix(hexStr, "0x") {
+		hexStr = hexStr[2:]
+	}
+
+	var result strings.Builder
+	for i := 0; i < len(hexStr); i += 4 {
+		if i > 0 {
+			result.WriteRune(':')
+		}
+		result.WriteString(hexStr[i : i+4])
+	}
+
+	return result.String()
+}
 func (z *ZigbeeDeviceGatherer) gatherFromZ2M(path string, nameByIEEE map[string]string, stateByIeee map[string]string) []types.ZigbeeDevice {
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -224,6 +240,7 @@ func (z *ZigbeeDeviceGatherer) gatherFromZ2M(path string, nameByIEEE map[string]
 		if err := json.Unmarshal([]byte(line), &z2mDevice); err != nil {
 			continue
 		}
+		z2mDevice.IEEEAddr = convertHex(z2mDevice.IEEEAddr)
 		devices = append(devices, z2mDevice)
 	}
 
