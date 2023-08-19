@@ -33,7 +33,7 @@ install:
 	@systemctl daemon-reload
 	@echo "Stopping service..."
 	@systemctl stop haargos.service
-	@cp haargos /usr/local/bin/haargos
+	@cp haargos-prod /usr/local/bin/haargos
 	@echo "Starting service..."
 	@systemctl start haargos.service
 	@echo "Haargos service replaced"
