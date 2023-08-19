@@ -335,7 +335,7 @@ func ifEmpty(value string, defaultValue string) string {
 	return value
 }
 
-func NewZigbeeDevice(z2mDevice Z2MDevice, nameByUser string, batteryLevel int) ZigbeeDevice {
+func NewZigbeeDevice(z2mDevice Z2MDevice, nameByUser *string, batteryLevel int) ZigbeeDevice {
 	var batteryLevel2 = fmt.Sprintf("%d", batteryLevel)
 	return ZigbeeDevice{
 		Ieee:            z2mDevice.IEEEAddr,
@@ -344,7 +344,7 @@ func NewZigbeeDevice(z2mDevice Z2MDevice, nameByUser string, batteryLevel int) Z
 		LastUpdated:     time.Unix(int64(z2mDevice.LastSeen/1000), 0),
 		Lqi:             0,
 		IntegrationType: "z2m",
-		NameByUser:      &nameByUser,
+		NameByUser:      nameByUser,
 		PowerSource:     &z2mDevice.PowerSource,
 		BatteryLevel:    &batteryLevel2,
 	}

@@ -93,6 +93,8 @@ func (z *ZigbeeDeviceGatherer) GatherDevices(z2mPath *string, zhaPath *string, d
 				}
 				nameByIEEE[connection[1]] = nameByUser
 
+				log.Infof("Assigning name %s", nameByUser)
+
 				ieeeByDeviceId[device.ID] = connection[1]
 			}
 		}
@@ -256,9 +258,15 @@ func (z *ZigbeeDeviceGatherer) gatherFromZ2M(path string, nameByIEEE map[string]
 				batteryLevel = 0
 			}
 		}
+
+		var nameByUser *string
+		if name, ok := nameByIEEE[device.IEEEAddr]; ok {
+			nameByUser = &name
+		}
+
 		zigbeeDevices = append(zigbeeDevices, types.NewZigbeeDevice(
 			device,
-			nameByIEEE[device.IEEEAddr],
+			nameByUser,
 			batteryLevel,
 		))
 	}
