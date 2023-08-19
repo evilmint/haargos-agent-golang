@@ -302,6 +302,7 @@ func (z *ZigbeeDeviceGatherer) gatherFromZHA(databasePath string, nameByIEEE map
 		var attridValue int
 		var valueStr string
 		if err := rows.Scan(&deviceIeee, &attridValue, &valueStr); err != nil {
+			log.Errorf("Error: %s", err)
 			return []types.ZigbeeDevice{}
 		}
 
