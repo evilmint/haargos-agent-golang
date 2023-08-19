@@ -290,7 +290,7 @@ func (z *ZigbeeDeviceGatherer) gatherFromZHA(databasePath string, nameByIEEE map
 
 	var deviceMap = map[string]types.ZigbeeDevice{}
 
-	rows, err := db.Query(fmt.Sprintf("SELECT * FROM %s", attributesTable))
+	rows, err := db.Query(fmt.Sprintf("SELECT ieee, attrid, value FROM %s", attributesTable))
 	if err != nil {
 		log.Errorf("Error: %s", err)
 		return []types.ZigbeeDevice{}
