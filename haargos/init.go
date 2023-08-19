@@ -1,29 +1,29 @@
 package haargos
 
 import (
-	"bufio"
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
-	"os/exec"
 	"path"
-	"path/filepath"
-	"strconv"
 	"strings"
 	"sync"
 
 	"time"
 
 	"github.com/evilmint/haargos-agent-golang/client"
+	"github.com/evilmint/haargos-agent-golang/gatherers/automationgatherer"
+	"github.com/evilmint/haargos-agent-golang/gatherers/dockergatherer"
+	"github.com/evilmint/haargos-agent-golang/gatherers/environmentgatherer"
+	"github.com/evilmint/haargos-agent-golang/gatherers/loggatherer"
+	"github.com/evilmint/haargos-agent-golang/gatherers/scenegatherer"
+	"github.com/evilmint/haargos-agent-golang/gatherers/scriptgatherer"
+	"github.com/evilmint/haargos-agent-golang/gatherers/zigbeedevicegatherer"
 	"github.com/evilmint/haargos-agent-golang/types"
 	"github.com/sirupsen/logrus"
-	"gopkg.in/yaml.v3"
 )
 
 type Haargos struct {
-	// Additional fields can be added here if needed
 }
 
 var log = logrus.New()
@@ -35,229 +35,30 @@ type RunParams struct {
 	HaConfigPath   string
 }
 
-func fetchLogs(haConfigPath string, ch chan string, wg *sync.WaitGroup) {
+func (h *Haargos) fetchLogs(haConfigPath string, ch chan string, wg *sync.WaitGroup) {
 	defer wg.Done()
-	file, err := os.Open(haConfigPath + "home-assistant.log")
-	if err != nil {
-		log.Errorf("Error reading log file: %v", err)
-		ch <- ""
-		return
-	}
-	defer file.Close()
 
-	scanner := bufio.NewScanner(file)
-	var logLines []string
-	for scanner.Scan() {
-		line := scanner.Text()
-		parts := strings.Fields(line)
+	gatherer := loggatherer.LogGatherer{}
+	logContent := gatherer.GatherLogs(haConfigPath)
 
-		if len(parts) >= 3 && (parts[2] == "WARNING" || parts[2] == "ERROR") {
-			logLines = append(logLines, line)
-		}
-	}
-
-	if err := scanner.Err(); err != nil {
-		log.Errorf("Error scanning log file: %v", err)
-		ch <- ""
-		return
-	}
-
-	if len(logLines) > 200 {
-		logLines = logLines[len(logLines)-200:]
-	}
-
-	// Join them by newline
-	logContent := strings.Join(logLines, "\n")
 	ch <- logContent
 }
-func executeShellCommand(command string) string {
-	cmd := exec.Command("/bin/bash", "-c", command)
 
-	// Get the output of the command
-	output, err := cmd.Output()
-	if err != nil {
-		log.Printf("Failed to execute command: %s, error: %v", command, err)
-		return ""
-	}
-
-	return string(output)
-}
-
-func calculateDocker(ch chan types.Docker, wg *sync.WaitGroup) {
+func (h *Haargos) calculateDocker(ch chan types.Docker, wg *sync.WaitGroup) {
 	defer wg.Done()
-
-	// Simulating shell command execution
-	dockerPs := executeShellCommand("docker ps --format json")
-	entries := parseDockerPsOutput(dockerPs)
-
-	var containers []types.DockerContainer
-	for _, entry := range entries {
-		inspectString := executeShellCommand("docker inspect " + entry.ID)
-		inspectData := []types.DockerInspectResult{}
-		err := json.Unmarshal([]byte(inspectString), &inspectData)
-		if err != nil || len(inspectData) == 0 {
-			log.Errorf("Failed to inspect entry %s %s", entry.Names, err)
-			continue
-		}
-		inspect := inspectData[0]
-
-		containers = append(containers, types.DockerContainer{
-			Name:       inspect.Name,
-			Image:      entry.Image,
-			State:      entry.State,
-			Status:     entry.Status,
-			Running:    inspect.State.IsRunning,
-			Restarting: inspect.State.IsRestarting,
-			StartedAt:  inspect.State.StartedAt,
-			FinishedAt: inspect.State.FinishedAt,
-		})
-	}
-
-	ch <- types.Docker{Containers: containers}
+	gatherer := dockergatherer.DockerGatherer{}
+	dockerInfo := gatherer.GatherDocker()
+	ch <- dockerInfo
 }
 
-func parseDockerPsOutput(output string) []types.DockerPsEntry {
-	jsonStringArray := strings.Split(output, "\n")
-
-	var entries []types.DockerPsEntry
-	for _, jsonStr := range jsonStringArray {
-		var entry types.DockerPsEntry
-		log.Infof("Try to decode: %s", jsonStr)
-		err := json.Unmarshal([]byte(jsonStr), &entry)
-		if err == nil {
-			entries = append(entries, entry)
-			log.Infof("Appended %s %s", entry.Command, entry.Names)
-		} else {
-			log.Infof("Failed to decode JSON: %s\n", jsonStr)
-		}
-	}
-
-	return entries
+func (h *Haargos) calculateEnvironment(ch chan types.Environment, wg *sync.WaitGroup) {
+	defer wg.Done()
+	gatherer := environmentgatherer.EnvironmentGatherer{}
+	environment := gatherer.CalculateEnvironment()
+	ch <- environment
 }
 
-func getMemoryInfo() (types.Memory, error) {
-	out, err := exec.Command("bash", "-c", "free").Output()
-	if err != nil {
-		return types.Memory{}, err
-	}
-
-	lines := strings.Split(strings.TrimSpace(string(out)), "\n")
-	if len(lines) >= 3 {
-		memInfo := strings.Fields(lines[1])
-		if len(memInfo) >= 7 {
-			total, err := strconv.Atoi(memInfo[1])
-			if err != nil {
-				return types.Memory{}, err
-			}
-			used, err := strconv.Atoi(memInfo[2])
-			if err != nil {
-				return types.Memory{}, err
-			}
-			free, err := strconv.Atoi(memInfo[3])
-			if err != nil {
-				return types.Memory{}, err
-			}
-			shared, err := strconv.Atoi(memInfo[4])
-			if err != nil {
-				return types.Memory{}, err
-			}
-			buffCache, err := strconv.Atoi(memInfo[5])
-			if err != nil {
-				return types.Memory{}, err
-			}
-			available, err := strconv.Atoi(memInfo[6])
-			if err != nil {
-				return types.Memory{}, err
-			}
-
-			return types.Memory{
-				Total:     total,
-				Used:      used,
-				Free:      free,
-				Shared:    shared,
-				BuffCache: buffCache,
-				Available: available,
-			}, nil
-		}
-	}
-
-	return types.Memory{}, fmt.Errorf("Failed to parse memory info")
-}
-
-func getFileSystems() ([]types.Storage, error) {
-	out, err := exec.Command("bash", "-c", "df -h").Output()
-	if err != nil {
-		return nil, err
-	}
-
-	var fileSystems []types.Storage
-	lines := strings.Split(strings.TrimSpace(string(out)), "\n")
-	for i, line := range lines {
-		if i == 0 {
-			continue
-		}
-
-		components := strings.Fields(line)
-		if len(components) >= 6 {
-			fileSystem := types.Storage{
-				Name:          components[0],
-				Size:          components[1],
-				Used:          components[2],
-				Available:     components[3],
-				UsePercentage: components[4],
-				MountedOn:     components[5],
-			}
-			fileSystems = append(fileSystems, fileSystem)
-		}
-	}
-
-	return fileSystems, nil
-}
-
-func getCPUDetails() (types.CPU, error) {
-	topOut, err := exec.Command("bash", "-c", "top -bn 1 | awk 'NR == 3 {printf \"%.2f\", 100 - $8}'").
-		Output()
-	if err != nil {
-		return types.CPU{}, err
-	}
-
-	load, _ := strconv.ParseFloat(strings.TrimSpace(string(topOut)), 64)
-
-	cpuOut, err := exec.Command("bash", "-c", "lscpu | grep -E 'Architecture|Model name|CPU MHz|CPU(s)' | sed 's/   *//g'").
-		Output()
-	if err != nil {
-		return types.CPU{}, err
-	}
-
-	var architecture, modelName, cpuMHz string
-
-	lines := strings.Split(strings.TrimSpace(string(cpuOut)), "\n")
-	for _, line := range lines {
-		components := strings.SplitN(line, ":", 2)
-		if len(components) == 2 {
-			key := strings.TrimSpace(components[0])
-			value := strings.TrimSpace(components[1])
-
-			switch key {
-			case "Architecture":
-				architecture = value
-			case "Model name":
-				modelName = value
-			case "CPU MHz":
-				cpuMHz = value
-			}
-		}
-	}
-
-	return types.CPU{
-		Architecture: architecture,
-		ModelName:    modelName,
-		CPUMHz:       cpuMHz,
-		Load:         load,
-	}, nil
-}
-
-func readRestoreStateResponse(filePath string) (types.RestoreStateResponse, error) {
+func (h *Haargos) readRestoreStateResponse(filePath string) (types.RestoreStateResponse, error) {
 	file, err := os.Open(filePath)
 	if err != nil {
 		return types.RestoreStateResponse{}, fmt.Errorf("Error opening file %s: %w", filePath, err)
@@ -277,63 +78,61 @@ func readRestoreStateResponse(filePath string) (types.RestoreStateResponse, erro
 	return response, nil
 }
 
-func calculateEnvironment(ch chan types.Environment, wg *sync.WaitGroup) {
-	defer wg.Done()
-
-	memory, err := getMemoryInfo()
+func (h *Haargos) readDeviceRegistry(haConfigPath string) (types.DeviceRegistry, error) {
+	path := haConfigPath + ".storage/core.device_registry"
+	file, err := os.Open(path)
 	if err != nil {
-		log.Errorf("Error getting memory info: %v", err)
-		return
+		return types.DeviceRegistry{}, fmt.Errorf("Error opening file %s: %w", path, err)
+	}
+	defer file.Close()
+
+	var response types.DeviceRegistry
+	decoder := json.NewDecoder(file)
+	if err := decoder.Decode(&response); err != nil {
+		return types.DeviceRegistry{}, fmt.Errorf(
+			"Error decoding JSON from file %s: %w",
+			path,
+			err,
+		)
 	}
 
-	fileSystems, err := getFileSystems()
-	if err != nil {
-		log.Errorf("Error getting file systems: %v", err)
-		return
-	}
-
-	cpuDetails, err := getCPUDetails()
-	if err != nil {
-		log.Errorf("Error getting CPU details: %v", err)
-		return
-	}
-
-	environment := types.Environment{
-		Memory:  memory,
-		CPU:     cpuDetails,
-		Storage: fileSystems,
-	}
-
-	ch <- environment
+	return response, nil
 }
 
-func calculateZigbee(ch chan types.ZigbeeStatus, wg *sync.WaitGroup) {
-	defer wg.Done()
-	// Calculate ZigbeeStatus information here
-	var nameByUser = "sd"
-	var powerSource = "Battery"
-	var entityName = "entity.name"
-	var batteryLevel = "87"
-	zigbee := types.ZigbeeStatus{Devices: []types.ZigbeeDevice{
-		{
-			Ieee:            "84:fd:27:ff:fe:6d:be:fa",
-			Lqi:             0,
-			LastUpdated:     time.Now(),
-			NameByUser:      &nameByUser,
-			PowerSource:     &powerSource,
-			EntityName:      entityName,
-			Brand:           "Yes",
-			IntegrationType: "Z2M",
-			BatteryLevel:    &batteryLevel,
-		},
-	}}
-	ch <- zigbee
+func (h *Haargos) readEntityRegistry(haConfigPath string) (types.EntityRegistry, error) {
+	path := haConfigPath + ".storage/core.entity_registry"
+	file, err := os.Open(path)
+	if err != nil {
+		return types.EntityRegistry{}, fmt.Errorf("Error opening file %s: %w", path, err)
+	}
+	defer file.Close()
+
+	var response types.EntityRegistry
+	decoder := json.NewDecoder(file)
+	if err := decoder.Decode(&response); err != nil {
+		return types.EntityRegistry{}, fmt.Errorf(
+			"Error decoding JSON from file %s: %w",
+			path,
+			err,
+		)
+	}
+
+	return response, nil
 }
 
-func calculateHAConfig(haConfigPath string, ch chan types.HAConfig, wg *sync.WaitGroup) {
+func (h *Haargos) calculateZigbee(haConfigPath string, z2mPath *string, zhaPath *string, ch chan types.ZigbeeStatus, wg *sync.WaitGroup) {
+	defer wg.Done()
+	gatherer := zigbeedevicegatherer.ZigbeeDeviceGatherer{}
+	deviceRegistry, _ := h.readDeviceRegistry(haConfigPath)
+	entityRegistry, _ := h.readEntityRegistry(haConfigPath)
+	zigbee, _ := gatherer.GatherDevices(z2mPath, zhaPath, &deviceRegistry, &entityRegistry, haConfigPath)
+
+	ch <- types.ZigbeeStatus{Devices: zigbee}
+}
+
+func (h *Haargos) calculateHAConfig(haConfigPath string, ch chan types.HAConfig, wg *sync.WaitGroup) {
 	defer wg.Done()
 
-	// Read the contents of the ".HA_VERSION" file
 	versionFilePath := path.Join(haConfigPath, ".HA_VERSION")
 	versionBytes, err := os.ReadFile(versionFilePath)
 	if err != nil {
@@ -347,7 +146,7 @@ func calculateHAConfig(haConfigPath string, ch chan types.HAConfig, wg *sync.Wai
 	ch <- haConfig
 }
 
-func calculateAutomations(
+func (h *Haargos) calculateAutomations(
 	configPath string,
 	restoreState types.RestoreStateResponse,
 	ch chan []types.Automation,
@@ -355,80 +154,13 @@ func calculateAutomations(
 ) {
 	defer wg.Done()
 
-	// Read automations from YAML file
-	automationsData, err := os.ReadFile(filepath.Join(configPath, "automations.yaml"))
-	if err != nil {
-		log.Printf("=== No automations data: %v", err)
-		ch <- []types.Automation{}
-		return
-	}
-
-	var automations []types.Automation
-	if err := yaml.Unmarshal(automationsData, &automations); err != nil {
-		log.Printf("Error parsing automations.yaml: %v", err)
-		ch <- []types.Automation{}
-		return
-	}
-
-	// Map automations based on the restore state
-	for i, automation := range automations {
-		if restoreStateForAutomation, ok := findRestoreStateByID(restoreState, automation.ID); ok {
-			var lastTriggered time.Time
-			var err error
-
-			if restoreStateForAutomation.State.Attributes.LastTriggered != nil {
-				lastTriggered, err = time.Parse(
-					time.RFC3339,
-					*restoreStateForAutomation.State.Attributes.LastTriggered,
-				)
-			}
-
-			if err != nil {
-				log.Printf(
-					"Error parsing lastTriggered for automation ID %s: %v",
-					automation.ID,
-					err,
-				)
-			} else {
-				automations[i].LastTriggered = lastTriggered
-			}
-			automations[i].FriendlyName = *restoreStateForAutomation.State.Attributes.FriendlyName
-			automations[i].State = restoreStateForAutomation.State.State
-		}
-	}
+	gatherer := automationgatherer.AutomationGatherer{}
+	automations := gatherer.GatherAutomations(configPath, restoreState)
 
 	ch <- automations
 }
 
-// Helper function to find restore state by ID
-func findRestoreStateByID(
-	restoreState types.RestoreStateResponse,
-	id string,
-) (*types.RestoreStateData, bool) {
-	for _, data := range restoreState.Data {
-		if data.State.Attributes.ID != nil {
-			if *data.State.Attributes.ID == id {
-				return &data, true
-			}
-		}
-	}
-
-	return nil, false
-}
-
-func findRestoreStateForScript(
-	scriptAlias string,
-	restoreState types.RestoreStateResponse,
-) *types.RestoreStateData {
-	for _, data := range restoreState.Data {
-		if data.State.EntityID == scriptAlias {
-			return &data
-		}
-	}
-	return nil
-}
-
-func calculateScripts(
+func (h *Haargos) calculateScripts(
 	configPath string,
 	restoreState types.RestoreStateResponse,
 	ch chan []types.Script,
@@ -436,113 +168,22 @@ func calculateScripts(
 ) {
 	defer wg.Done()
 
-	// Read scripts data from file
-	scriptsFilePath := configPath + "scripts.yaml"
-	scriptsData, err := os.ReadFile(scriptsFilePath)
-	if err != nil {
-		log.Println("Error reading scripts file:", err)
-		ch <- []types.Script{}
-		return
-	}
-
-	// Unmarshal scripts from YAML
-	var scriptsMap map[string]types.Script
-	if err := yaml.Unmarshal(scriptsData, &scriptsMap); err != nil {
-		log.Println("Error unmarshaling scripts data:", err)
-		ch <- []types.Script{}
-		return
-	}
-
-	// Convert map to slice
-	scripts := make([]types.Script, 0, len(scriptsMap))
-	for _, script := range scriptsMap {
-		scripts = append(scripts, script)
-	}
-
-	// Modify scripts based on restore state
-	for i, script := range scripts {
-		if restoreStateForScript := findRestoreStateForScript("script."+script.Alias, restoreState); restoreStateForScript != nil {
-			var lastTriggered time.Time
-			var err error
-
-			if restoreStateForScript.State.Attributes.LastTriggered != nil {
-				lastTriggered, err = time.Parse(
-					time.RFC3339,
-					*restoreStateForScript.State.Attributes.LastTriggered,
-				)
-			}
-			if err != nil {
-			} else {
-				scripts[i].LastTriggered = lastTriggered
-			}
-
-			scripts[i].FriendlyName = *restoreStateForScript.State.Attributes.FriendlyName
-			scripts[i].State = restoreStateForScript.State.State // Assuming state is of a compatible type
-		}
-	}
+	gatherer := scriptgatherer.ScriptGatherer{}
+	scripts := gatherer.GatherScripts(configPath, restoreState)
 
 	ch <- scripts
 }
 
-func calculateScenes(
+func (h *Haargos) calculateScenes(
 	configPath string,
 	restoreState types.RestoreStateResponse,
 	ch chan []types.Scene,
 	wg *sync.WaitGroup,
 ) {
 	defer wg.Done()
-
-	// Read scenes data from file
-	scenesFilePath := configPath + "scenes.yaml"
-	scenesData, err := ioutil.ReadFile(scenesFilePath)
-	if err != nil {
-		log.Println("Error reading scenes file:", err)
-		ch <- []types.Scene{}
-		return
-	}
-
-	// Unmarshal scenes from YAML
-	var scenes []types.Scene
-	if err := yaml.Unmarshal(scenesData, &scenes); err != nil {
-		log.Println("Error unmarshaling scenes data:", err)
-		ch <- []types.Scene{}
-		return
-	}
-
-	// Modify scenes based on restore state
-	for i, scene := range scenes {
-		if restoreStateForScene := findRestoreStateForScene(scene.ID, restoreState); restoreStateForScene != nil {
-			scenes[i].FriendlyName = *restoreStateForScene.State.Attributes.FriendlyName
-
-			var lastTriggered time.Time
-			var err error
-
-			if restoreStateForScene.State.State != "" {
-				lastTriggered, err = time.Parse(time.RFC3339, restoreStateForScene.State.State)
-			}
-			if err != nil {
-			} else {
-				scenes[i].State = lastTriggered
-			}
-		}
-	}
-
+	gatherer := scenegatherer.SceneGatherer{}
+	scenes := gatherer.GatherScenes(configPath, restoreState)
 	ch <- scenes
-}
-
-// Helper function to find corresponding restore state for a scene
-func findRestoreStateForScene(
-	sceneID string,
-	restoreState types.RestoreStateResponse,
-) *types.RestoreStateData {
-	for _, data := range restoreState.Data {
-		if data.State.Attributes.ID != nil {
-			if *data.State.Attributes.ID == sceneID {
-				return &data
-			}
-		}
-	}
-	return nil
 }
 
 func (h *Haargos) Run(params RunParams) {
@@ -562,7 +203,7 @@ func (h *Haargos) Run(params RunParams) {
 		var wg sync.WaitGroup
 		var observation types.Observation
 
-		restoreStateResponse, err := readRestoreStateResponse(
+		restoreStateResponse, err := h.readRestoreStateResponse(
 			params.HaConfigPath + ".storage/core.restore_state",
 		)
 		if err != nil {
@@ -580,14 +221,14 @@ func (h *Haargos) Run(params RunParams) {
 		logsCh := make(chan string, 1)
 
 		wg.Add(8)
-		go calculateDocker(dockerCh, &wg)
-		go calculateEnvironment(environmentCh, &wg)
-		go calculateZigbee(zigbeeCh, &wg)
-		go calculateHAConfig(params.HaConfigPath, haConfigCh, &wg)
-		go calculateAutomations(params.HaConfigPath, restoreStateResponse, automationsCh, &wg)
-		go calculateScripts(params.HaConfigPath, restoreStateResponse, scriptsCh, &wg)
-		go calculateScenes(params.HaConfigPath, restoreStateResponse, scenesCh, &wg)
-		go fetchLogs(params.HaConfigPath, logsCh, &wg)
+		go h.calculateDocker(dockerCh, &wg)
+		go h.calculateEnvironment(environmentCh, &wg)
+		go h.calculateZigbee(params.HaConfigPath, nil, nil, zigbeeCh, &wg)
+		go h.calculateHAConfig(params.HaConfigPath, haConfigCh, &wg)
+		go h.calculateAutomations(params.HaConfigPath, restoreStateResponse, automationsCh, &wg)
+		go h.calculateScripts(params.HaConfigPath, restoreStateResponse, scriptsCh, &wg)
+		go h.calculateScenes(params.HaConfigPath, restoreStateResponse, scenesCh, &wg)
+		go h.fetchLogs(params.HaConfigPath, logsCh, &wg)
 
 		wg.Wait()
 

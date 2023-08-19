@@ -310,3 +310,44 @@ type DockerPsEntry struct {
 	State     string `json:"State"`
 	Status    string `json:"Status"`
 }
+
+type Z2MDevice struct {
+	ID                 int
+	Type               string
+	IEEEAddr           string
+	NwkAddr            int
+	ManufId            int
+	ManufName          string
+	PowerSource        string
+	ModelId            string
+	AppVersion         int
+	StackVersion       int
+	HWVersion          int
+	DateCode           string
+	SWBuildId          string
+	ZclVersion         int
+	InterviewCompleted bool
+	LastSeen           int64
+}
+
+func ifEmpty(value string, defaultValue string) string {
+	if value == "" {
+		return defaultValue
+	}
+	return value
+}
+
+func NewZigbeeDevice(z2mDevice Z2MDevice, nameByUser string, batteryLevel int) ZigbeeDevice {
+	var batteryLevel2 = string(batteryLevel)
+	return ZigbeeDevice{
+		Ieee:            z2mDevice.IEEEAddr,
+		EntityName:      ifEmpty(z2mDevice.ModelId, "-"),
+		Brand:           ifEmpty(z2mDevice.ManufName, "-"),
+		LastUpdated:     time.Unix(int64(z2mDevice.LastSeen/1000), 0),
+		Lqi:             0,
+		IntegrationType: "z2m",
+		NameByUser:      &nameByUser,
+		PowerSource:     &z2mDevice.PowerSource,
+		BatteryLevel:    &batteryLevel2,
+	}
+}
