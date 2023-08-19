@@ -274,10 +274,11 @@ func (z *ZigbeeDeviceGatherer) gatherFromZ2M(path string, nameByIEEE map[string]
 	}
 	return zigbeeDevices
 }
-func (z *ZigbeeDeviceGatherer) gatherFromZHA(databasePath string, nameByIEEE map[string]string, stateByIeee map[string]string) ([]types.ZigbeeDevice, error) {
+
+func (z *ZigbeeDeviceGatherer) gatherFromZHA(databasePath string, nameByIEEE map[string]string, stateByIeee map[string]string) []types.ZigbeeDevice {
 	db, err := sql.Open("sqlite3", databasePath)
 	if err != nil {
-		return nil, err
+		return []types.ZigbeeDevice{}
 	}
 	defer db.Close()
 
@@ -286,8 +287,6 @@ func (z *ZigbeeDeviceGatherer) gatherFromZHA(databasePath string, nameByIEEE map
 	neighborsTable := "neighbors_v12"
 	nodeDescriptorsTable := "node_descriptors_v12"
 	ieee := "ieee"
-	attrid := "attrid"
-	value := "value"
 	lastSeen := "last_seen"
 	lqi := "lqi"
 	logicalType := "logical_type"
@@ -296,7 +295,7 @@ func (z *ZigbeeDeviceGatherer) gatherFromZHA(databasePath string, nameByIEEE map
 
 	rows, err := db.Query(fmt.Sprintf("SELECT * FROM %s", attributesTable))
 	if err != nil {
-		return nil, err
+		return []types.ZigbeeDevice{}
 	}
 	defer rows.Close()
 
@@ -305,7 +304,7 @@ func (z *ZigbeeDeviceGatherer) gatherFromZHA(databasePath string, nameByIEEE map
 		var attridValue int
 		var valueStr string
 		if err := rows.Scan(&deviceIeee, &attridValue, &valueStr); err != nil {
-			return nil, err
+			return []types.ZigbeeDevice{}
 		}
 
 		batteryLevelStr := stateByIeee[deviceIeee]
@@ -370,5 +369,5 @@ func (z *ZigbeeDeviceGatherer) gatherFromZHA(databasePath string, nameByIEEE map
 		zigbeeDevices = append(zigbeeDevices, device)
 	}
 
-	return zigbeeDevices, nil
+	return zigbeeDevices
 }
