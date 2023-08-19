@@ -196,9 +196,8 @@ func (z *ZigbeeDeviceGatherer) GatherDevices(z2mPath *string, zhaPath *string, d
 		zigbeeDevices = append(zigbeeDevices, z.gatherFromZ2M(*z2mPath, nameByIEEE, stateByIeee)...)
 	}
 
-	log.Infof("Gathering ZHA from %s", zhaPath)
 	if zhaPath != nil && *zhaPath != "" {
-		log.Infof("Gathering ZHA from")
+		log.Infof("Gathering ZHA from %s", *zhaPath)
 		zigbeeDevices = append(zigbeeDevices, z.gatherFromZHA(*zhaPath, nameByIEEE, stateByIeee)...)
 	}
 
@@ -276,6 +275,7 @@ func (z *ZigbeeDeviceGatherer) gatherFromZHA(databasePath string, nameByIEEE map
 	defer db.Close()
 
 	if err != nil {
+		log.Errorf("Error: %s", err)
 		return []types.ZigbeeDevice{}
 	}
 
@@ -292,6 +292,7 @@ func (z *ZigbeeDeviceGatherer) gatherFromZHA(databasePath string, nameByIEEE map
 
 	rows, err := db.Query(fmt.Sprintf("SELECT * FROM %s", attributesTable))
 	if err != nil {
+		log.Errorf("Error: %s", err)
 		return []types.ZigbeeDevice{}
 	}
 	defer rows.Close()
@@ -366,6 +367,6 @@ func (z *ZigbeeDeviceGatherer) gatherFromZHA(databasePath string, nameByIEEE map
 		zigbeeDevices = append(zigbeeDevices, device)
 	}
 
-	log.Infof("Gathered %d Z2M devices", len(zigbeeDevices))
+	log.Infof("Gathered %d ZHA devices", len(zigbeeDevices))
 	return zigbeeDevices
 }
