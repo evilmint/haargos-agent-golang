@@ -88,7 +88,7 @@ func (z *ZigbeeDeviceGatherer) GatherDevices(z2mPath *string, zhaPath *string, d
 		for _, connection := range device.Connections {
 			if len(connection) == 2 && (connection[0] == "zigbee" || connection[0] == "zha") {
 				nameByUser := device.Name
-				if device.NameByUser != nil {
+				if device.NameByUser != nil && *device.NameByUser != "" {
 					nameByUser = *device.NameByUser
 				}
 				nameByIEEE[connection[1]] = nameByUser
