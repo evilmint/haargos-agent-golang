@@ -28,7 +28,7 @@ dev:
 
 install:
 	@echo "Building Haargos"
-	@go build -ldflags "-X 'client.API_URL=${API_URL}'" -o haargos
+	@go build -ldflags "-X 'client.API_URL=${API_URL}'" -o haargos-prod
 	@echo "Reloading daemons"
 	@systemctl daemon-reload
 	@echo "Stopping service..."
