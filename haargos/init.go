@@ -19,6 +19,7 @@ import (
 	"github.com/evilmint/haargos-agent-golang/gatherers/scenegatherer"
 	"github.com/evilmint/haargos-agent-golang/gatherers/scriptgatherer"
 	"github.com/evilmint/haargos-agent-golang/gatherers/zigbeedevicegatherer"
+	"github.com/evilmint/haargos-agent-golang/registry"
 	"github.com/evilmint/haargos-agent-golang/types"
 	"github.com/sirupsen/logrus"
 )
@@ -80,55 +81,11 @@ func (h *Haargos) readRestoreStateResponse(filePath string) (types.RestoreStateR
 	return response, nil
 }
 
-func (h *Haargos) readDeviceRegistry(haConfigPath string) (types.DeviceRegistry, error) {
-	path := haConfigPath + ".storage/core.device_registry"
-	file, err := os.Open(path)
-	if err != nil {
-		log.Errorf("Failed %s", err)
-		return types.DeviceRegistry{}, fmt.Errorf("Error opening file %s: %w", path, err)
-	}
-	defer file.Close()
-
-	var response types.DeviceRegistry
-	decoder := json.NewDecoder(file)
-	if err := decoder.Decode(&response); err != nil {
-		log.Errorf("Failed %s", err)
-		return types.DeviceRegistry{}, fmt.Errorf(
-			"Error decoding JSON from file %s: %w",
-			path,
-			err,
-		)
-	}
-
-	return response, nil
-}
-
-func (h *Haargos) readEntityRegistry(haConfigPath string) (types.EntityRegistry, error) {
-	path := haConfigPath + ".storage/core.entity_registry"
-	file, err := os.Open(path)
-	if err != nil {
-		return types.EntityRegistry{}, fmt.Errorf("Error opening file %s: %w", path, err)
-	}
-	defer file.Close()
-
-	var response types.EntityRegistry
-	decoder := json.NewDecoder(file)
-	if err := decoder.Decode(&response); err != nil {
-		return types.EntityRegistry{}, fmt.Errorf(
-			"Error decoding JSON from file %s: %w",
-			path,
-			err,
-		)
-	}
-
-	return response, nil
-}
-
 func (h *Haargos) calculateZigbee(haConfigPath string, z2mPath *string, zhaPath *string, ch chan types.ZigbeeStatus, wg *sync.WaitGroup) {
 	defer wg.Done()
 	gatherer := zigbeedevicegatherer.ZigbeeDeviceGatherer{}
-	deviceRegistry, _ := h.readDeviceRegistry(haConfigPath)
-	entityRegistry, _ := h.readEntityRegistry(haConfigPath)
+	deviceRegistry, _ := registry.ReadDeviceRegistry(haConfigPath)
+	entityRegistry, _ := registry.ReadEntityRegistry(haConfigPath)
 	zigbee, err := gatherer.GatherDevices(z2mPath, zhaPath, &deviceRegistry, &entityRegistry, haConfigPath)
 
 	if err != nil {
@@ -202,7 +159,7 @@ func (h *Haargos) Run(params RunParams) {
 	if os.Getenv("DEBUG") == "true" {
 		interval = 1 * time.Minute
 	} else {
-		interval = 1 * time.Hour
+		interval = 15 * time.Minute
 	}
 
 	ticker := time.NewTicker(interval)
