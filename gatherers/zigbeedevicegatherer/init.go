@@ -265,6 +265,8 @@ func (z *ZigbeeDeviceGatherer) gatherFromZ2M(path string, nameByIEEE map[string]
 			batteryLevel,
 		))
 	}
+
+	log.Infof("Gathered %d Z2M devices", len(zigbeeDevices))
 	return zigbeeDevices
 }
 
@@ -363,5 +365,6 @@ func (z *ZigbeeDeviceGatherer) gatherFromZHA(databasePath string, nameByIEEE map
 		zigbeeDevices = append(zigbeeDevices, device)
 	}
 
+	log.Infof("Gathered %d Z2M devices", len(zigbeeDevices))
 	return zigbeeDevices
 }
