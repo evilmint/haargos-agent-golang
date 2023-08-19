@@ -55,8 +55,6 @@ func queryStatesMeta(db *sql.DB, entityIDs []string) (map[string]int, error) {
 	}
 	query += ")"
 
-	log.Infof("Query: %s", query)
-
 	stmt, err := db.Prepare(query)
 	if err != nil {
 		return nil, err
@@ -191,8 +189,6 @@ func (z *ZigbeeDeviceGatherer) GatherDevices(z2mPath *string, zhaPath *string, d
 		}
 	}
 
-	log.Infof("States %v", stateByIeee)
-
 	var zigbeeDevices []types.ZigbeeDevice
 
 	if z2mPath != nil && *z2mPath != "" {
@@ -202,6 +198,8 @@ func (z *ZigbeeDeviceGatherer) GatherDevices(z2mPath *string, zhaPath *string, d
 	if zhaPath != nil && *zhaPath != "" {
 		zigbeeDevices = append(zigbeeDevices, z.gatherFromZHA(*zhaPath, nameByIEEE, stateByIeee)...)
 	}
+
+	log.Infof("Devices count: %d", len(zigbeeDevices))
 
 	return zigbeeDevices, nil
 }
