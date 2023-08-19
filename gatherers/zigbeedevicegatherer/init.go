@@ -216,15 +216,16 @@ func convertHex(hexStr string) string {
 	}
 
 	var result strings.Builder
-	for i := 0; i < len(hexStr); i += 4 {
+	for i := 0; i < len(hexStr); i += 2 {
 		if i > 0 {
 			result.WriteRune(':')
 		}
-		result.WriteString(hexStr[i : i+4])
+		result.WriteString(hexStr[i : i+2])
 	}
 
 	return result.String()
 }
+
 func (z *ZigbeeDeviceGatherer) gatherFromZ2M(path string, nameByIEEE map[string]string, stateByIeee map[string]string) []types.ZigbeeDevice {
 	data, err := os.ReadFile(path)
 	if err != nil {
