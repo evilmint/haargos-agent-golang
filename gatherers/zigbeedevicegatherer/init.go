@@ -235,6 +235,7 @@ func (z *ZigbeeDeviceGatherer) gatherFromZ2M(path string, nameByIEEE map[string]
 			batteryLevel, err = strconv.Atoi(batteryLevelStr)
 			if err != nil {
 				log.Errorf("Failed converting battery level to integer.")
+				batteryLevel = 0
 			}
 		}
 		zigbeeDevices = append(zigbeeDevices, types.NewZigbeeDevice(

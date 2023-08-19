@@ -336,7 +336,7 @@ func ifEmpty(value string, defaultValue string) string {
 }
 
 func NewZigbeeDevice(z2mDevice Z2MDevice, nameByUser string, batteryLevel int) ZigbeeDevice {
-	var batteryLevel2 = string(batteryLevel)
+	var batteryLevel2 = fmt.Sprintf("%d", batteryLevel)
 	return ZigbeeDevice{
 		Ieee:            z2mDevice.IEEEAddr,
 		EntityName:      ifEmpty(z2mDevice.ModelId, "-"),
