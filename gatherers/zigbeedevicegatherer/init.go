@@ -192,10 +192,12 @@ func (z *ZigbeeDeviceGatherer) GatherDevices(z2mPath *string, zhaPath *string, d
 	var zigbeeDevices []types.ZigbeeDevice
 
 	if z2mPath != nil && *z2mPath != "" {
+		log.Infof("Gathering Z2M")
 		zigbeeDevices = append(zigbeeDevices, z.gatherFromZ2M(*z2mPath, nameByIEEE, stateByIeee)...)
 	}
 
 	if zhaPath != nil && *zhaPath != "" {
+		log.Infof("Gathering ZHA")
 		zigbeeDevices = append(zigbeeDevices, z.gatherFromZHA(*zhaPath, nameByIEEE, stateByIeee)...)
 	}
 
