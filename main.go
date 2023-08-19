@@ -65,7 +65,7 @@ func main() {
 		StringVarP(&haConfigPath, "ha-config", "c", "", "Path to the Home Assistant configuration")
 
 	cmdRun.Flags().StringVarP(&z2mPath, "z2m-path", "z", "", "Path to Z2M database")
-	cmdRun.Flags().StringVarP(&z2mPath, "zha-path", "x", "", "Path to ZHA database")
+	cmdRun.Flags().StringVarP(&zhaPath, "zha-path", "x", "", "Path to ZHA database")
 	rootCmd.AddCommand(cmdVersion, cmdHelp, cmdRun)
 	if err := rootCmd.Execute(); err != nil {
 		log.Errorf("Error sending request request: %v", err)
