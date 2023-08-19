@@ -335,7 +335,7 @@ func (z *ZigbeeDeviceGatherer) gatherFromZHA(databasePath string, nameByIEEE map
 		deviceRow := db.QueryRow(fmt.Sprintf("SELECT %s FROM %s WHERE %s = ?", lastSeen, devicesTable, ieee), deviceIeee)
 		var timestamp float64
 		if err := deviceRow.Scan(&timestamp); err == nil {
-			lastUpdated := time.Unix(int64(timestamp/1000.0), 0)
+			lastUpdated := time.Unix(int64(timestamp), 0)
 			log.Infof("Got time %s", lastUpdated)
 			if lastUpdated.After(device.LastUpdated) {
 				log.Infof("Is after")
