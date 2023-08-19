@@ -33,6 +33,7 @@ type RunParams struct {
 	InstallationID string
 	Token          string
 	HaConfigPath   string
+	Z2MPath        string
 }
 
 func (h *Haargos) fetchLogs(haConfigPath string, ch chan string, wg *sync.WaitGroup) {
@@ -223,7 +224,7 @@ func (h *Haargos) Run(params RunParams) {
 		wg.Add(8)
 		go h.calculateDocker(dockerCh, &wg)
 		go h.calculateEnvironment(environmentCh, &wg)
-		go h.calculateZigbee(params.HaConfigPath, nil, nil, zigbeeCh, &wg)
+		go h.calculateZigbee(params.HaConfigPath, &params.Z2MPath, nil, zigbeeCh, &wg)
 		go h.calculateHAConfig(params.HaConfigPath, haConfigCh, &wg)
 		go h.calculateAutomations(params.HaConfigPath, restoreStateResponse, automationsCh, &wg)
 		go h.calculateScripts(params.HaConfigPath, restoreStateResponse, scriptsCh, &wg)

@@ -153,7 +153,7 @@ func (z *ZigbeeDeviceGatherer) GatherDevices(z2mPath *string, zhaPath *string, d
 	// You'll have to implement this part based on your specific database structure and requirements
 
 	if z2mPath != nil {
-		return z.gatherFromZ2M("", nameByIEEE, stateByIeee), nil
+		return z.gatherFromZ2M(*z2mPath, nameByIEEE, stateByIeee), nil
 	}
 
 	return []types.ZigbeeDevice{}, nil
