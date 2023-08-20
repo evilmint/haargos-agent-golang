@@ -33,8 +33,8 @@ type Storage struct {
 }
 
 type Environment struct {
-	Memory  Memory    `json:"memory"`
-	CPU     CPU       `json:"cpu"`
+	Memory  *Memory   `json:"memory"`
+	CPU     *CPU      `json:"cpu"`
 	Storage []Storage `json:"storage"`
 }
 

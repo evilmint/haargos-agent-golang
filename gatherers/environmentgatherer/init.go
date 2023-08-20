@@ -3,6 +3,7 @@ package environmentgatherer
 import (
 	"fmt"
 	"os/exec"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -14,10 +15,10 @@ var log = logrus.New()
 
 type EnvironmentGatherer struct{}
 
-func (e *EnvironmentGatherer) getMemoryInfo() (types.Memory, error) {
+func (e *EnvironmentGatherer) getMemoryInfo() (*types.Memory, error) {
 	out, err := exec.Command("bash", "-c", "free").Output()
 	if err != nil {
-		return types.Memory{}, err
+		return nil, err
 	}
 
 	lines := strings.Split(strings.TrimSpace(string(out)), "\n")
@@ -26,30 +27,30 @@ func (e *EnvironmentGatherer) getMemoryInfo() (types.Memory, error) {
 		if len(memInfo) >= 7 {
 			total, err := strconv.Atoi(memInfo[1])
 			if err != nil {
-				return types.Memory{}, err
+				return nil, err
 			}
 			used, err := strconv.Atoi(memInfo[2])
 			if err != nil {
-				return types.Memory{}, err
+				return nil, err
 			}
 			free, err := strconv.Atoi(memInfo[3])
 			if err != nil {
-				return types.Memory{}, err
+				return nil, err
 			}
 			shared, err := strconv.Atoi(memInfo[4])
 			if err != nil {
-				return types.Memory{}, err
+				return nil, err
 			}
 			buffCache, err := strconv.Atoi(memInfo[5])
 			if err != nil {
-				return types.Memory{}, err
+				return nil, err
 			}
 			available, err := strconv.Atoi(memInfo[6])
 			if err != nil {
-				return types.Memory{}, err
+				return nil, err
 			}
 
-			return types.Memory{
+			return &types.Memory{
 				Total:     total,
 				Used:      used,
 				Free:      free,
@@ -60,31 +61,34 @@ func (e *EnvironmentGatherer) getMemoryInfo() (types.Memory, error) {
 		}
 	}
 
-	return types.Memory{}, fmt.Errorf("Failed to parse memory info")
+	return nil, fmt.Errorf("Failed to parse memory info")
 }
 
 func (e *EnvironmentGatherer) getFileSystems() ([]types.Storage, error) {
 	out, err := exec.Command("bash", "-c", "df -h").Output()
 	if err != nil {
-		return nil, err
+		return make([]types.Storage, 0), err
 	}
 
-	var fileSystems []types.Storage
+	var fileSystems = make([]types.Storage, 0)
+
 	lines := strings.Split(strings.TrimSpace(string(out)), "\n")
 	for i, line := range lines {
 		if i == 0 {
 			continue
 		}
 
-		components := strings.Fields(line)
-		if len(components) >= 6 {
+		re := regexp.MustCompile(`(.*?)\s+(\d+\S*)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(.*)`)
+		matches := re.FindStringSubmatch(line)
+
+		if len(matches) >= 10 {
 			fileSystem := types.Storage{
-				Name:          components[0],
-				Size:          components[1],
-				Used:          components[2],
-				Available:     components[3],
-				UsePercentage: components[4],
-				MountedOn:     components[5],
+				Name:          matches[1],
+				Size:          matches[2],
+				Used:          matches[3],
+				Available:     matches[4],
+				UsePercentage: matches[5],
+				MountedOn:     matches[9],
 			}
 			fileSystems = append(fileSystems, fileSystem)
 		}
@@ -93,20 +97,22 @@ func (e *EnvironmentGatherer) getFileSystems() ([]types.Storage, error) {
 	return fileSystems, nil
 }
 
-func (e *EnvironmentGatherer) getCPUDetails() (types.CPU, error) {
+func (e *EnvironmentGatherer) getCPUDetails() (*types.CPU, error) {
 	topOut, err := exec.Command("bash", "-c", "top -bn 1 | awk 'NR == 3 {printf \"%.2f\", 100 - $8}'").
 		Output()
 	if err != nil {
-		return types.CPU{}, err
+		return nil, err
 	}
 
 	load, _ := strconv.ParseFloat(strings.TrimSpace(string(topOut)), 64)
 
 	cpuOut, err := exec.Command("bash", "-c", "lscpu | grep -E 'Architecture|Model name|CPU MHz|CPU(s)' | sed 's/   *//g'").
 		Output()
-	if err != nil {
-		return types.CPU{}, err
+	if err != nil || string(cpuOut) == "" {
+		return nil, err
 	}
+
+	log.Infof("Yeahs %s", string(cpuOut))
 
 	var architecture, modelName, cpuMHz string
 
@@ -128,7 +134,7 @@ func (e *EnvironmentGatherer) getCPUDetails() (types.CPU, error) {
 		}
 	}
 
-	return types.CPU{
+	return &types.CPU{
 		Architecture: architecture,
 		ModelName:    modelName,
 		CPUMHz:       cpuMHz,
@@ -140,19 +146,16 @@ func (e *EnvironmentGatherer) CalculateEnvironment() types.Environment {
 	memory, err := e.getMemoryInfo()
 	if err != nil {
 		log.Errorf("Error getting memory info: %v", err)
-		return types.Environment{}
 	}
 
 	fileSystems, err := e.getFileSystems()
 	if err != nil {
 		log.Errorf("Error getting file systems: %v", err)
-		return types.Environment{}
 	}
 
 	cpuDetails, err := e.getCPUDetails()
 	if err != nil {
 		log.Errorf("Error getting CPU details: %v", err)
-		return types.Environment{}
 	}
 
 	environment := types.Environment{

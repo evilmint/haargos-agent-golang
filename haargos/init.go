@@ -86,14 +86,15 @@ func (h *Haargos) calculateZigbee(haConfigPath string, z2mPath *string, zhaPath 
 	gatherer := zigbeedevicegatherer.ZigbeeDeviceGatherer{}
 	deviceRegistry, _ := registry.ReadDeviceRegistry(haConfigPath)
 	entityRegistry, _ := registry.ReadEntityRegistry(haConfigPath)
-	zigbee, err := gatherer.GatherDevices(z2mPath, zhaPath, &deviceRegistry, &entityRegistry, haConfigPath)
+	devices, err := gatherer.GatherDevices(z2mPath, zhaPath, &deviceRegistry, &entityRegistry, haConfigPath)
 
 	if err != nil {
 		log.Errorf("Error while gathering zigbee devices: %s", err)
 		ch <- types.ZigbeeStatus{Devices: []types.ZigbeeDevice{}}
+		return
 	}
 
-	ch <- types.ZigbeeStatus{Devices: zigbee}
+	ch <- types.ZigbeeStatus{Devices: devices}
 }
 
 func (h *Haargos) calculateHAConfig(haConfigPath string, ch chan types.HAConfig, wg *sync.WaitGroup) {

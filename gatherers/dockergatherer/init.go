@@ -18,7 +18,7 @@ func (dg *DockerGatherer) GatherDocker() types.Docker {
 	dockerPs := executeShellCommand("docker ps --format json")
 	entries := dg.parseDockerPsOutput(dockerPs)
 
-	var containers []types.DockerContainer
+	var containers = make([]types.DockerContainer, 0)
 	for _, entry := range entries {
 		inspectString := executeShellCommand("docker inspect " + entry.ID)
 		inspectData := []types.DockerInspectResult{}

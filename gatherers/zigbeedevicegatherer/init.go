@@ -190,7 +190,7 @@ func (z *ZigbeeDeviceGatherer) GatherDevices(z2mPath *string, zhaPath *string, d
 		}
 	}
 
-	var zigbeeDevices []types.ZigbeeDevice
+	var zigbeeDevices = make([]types.ZigbeeDevice, 0)
 
 	if z2mPath != nil && *z2mPath != "" {
 		log.Infof("Gathering Z2M from %s", *z2mPath)
