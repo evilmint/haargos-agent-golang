@@ -135,6 +135,7 @@ func (z *ZigbeeDeviceGatherer) GatherDevices(z2mPath *string, zhaPath *string, d
 		log.Fatal(err)
 	}
 	defer db.Close()
+	defer os.RemoveAll(tempDir)
 
 	results, err := queryStatesMeta(db, entityIds)
 	if err != nil {
