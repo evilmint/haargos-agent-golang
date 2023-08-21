@@ -49,6 +49,10 @@ func (dg *DockerGatherer) parseDockerPsOutput(output string) []types.DockerPsEnt
 
 	var entries []types.DockerPsEntry
 	for _, jsonStr := range jsonStringArray {
+		if strings.TrimSpace(jsonStr) == "" {
+			continue
+		}
+
 		var entry types.DockerPsEntry
 		err := json.Unmarshal([]byte(jsonStr), &entry)
 		if err == nil {
