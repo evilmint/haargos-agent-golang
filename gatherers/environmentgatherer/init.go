@@ -61,17 +61,29 @@ func (e *EnvironmentGatherer) getFileSystems() ([]types.Storage, error) {
 		re := regexp.MustCompile(`(.*?)\s+(\d+\S*)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(.*)`)
 		matches := re.FindStringSubmatch(line)
 
-		if len(matches) >= 7 {
+		if len(matches) >= 10 {
 			fileSystems = append(fileSystems, types.Storage{
 				Name:          matches[1],
 				Size:          matches[2],
 				Used:          matches[3],
 				Available:     matches[4],
 				UsePercentage: matches[5],
-				MountedOn:     matches[6],
+				MountedOn:     matches[9],
 			})
 		} else {
-			log.Errorf("Invalid number of matches when collecting file systems.")
+			re := regexp.MustCompile(`(.*?)\s+(\d+\S*)\s+(\S+)\s+(\S+)\s+(\S+)\s+(.*)`)
+			matches := re.FindStringSubmatch(line)
+
+			if len(matches) >= 7 {
+				fileSystems = append(fileSystems, types.Storage{
+					Name:          matches[1],
+					Size:          matches[2],
+					Used:          matches[3],
+					Available:     matches[4],
+					UsePercentage: matches[5],
+					MountedOn:     matches[6],
+				})
+			}
 		}
 	}
 
