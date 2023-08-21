@@ -3,7 +3,6 @@ package environmentgatherer
 import (
 	"errors"
 	"fmt"
-	"regexp"
 	"strconv"
 	"strings"
 
@@ -48,43 +47,48 @@ func (e *EnvironmentGatherer) getMemoryInfo() (*types.Memory, error) {
 func (e *EnvironmentGatherer) getFileSystems() ([]types.Storage, error) {
 	storage, err := e.commandRepository.GetStorage()
 	if err != nil {
-		return make([]types.Storage, 0), fmt.Errorf("Error getting storage info: %v", err)
+		return nil, fmt.Errorf("Error getting storage info: %v", err)
 	}
 
 	var fileSystems []types.Storage
 	lines := strings.Split(strings.TrimSpace(*storage), "\n")
-	for i, line := range lines {
-		if i == 0 {
-			continue
+	if len(lines) < 2 {
+		return nil, errors.New("Insufficient data in storage info")
+	}
+
+	// Parse header to get the index of each column
+	header := strings.Fields(lines[0])
+	columnIndices := map[string]int{}
+	for i, columnName := range header {
+		lowerColumnName := strings.ToLower(columnName)
+		switch lowerColumnName {
+		case "filesystem":
+			columnIndices["name"] = i
+		case "size":
+			columnIndices["size"] = i
+		case "used":
+			columnIndices["used"] = i
+		case "avail":
+			columnIndices["available"] = i
+		case "use%", "capacity":
+			columnIndices["usepercentage"] = i
+		case "mounted":
+			columnIndices["mountedon"] = i
+		}
+	}
+
+	for i := 1; i < len(lines); i++ {
+		fields := strings.Fields(lines[i])
+		fileSystem := types.Storage{
+			Name:          fields[columnIndices["name"]],
+			Size:          fields[columnIndices["size"]],
+			Used:          fields[columnIndices["used"]],
+			Available:     fields[columnIndices["available"]],
+			UsePercentage: fields[columnIndices["usepercentage"]],
+			MountedOn:     fields[columnIndices["mountedon"]],
 		}
 
-		re := regexp.MustCompile(`(.*?)\s+(\d+\S*)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(.*)`)
-		matches := re.FindStringSubmatch(line)
-
-		if len(matches) >= 10 {
-			fileSystems = append(fileSystems, types.Storage{
-				Name:          matches[1],
-				Size:          matches[2],
-				Used:          matches[3],
-				Available:     matches[4],
-				UsePercentage: matches[5],
-				MountedOn:     matches[9],
-			})
-		} else {
-			re := regexp.MustCompile(`(.*?)\s+(\d+\S*)\s+(\S+)\s+(\S+)\s+(\S+)\s+(.*)`)
-			matches := re.FindStringSubmatch(line)
-
-			if len(matches) >= 7 {
-				fileSystems = append(fileSystems, types.Storage{
-					Name:          matches[1],
-					Size:          matches[2],
-					Used:          matches[3],
-					Available:     matches[4],
-					UsePercentage: matches[5],
-					MountedOn:     matches[6],
-				})
-			}
-		}
+		fileSystems = append(fileSystems, fileSystem)
 	}
 
 	return fileSystems, nil
