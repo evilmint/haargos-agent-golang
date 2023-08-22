@@ -16,7 +16,7 @@ func (c *CommandRepository) executeCommand(cmd string) (*string, error) {
 	return &result, nil
 }
 
-func (c *CommandRepository) GetTopBatch() (*string, error) {
+func (c *CommandRepository) GetCPULoad() (*string, error) {
 	return c.executeCommand("top -bn 1 | awk 'NR == 3 {printf \"%.2f\", 100 - $8}'")
 }
 

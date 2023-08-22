@@ -14,7 +14,7 @@ const version = "1.0.0"
 var log = logrus.New()
 
 func main() {
-	var rootCmd = &cobra.Command{Use: "myapp"}
+	var rootCmd = &cobra.Command{Use: "haargos"}
 
 	var cmdVersion = &cobra.Command{
 		Use:   "version",
@@ -38,6 +38,9 @@ func main() {
 	var haConfigPath string
 	var z2mPath string
 	var zhaPath string
+	var installationId string
+	var userId string
+	var token string
 
 	var cmdRun = &cobra.Command{
 		Use:   "run",
@@ -46,13 +49,22 @@ func main() {
 			if haConfigPath == "" {
 				log.Error("The --ha-config flag must be provided")
 				os.Exit(1)
+			} else if installationId == "" {
+				log.Error("The --installation-id flag must be provided.")
+				os.Exit(1)
+			} else if userId == "" {
+				log.Error("The --user-id flag must be provided.")
+				os.Exit(1)
+			} else if token == "" {
+				log.Error("The --token flag must be provided.")
+				os.Exit(1)
 			}
 
 			haargosClient.Run(
 				haargos.RunParams{
-					UserID:         "07957eee-0d3d-4e09-8d25-465bb1a82806",
-					InstallationID: "f2687b3e-d6f7-4cbd-a58b-48000752c2a9",
-					Token:          "ba4d8180-88b1-4645-9d0b-d4980a86be05",
+					UserID:         userId,
+					InstallationID: installationId,
+					Token:          token,
 					HaConfigPath:   haConfigPath,
 					Z2MPath:        z2mPath,
 					ZHAPath:        zhaPath,
@@ -66,6 +78,9 @@ func main() {
 
 	cmdRun.Flags().StringVarP(&z2mPath, "z2m-path", "z", "", "Path to Z2M database")
 	cmdRun.Flags().StringVarP(&zhaPath, "zha-path", "x", "", "Path to ZHA database")
+	cmdRun.Flags().StringVarP(&installationId, "installation-id", "i", "", "Installation ID")
+	cmdRun.Flags().StringVarP(&userId, "user-id", "u", "", "User ID")
+	cmdRun.Flags().StringVarP(&token, "token", "t", "", "Token")
 	rootCmd.AddCommand(cmdVersion, cmdHelp, cmdRun)
 	if err := rootCmd.Execute(); err != nil {
 		log.Errorf("Error sending request request: %v", err)

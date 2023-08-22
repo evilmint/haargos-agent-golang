@@ -95,7 +95,7 @@ func (e *EnvironmentGatherer) getFileSystems() ([]types.Storage, error) {
 }
 
 func (e *EnvironmentGatherer) getCPUDetails() (*types.CPU, error) {
-	top, err := e.commandRepository.GetTopBatch()
+	top, err := e.commandRepository.GetCPULoad()
 	if err != nil {
 		return nil, fmt.Errorf("Error getting CPU load: %v", err)
 	}
