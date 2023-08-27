@@ -30,12 +30,10 @@ type Haargos struct {
 var log = logrus.New()
 
 type RunParams struct {
-	UserID         string
-	InstallationID string
-	Token          string
-	HaConfigPath   string
-	Z2MPath        string
-	ZHAPath        string
+	AgentToken   string
+	HaConfigPath string
+	Z2MPath      string
+	ZHAPath      string
 }
 
 func (h *Haargos) fetchLogs(haConfigPath string, ch chan string, wg *sync.WaitGroup) {
@@ -49,7 +47,7 @@ func (h *Haargos) fetchLogs(haConfigPath string, ch chan string, wg *sync.WaitGr
 
 func (h *Haargos) calculateDocker(ch chan types.Docker, wg *sync.WaitGroup) {
 	defer wg.Done()
-	gatherer := dockergatherer.DockerGatherer{}
+	gatherer := dockergatherer.NewDockerGatherer()
 	dockerInfo := gatherer.GatherDocker()
 	ch <- dockerInfo
 }
@@ -208,9 +206,9 @@ func (h *Haargos) Run(params RunParams) {
 		observation.Scenes = <-scenesCh
 		observation.AgentVersion = "Release 1.0.0"
 		observation.Logs = <-logsCh
-		observation.InstallationID = params.InstallationID
 
-		response, err := client.SendObservation(observation, params.UserID, params.Token)
+		client := client.NewClient()
+		response, err := client.SendObservation(observation, params.AgentToken)
 
 		if err != nil || response.Status != "200 OK" {
 			log.Errorf("Error sending request request: %v", err)

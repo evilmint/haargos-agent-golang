@@ -13,15 +13,6 @@ var log = logrus.New()
 
 type ScriptGatherer struct{}
 
-func (s *ScriptGatherer) findRestoreStateForScript(scriptAlias string, restoreState types.RestoreStateResponse) *types.RestoreStateData {
-	for _, data := range restoreState.Data {
-		if data.State.EntityID == scriptAlias {
-			return &data
-		}
-	}
-	return nil
-}
-
 func (s *ScriptGatherer) GatherScripts(configPath string, restoreState types.RestoreStateResponse) []types.Script {
 
 	// Read scripts data from file
@@ -68,4 +59,13 @@ func (s *ScriptGatherer) GatherScripts(configPath string, restoreState types.Res
 	}
 
 	return scripts
+}
+
+func (s *ScriptGatherer) findRestoreStateForScript(scriptAlias string, restoreState types.RestoreStateResponse) *types.RestoreStateData {
+	for _, data := range restoreState.Data {
+		if data.State.EntityID == scriptAlias {
+			return &data
+		}
+	}
+	return nil
 }

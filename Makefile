@@ -7,6 +7,8 @@ OS_ARCH := \
     windows/386 windows/amd64 \
     darwin/amd64
 
+VERSION := $(shell cat VERSION)
+
 distribute: $(OS_ARCH)
 
 # Rule to create the distribution directory
@@ -16,7 +18,9 @@ $(DIST_DIR):
 # Rule to build for each OS and architecture
 $(OS_ARCH): $(DIST_DIR)
 	GOOS=$(firstword $(subst /, ,$@)) GOARCH=$(lastword $(subst /, ,$@)) \
-    go build -o $(DIST_DIR)/$(APP_NAME)-$(firstword $(subst /, ,$@))-$(lastword $(subst /, ,$@))
+    go build -o $(DIST_DIR)/$(APP_NAME)-$(VERSION)-$(firstword $(subst /, ,$@))-$(lastword $(subst /, ,$@))
+	zip $(DIST_DIR)/$(APP_NAME)-$(VERSION)-$(firstword $(subst /, ,$@))-$(lastword $(subst /, ,$@)).zip \
+	    $(DIST_DIR)/$(APP_NAME)-$(VERSION)-$(firstword $(subst /, ,$@))-$(lastword $(subst /, ,$@))
 
 # Rule to clean up the distribution directory
 clean:

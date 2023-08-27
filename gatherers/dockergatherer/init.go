@@ -9,36 +9,38 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type DockerGatherer struct{}
+type DockerGatherer struct {
+	log *logrus.Logger
+}
 
-var log = logrus.New()
+func NewDockerGatherer() *DockerGatherer {
+	return &DockerGatherer{
+		log: logrus.New(),
+	}
+}
 
 func (dg *DockerGatherer) GatherDocker() types.Docker {
 	// Simulating shell command execution
-	dockerPs := executeShellCommand("docker ps --format json")
+	dockerPs, err := dg.executeShellCommand("docker ps --format json")
+	if err != nil {
+		dg.log.Error("Failed to gather Docker process status")
+		return types.Docker{}
+	}
+
 	entries := dg.parseDockerPsOutput(dockerPs)
 
-	var containers = make([]types.DockerContainer, 0)
+	var containers []types.DockerContainer
 	for _, entry := range entries {
-		inspectString := executeShellCommand("docker inspect " + entry.ID)
-		inspectData := []types.DockerInspectResult{}
-		err := json.Unmarshal([]byte(inspectString), &inspectData)
-		if err != nil || len(inspectData) == 0 {
-			log.Errorf("Failed to inspect entry %s %s", entry.Names, err)
+		inspectString, err := dg.executeShellCommand("docker inspect " + entry.ID)
+		if err != nil {
+			dg.log.Errorf("Failed to inspect entry %s", entry.Names)
 			continue
 		}
-		inspect := inspectData[0]
 
-		containers = append(containers, types.DockerContainer{
-			Name:       inspect.Name,
-			Image:      entry.Image,
-			State:      entry.State,
-			Status:     entry.Status,
-			Running:    inspect.State.IsRunning,
-			Restarting: inspect.State.IsRestarting,
-			StartedAt:  inspect.State.StartedAt,
-			FinishedAt: inspect.State.FinishedAt,
-		})
+		container, err := dg.containerFromInspect(inspectString, entry)
+		if err == nil {
+			containers = append(containers, container)
+		}
 	}
 
 	return types.Docker{Containers: containers}
@@ -58,23 +60,35 @@ func (dg *DockerGatherer) parseDockerPsOutput(output string) []types.DockerPsEnt
 		if err == nil {
 			entries = append(entries, entry)
 		} else {
-			log.Errorf("Failed to decode docker JSON: [%s] %s\n", jsonStr, err)
+			dg.log.Errorf("Failed to decode docker JSON: [%s] %s\n", jsonStr, err)
 		}
 	}
 
 	return entries
 }
 
-// Note: You might want to define or import the `executeShellCommand` function in this package.
-func executeShellCommand(command string) string {
-	cmd := exec.Command("/bin/bash", "-c", command)
-
-	// Get the output of the command
-	output, err := cmd.Output()
-	if err != nil {
-		log.Printf("Failed to execute command: %s, error: %v", command, err)
-		return ""
+func (dg *DockerGatherer) containerFromInspect(inspectString string, entry types.DockerPsEntry) (types.DockerContainer, error) {
+	inspectData := []types.DockerInspectResult{}
+	err := json.Unmarshal([]byte(inspectString), &inspectData)
+	if err != nil || len(inspectData) == 0 {
+		return types.DockerContainer{}, err
 	}
+	inspect := inspectData[0]
 
-	return string(output)
+	return types.DockerContainer{
+		Name:       inspect.Name,
+		Image:      entry.Image,
+		State:      entry.State,
+		Status:     entry.Status,
+		Running:    inspect.State.IsRunning,
+		Restarting: inspect.State.IsRestarting,
+		StartedAt:  inspect.State.StartedAt,
+		FinishedAt: inspect.State.FinishedAt,
+	}, nil
+}
+
+func (dg *DockerGatherer) executeShellCommand(command string) (string, error) {
+	cmd := exec.Command("/bin/bash", "-c", command)
+	output, err := cmd.Output()
+	return string(output), err
 }

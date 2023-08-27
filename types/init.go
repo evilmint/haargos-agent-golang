@@ -59,16 +59,15 @@ type Auth struct {
 }
 
 type Observation struct {
-	Docker         Docker       `json:"docker"`
-	AgentVersion   string       `json:"agent_version"`
-	Environment    Environment  `json:"environment"`
-	Logs           string       `json:"logs"`
-	InstallationID string       `json:"installation_id"`
-	Zigbee         ZigbeeStatus `json:"zigbee"`
-	HAConfig       HAConfig     `json:"ha_config"`
-	Automations    []Automation `json:"automations"`
-	Scripts        []Script     `json:"scripts"`
-	Scenes         []Scene      `json:"scenes"`
+	Docker       Docker       `json:"docker"`
+	AgentVersion string       `json:"agent_version"`
+	Environment  Environment  `json:"environment"`
+	Logs         string       `json:"logs"`
+	Zigbee       ZigbeeStatus `json:"zigbee"`
+	HAConfig     HAConfig     `json:"ha_config"`
+	Automations  []Automation `json:"automations"`
+	Scripts      []Script     `json:"scripts"`
+	Scenes       []Scene      `json:"scenes"`
 }
 
 type MemoryStatus struct {

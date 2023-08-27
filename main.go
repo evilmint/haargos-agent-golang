@@ -14,17 +14,30 @@ const version = "1.0.0"
 var log = logrus.New()
 
 func main() {
-	var rootCmd = &cobra.Command{Use: "haargos"}
+	rootCmd := &cobra.Command{Use: "haargos"}
 
-	var cmdVersion = &cobra.Command{
+	rootCmd.AddCommand(createVersionCommand())
+	rootCmd.AddCommand(createHelpCommand())
+	rootCmd.AddCommand(createRunCommand())
+
+	if err := rootCmd.Execute(); err != nil {
+		log.Errorf("Error executing command: %v", err)
+		os.Exit(1)
+	}
+}
+
+func createVersionCommand() *cobra.Command {
+	return &cobra.Command{
 		Use:   "version",
 		Short: "Print the version number",
 		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Printf("Current agent version: %s\n", version)
 		},
 	}
+}
 
-	var cmdHelp = &cobra.Command{
+func createHelpCommand() *cobra.Command {
+	return &cobra.Command{
 		Use:   "help",
 		Short: "Print basic help information",
 		Run: func(cmd *cobra.Command, args []string) {
@@ -33,57 +46,45 @@ func main() {
   version   Print the current agent version`)
 		},
 	}
+}
 
-	haargosClient := &haargos.Haargos{}
-	var haConfigPath string
-	var z2mPath string
-	var zhaPath string
-	var installationId string
-	var userId string
-	var token string
+func createRunCommand() *cobra.Command {
+	var haConfigPath, z2mPath, zhaPath, agentToken string
 
-	var cmdRun = &cobra.Command{
+	cmdRun := &cobra.Command{
 		Use:   "run",
 		Short: "Run Haargos",
 		Run: func(cmd *cobra.Command, args []string) {
-			if haConfigPath == "" {
-				log.Error("The --ha-config flag must be provided")
-				os.Exit(1)
-			} else if installationId == "" {
-				log.Error("The --installation-id flag must be provided.")
-				os.Exit(1)
-			} else if userId == "" {
-				log.Error("The --user-id flag must be provided.")
-				os.Exit(1)
-			} else if token == "" {
-				log.Error("The --token flag must be provided.")
+			if haConfigPath == "" || agentToken == "" {
+				logMissingFlags(haConfigPath, agentToken)
 				os.Exit(1)
 			}
 
+			haargosClient := &haargos.Haargos{}
 			haargosClient.Run(
 				haargos.RunParams{
-					UserID:         userId,
-					InstallationID: installationId,
-					Token:          token,
-					HaConfigPath:   haConfigPath,
-					Z2MPath:        z2mPath,
-					ZHAPath:        zhaPath,
+					AgentToken:   agentToken,
+					HaConfigPath: haConfigPath,
+					Z2MPath:      z2mPath,
+					ZHAPath:      zhaPath,
 				},
 			)
 		},
 	}
 
-	cmdRun.Flags().
-		StringVarP(&haConfigPath, "ha-config", "c", "", "Path to the Home Assistant configuration")
-
+	cmdRun.Flags().StringVarP(&haConfigPath, "ha-config", "c", "", "Path to the Home Assistant configuration")
 	cmdRun.Flags().StringVarP(&z2mPath, "z2m-path", "z", "", "Path to Z2M database")
 	cmdRun.Flags().StringVarP(&zhaPath, "zha-path", "x", "", "Path to ZHA database")
-	cmdRun.Flags().StringVarP(&installationId, "installation-id", "i", "", "Installation ID")
-	cmdRun.Flags().StringVarP(&userId, "user-id", "u", "", "User ID")
-	cmdRun.Flags().StringVarP(&token, "token", "t", "", "Token")
-	rootCmd.AddCommand(cmdVersion, cmdHelp, cmdRun)
-	if err := rootCmd.Execute(); err != nil {
-		log.Errorf("Error sending request request: %v", err)
-		os.Exit(1)
+	cmdRun.Flags().StringVarP(&agentToken, "agent-token", "", "", "Agent Token")
+
+	return cmdRun
+}
+
+func logMissingFlags(haConfigPath, agentToken string) {
+	if haConfigPath == "" {
+		log.Error("The --ha-config flag must be provided")
+	}
+	if agentToken == "" {
+		log.Error("The --agent-token flag must be provided.")
 	}
 }

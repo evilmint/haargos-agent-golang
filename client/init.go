@@ -10,26 +10,36 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var API_URL = "https://api.haargos.smartrezydencja.pl/"
-var log = logrus.New()
+const apiURL = "https://api.haargos.smartrezydencja.pl/"
 
-func SendObservation(observation types.Observation, userID, token string) (*http.Response, error) {
-	url := API_URL + "observations?installation_id=f2687b3e-d6f7-4cbd-a58b-48000752c2a9"
+type Client struct {
+	BaseURL string
+	Logger  *logrus.Logger
+}
+
+func NewClient() *Client {
+	return &Client{
+		BaseURL: apiURL,
+		Logger:  logrus.New(),
+	}
+}
+
+func (c *Client) SendObservation(observation types.Observation, agentToken string) (*http.Response, error) {
+	url := c.BaseURL + "observations"
 
 	jsonData, err := json.Marshal(observation)
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling JSON: %v", err)
 	}
 
-	log.Infof("Sending %s", string(jsonData))
+	c.Logger.Infof("Sending %s", string(jsonData))
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
 	if err != nil {
 		return nil, fmt.Errorf("error creating request: %v", err)
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("x-user-id", userID)
-	req.Header.Set("x-token", token)
+	req.Header.Set("x-agent-token", agentToken)
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
