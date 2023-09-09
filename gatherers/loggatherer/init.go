@@ -59,8 +59,8 @@ func filterLogLines(lines []string) []string {
 	}
 
 	// Keep only the last 200 lines if there are more
-	if len(logLines) > 200 {
-		logLines = logLines[len(logLines)-200:]
+	if len(logLines) > 100 {
+		logLines = logLines[len(logLines)-100:]
 	}
 
 	return logLines
