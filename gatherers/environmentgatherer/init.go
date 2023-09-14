@@ -24,10 +24,11 @@ func (e *EnvironmentGatherer) getMemoryInfo() (*types.Memory, error) {
 	}
 
 	lines := strings.Split(strings.TrimSpace(*out), "\n")
-	if len(lines) < 3 {
+	if len(lines) < 2 {
 		return nil, errors.New("Failed to parse memory info: insufficient data")
 	}
 
+	// Parsing RAM info
 	memInfo := strings.Fields(lines[1])
 	if len(memInfo) < 7 {
 		return nil, errors.New("Failed to parse memory info: unexpected format")
@@ -38,6 +39,19 @@ func (e *EnvironmentGatherer) getMemoryInfo() (*types.Memory, error) {
 	for i, field := range fields {
 		if *field, err = strconv.Atoi(memInfo[i+1]); err != nil {
 			return nil, fmt.Errorf("Failed to parse memory info at field %d: %v", i+1, err)
+		}
+	}
+
+	// Parsing SWAP info
+	swapInfo := strings.Fields(lines[2])
+	if len(swapInfo) >= 3 {
+		memory.SwapTotal, err = strconv.Atoi(swapInfo[1])
+		if err != nil {
+			log.Errorf("Failed to parse swap total: %v", err)
+		}
+		memory.SwapUsed, err = strconv.Atoi(swapInfo[2])
+		if err != nil {
+			log.Errorf("Failed to parse swap used: %v", err)
 		}
 	}
 
@@ -133,6 +147,29 @@ func (e *EnvironmentGatherer) getCPUDetails() (*types.CPU, error) {
 	return cpuDetails, nil
 }
 
+func (e *EnvironmentGatherer) getCPUTemperature() (float64, error) {
+	tempStr, err := e.commandRepository.GetCPUTemperature()
+	if err != nil {
+		return 0, fmt.Errorf("Error getting CPU temperature: %v", err)
+	}
+
+	temp, err := strconv.ParseFloat(strings.TrimSpace(*tempStr), 64)
+	if err != nil {
+		return 0, fmt.Errorf("Error parsing CPU temperature: %v", err)
+	}
+
+	return temp, nil
+}
+
+func (e *EnvironmentGatherer) getLastBootTime() (string, error) {
+	bootTime, err := e.commandRepository.GetLastBootTime()
+	if err != nil {
+		return "", fmt.Errorf("Error getting last boot time: %v", err)
+	}
+
+	return strings.TrimSpace(*bootTime), nil
+}
+
 func (e *EnvironmentGatherer) CalculateEnvironment() types.Environment {
 	environment := types.Environment{}
 
@@ -150,11 +187,25 @@ func (e *EnvironmentGatherer) CalculateEnvironment() types.Environment {
 		environment.Storage = fileSystems
 	}
 
+	bootTime, err := e.getLastBootTime()
+	if err != nil {
+		log.Error(err)
+	} else {
+		environment.BootTime = bootTime
+	}
+
 	cpuDetails, err := e.getCPUDetails()
 	if err != nil {
 		log.Error(err)
 	} else {
 		environment.CPU = cpuDetails
+
+		cpuTemp, err := e.getCPUTemperature()
+		if err != nil {
+			log.Error(err)
+		} else {
+			environment.CPU.Temperature = cpuTemp
+		}
 	}
 
 	return environment

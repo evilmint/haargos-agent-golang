@@ -14,6 +14,8 @@ type Memory struct {
 	Free      int `json:"free"`
 	Shared    int `json:"shared"`
 	BuffCache int `json:"buff_cache"`
+	SwapTotal int `json:"swap_total"`
+	SwapUsed  int `json:"swapused"`
 }
 
 type CPU struct {
@@ -21,6 +23,7 @@ type CPU struct {
 	Architecture string  `json:"architecture"`
 	Load         float64 `json:"load"`
 	CPUMHz       string  `json:"cpu_mhz"`
+	Temperature  float64 `json:"temp"`
 }
 
 type Storage struct {
@@ -33,9 +36,10 @@ type Storage struct {
 }
 
 type Environment struct {
-	Memory  *Memory   `json:"memory"`
-	CPU     *CPU      `json:"cpu"`
-	Storage []Storage `json:"storage"`
+	Memory   *Memory   `json:"memory"`
+	CPU      *CPU      `json:"cpu"`
+	Storage  []Storage `json:"storage"`
+	BootTime string    `json:"boot_time"`
 }
 
 type DockerContainer struct {

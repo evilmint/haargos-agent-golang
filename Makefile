@@ -38,7 +38,7 @@ install:
 	@echo "Stopping service..."
 	@systemctl stop haargos.service
 	@cp haargos-prod /usr/local/bin/haargos
-	@echo "Starting service..."
+	@echo "Starting service..."	
 	@systemctl start haargos.service
 	@echo "Haargos service replaced"
 

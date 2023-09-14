@@ -31,3 +31,11 @@ func (c *CommandRepository) GetStorage() (*string, error) {
 func (c *CommandRepository) GetMemory() (*string, error) {
 	return c.executeCommand("free")
 }
+
+func (c *CommandRepository) GetLastBootTime() (*string, error) {
+	return c.executeCommand("uptime -s")
+}
+
+func (c *CommandRepository) GetCPUTemperature() (*string, error) {
+	return c.executeCommand("cat /sys/class/thermal/thermal_zone0/temp | awk '{printf \"%.1f\", $1/1000}'")
+}
