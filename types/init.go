@@ -15,7 +15,7 @@ type Memory struct {
 	Shared    int `json:"shared"`
 	BuffCache int `json:"buff_cache"`
 	SwapTotal int `json:"swap_total"`
-	SwapUsed  int `json:"swapused"`
+	SwapUsed  int `json:"swap_used"`
 }
 
 type CPU struct {
