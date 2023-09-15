@@ -213,6 +213,10 @@ func (e *EnvironmentGatherer) CalculateEnvironment() types.Environment {
 	return environment
 }
 
-func (e *EnvironmentGatherer) Stop() {
+func (e *EnvironmentGatherer) PausePeriodicTasks() {
 	e.cpuLoadManager.Stop()
+}
+
+func (e *EnvironmentGatherer) ResumePeriodicTasks() {
+	e.cpuLoadManager.Start()
 }

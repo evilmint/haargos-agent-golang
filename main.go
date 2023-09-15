@@ -60,7 +60,7 @@ func createRunCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
-			haargosClient := &haargos.Haargos{}
+			haargosClient := haargos.NewHaargos()
 			haargosClient.Run(
 				haargos.RunParams{
 					AgentToken:   agentToken,

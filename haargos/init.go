@@ -26,6 +26,13 @@ import (
 )
 
 type Haargos struct {
+	EnvironmentGatherer *environmentgatherer.EnvironmentGatherer
+}
+
+func NewHaargos() *Haargos {
+	return &Haargos{
+		EnvironmentGatherer: environmentgatherer.NewEnvironmentGatherer(&commandrepository.CommandRepository{}),
+	}
 }
 
 var log = logrus.New()
@@ -55,8 +62,9 @@ func (h *Haargos) calculateDocker(ch chan types.Docker, wg *sync.WaitGroup) {
 
 func (h *Haargos) calculateEnvironment(ch chan types.Environment, wg *sync.WaitGroup) {
 	defer wg.Done()
-	gatherer := environmentgatherer.NewEnvironmentGatherer(&commandrepository.CommandRepository{})
-	environment := gatherer.CalculateEnvironment()
+	h.EnvironmentGatherer.PausePeriodicTasks()
+	environment := h.EnvironmentGatherer.CalculateEnvironment()
+	h.EnvironmentGatherer.ResumePeriodicTasks()
 	ch <- environment
 }
 
