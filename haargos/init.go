@@ -167,7 +167,7 @@ func (h *Haargos) Run(params RunParams) {
 	if os.Getenv("DEBUG") == "true" {
 		interval = 1 * time.Minute
 	} else {
-		interval = 60 * time.Minute
+		interval = 15 * time.Minute
 	}
 
 	ticker := time.NewTicker(interval)
