@@ -20,6 +20,7 @@ import (
 	"github.com/evilmint/haargos-agent-golang/gatherers/scriptgatherer"
 	"github.com/evilmint/haargos-agent-golang/gatherers/zigbeedevicegatherer"
 	"github.com/evilmint/haargos-agent-golang/registry"
+	"github.com/evilmint/haargos-agent-golang/repositories/commandrepository"
 	"github.com/evilmint/haargos-agent-golang/types"
 	"github.com/sirupsen/logrus"
 )
@@ -54,7 +55,7 @@ func (h *Haargos) calculateDocker(ch chan types.Docker, wg *sync.WaitGroup) {
 
 func (h *Haargos) calculateEnvironment(ch chan types.Environment, wg *sync.WaitGroup) {
 	defer wg.Done()
-	gatherer := environmentgatherer.EnvironmentGatherer{}
+	gatherer := environmentgatherer.NewEnvironmentGatherer(&commandrepository.CommandRepository{})
 	environment := gatherer.CalculateEnvironment()
 	ch <- environment
 }

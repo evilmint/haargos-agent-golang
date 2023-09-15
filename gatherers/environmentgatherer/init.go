@@ -15,6 +15,16 @@ var log = logrus.New()
 
 type EnvironmentGatherer struct {
 	commandRepository *commandrepository.CommandRepository
+	cpuLoadManager    *CPULoadManager
+}
+
+func NewEnvironmentGatherer(commandRepo *commandrepository.CommandRepository) *EnvironmentGatherer {
+	gatherer := &EnvironmentGatherer{
+		commandRepository: commandRepo,
+		cpuLoadManager:    NewCPULoadManager(commandRepo),
+	}
+	gatherer.cpuLoadManager.Start() // Start fetching CPU load periodically
+	return gatherer
 }
 
 func (e *EnvironmentGatherer) getMemoryInfo() (*types.Memory, error) {
@@ -109,15 +119,7 @@ func (e *EnvironmentGatherer) getFileSystems() ([]types.Storage, error) {
 }
 
 func (e *EnvironmentGatherer) getCPUDetails() (*types.CPU, error) {
-	top, err := e.commandRepository.GetCPULoad()
-	if err != nil {
-		return nil, fmt.Errorf("Error getting CPU load: %v", err)
-	}
-
-	load, err := strconv.ParseFloat(strings.TrimSpace(*top), 64)
-	if err != nil {
-		return nil, fmt.Errorf("Error parsing CPU load: %v", err)
-	}
+	load := e.cpuLoadManager.GetLastCPULoad()
 
 	cpuInfo, err := e.commandRepository.GetCPUInfo()
 	if err != nil {
@@ -209,4 +211,8 @@ func (e *EnvironmentGatherer) CalculateEnvironment() types.Environment {
 	}
 
 	return environment
+}
+
+func (e *EnvironmentGatherer) Stop() {
+	e.cpuLoadManager.Stop()
 }
