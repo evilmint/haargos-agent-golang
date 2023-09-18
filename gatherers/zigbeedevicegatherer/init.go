@@ -136,7 +136,12 @@ func (z *ZigbeeDeviceGatherer) GatherDevices(z2mPath *string, zhaPath *string, d
 	defer db.Close()
 	defer os.RemoveAll(tempDir)
 
-	_, err = db.Exec("PRAGMA journal_mode=WAL;")
+	_, err = db.Exec("PRAGMA journal_mode = WAL;")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	_, err = db.Exec("PRAGMA synchronous = normal;")
 	if err != nil {
 		log.Fatal(err)
 	}
