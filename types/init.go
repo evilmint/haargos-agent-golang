@@ -103,7 +103,7 @@ type ZigbeeDevice struct {
 	EntityName      string    `json:"entity_name"`
 	Brand           string    `json:"brand"`
 	IntegrationType string    `json:"integration_type"`
-	BatteryLevel    *string   `json:"battery_level"` // can be string or null
+	BatteryLevel    int       `json:"battery_level"` // can be string or null
 }
 
 type HAConfig struct {
@@ -123,7 +123,7 @@ type Script struct {
 	FriendlyName  string    `json:"friendlyName,omitempty"  yaml:"friendlyName,omitempty"`
 	State         string    `json:"state,omitempty"         yaml:"state,omitempty"`
 	Alias         string    `json:"alias"                   yaml:"alias"`
-	LastTriggered time.Time `json:"lastTriggered,omitempty" yaml:"lastTriggered,omitempty"`
+	LastTriggered time.Time `json:"last_triggered,omitempty" yaml:"last_triggered,omitempty"`
 }
 
 type Scene struct {
