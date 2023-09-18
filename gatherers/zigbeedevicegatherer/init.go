@@ -331,6 +331,8 @@ func (z *ZigbeeDeviceGatherer) gatherFromZHA(databasePath string, nameByIEEE map
 			PowerSource: "Battery",
 		}, nil, batteryLevel)
 
+		defaultDevice.IntegrationType = "zha"
+
 		device := deviceMap[deviceIeee]
 		if (types.ZigbeeDevice{}) == device {
 			device = defaultDevice
