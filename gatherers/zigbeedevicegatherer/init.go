@@ -136,6 +136,11 @@ func (z *ZigbeeDeviceGatherer) GatherDevices(z2mPath *string, zhaPath *string, d
 	defer db.Close()
 	defer os.RemoveAll(tempDir)
 
+	_, err = db.Exec("PRAGMA journal_mode=WAL;")
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	results, err := queryStatesMeta(db, entityIds)
 	if err != nil {
 		log.Fatal(err)
