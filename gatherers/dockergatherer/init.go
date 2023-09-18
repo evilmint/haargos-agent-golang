@@ -2,6 +2,7 @@ package dockergatherer
 
 import (
 	"encoding/json"
+	"fmt"
 	"os/exec"
 	"strings"
 
@@ -81,7 +82,7 @@ func (dg *DockerGatherer) containerFromInspect(inspectString string, entry types
 		State:      entry.State,
 		Status:     entry.Status,
 		Running:    inspect.State.IsRunning,
-		Restarting: inspect.State.IsRestarting,
+		Restarting: fmt.Sprintf("%v", inspect.State.IsRestarting),
 		StartedAt:  inspect.State.StartedAt,
 		FinishedAt: inspect.State.FinishedAt,
 	}, nil

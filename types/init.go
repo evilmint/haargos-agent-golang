@@ -48,7 +48,7 @@ type DockerContainer struct {
 	State      string `json:"state"`
 	Name       string `json:"name"`
 	Status     string `json:"status"`
-	Restarting bool   `json:"restarting"`
+	Restarting string `json:"restarting"`
 	Running    bool   `json:"running"`
 	StartedAt  string `json:"started_at"`
 }
@@ -120,7 +120,7 @@ type Automation struct {
 }
 
 type Script struct {
-	FriendlyName  string    `json:"friendlyName,omitempty"  yaml:"friendlyName,omitempty"`
+	FriendlyName  string    `json:"friendly_name,omitempty"  yaml:"friendly_name,omitempty"`
 	State         string    `json:"state,omitempty"         yaml:"state,omitempty"`
 	Alias         string    `json:"alias"                   yaml:"alias"`
 	LastTriggered time.Time `json:"last_triggered,omitempty" yaml:"last_triggered,omitempty"`
