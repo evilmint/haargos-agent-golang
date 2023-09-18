@@ -120,10 +120,10 @@ type Automation struct {
 }
 
 type Script struct {
-	FriendlyName  string    `json:"friendly_name,omitempty"  yaml:"friendly_name,omitempty"`
-	State         string    `json:"state,omitempty"         yaml:"state,omitempty"`
+	FriendlyName  string    `json:"friendly_name"  yaml:"friendly_name"`
+	State         string    `json:"state"         yaml:"state"`
 	Alias         string    `json:"alias"                   yaml:"alias"`
-	LastTriggered time.Time `json:"last_triggered,omitempty" yaml:"last_triggered,omitempty"`
+	LastTriggered time.Time `json:"last_triggered" yaml:"last_triggered"`
 }
 
 type Scene struct {
@@ -145,12 +145,12 @@ type EntityRegistryDataClass struct {
 }
 
 type EntityRegistryEntity struct {
-	DeviceClass         *string `json:"device_class,omitempty"`
-	DeviceID            *string `json:"device_id,omitempty"`
+	DeviceClass         *string `json:"device_class"`
+	DeviceID            *string `json:"device_id"`
 	EntityID            string  `json:"entity_id"`
 	ID                  string  `json:"id"`
-	Name                *string `json:"name,omitempty"`
-	OriginalDeviceClass *string `json:"original_device_class,omitempty"`
+	Name                *string `json:"name"`
+	OriginalDeviceClass *string `json:"original_device_class"`
 }
 
 type DeviceRegistry struct {
@@ -165,18 +165,18 @@ type DeviceRegistryDataClass struct {
 }
 
 type DeviceRegistryDevice struct {
-	AreaId           *string    `json:"area_id,omitempty"`
+	AreaId           *string    `json:"area_id"`
 	ConfigEntries    []string   `json:"config_entries"`
-	ConfigurationUrl *string    `json:"configuration_url,omitempty"`
+	ConfigurationUrl *string    `json:"configuration_url"`
 	Connections      [][]string `json:"connections"`
-	DisabledBy       *string    `json:"disabled_by,omitempty"`
-	EntryType        *string    `json:"entry_type,omitempty"`
-	HwVersion        *string    `json:"hw_version,omitempty"`
+	DisabledBy       *string    `json:"disabled_by"`
+	EntryType        *string    `json:"entry_type"`
+	HwVersion        *string    `json:"hw_version"`
 	ID               string     `json:"id"`
 	Identifiers      [][]string
-	Manufacturer     *string `json:"manufacturer,omitempty"`
-	Model            *string `json:"model,omitempty"`
-	NameByUser       *string `json:"name_by_user,omitempty"`
+	Manufacturer     *string `json:"manufacturer"`
+	Model            *string `json:"model"`
+	NameByUser       *string `json:"name_by_user"`
 	Name             string  `json:"name"`
 }
 
@@ -214,15 +214,15 @@ func (d *DeviceRegistryDevice) UnmarshalJSON(data []byte) error {
 }
 
 type RestoreStateAttributes struct {
-	ID            *string `json:"id,omitempty"`
-	FriendlyName  *string `json:"friendly_name,omitempty"`
-	LastTriggered *string `json:"last_triggered,omitempty"`
+	ID            *string `json:"id"`
+	FriendlyName  *string `json:"friendly_name"`
+	LastTriggered *string `json:"last_triggered"`
 }
 
 type RestoreStateContext struct {
 	ID       string  `json:"id"`
-	ParentID *string `json:"parent_id,omitempty"`
-	UserID   *string `json:"user_id,omitempty"`
+	ParentID *string `json:"parent_id"`
+	UserID   *string `json:"user_id"`
 }
 
 type RestoreStateState struct {
