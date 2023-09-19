@@ -29,7 +29,7 @@ func (c *CPULoadManager) Start() {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
-	log.Infof("Fetch CPU")
+	log.Infof("Fetch CPU Start")
 
 	if !c.isFetching {
 		c.isFetching = true
@@ -41,7 +41,7 @@ func (c *CPULoadManager) Stop() {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
-	log.Infof("Fetch CPU end")
+	log.Infof("Fetch CPU Stop")
 
 	if c.isFetching {
 		select {
@@ -54,14 +54,21 @@ func (c *CPULoadManager) Stop() {
 }
 
 func (c *CPULoadManager) fetchPeriodically() {
+	time.Sleep(time.Second)
+
 	ticker := time.NewTicker(5 * time.Minute)
 	defer ticker.Stop()
 
 	for {
 		select {
 		case <-ticker.C:
+
+			log.Infof("Fetch perdiocally CPU start")
 			c.fetchCPULoad()
+			log.Infof("Fetch perdiocally CPU done")
 		case <-c.stopFetching:
+
+			log.Infof("Got CPU fetch end event")
 			return
 		}
 	}
