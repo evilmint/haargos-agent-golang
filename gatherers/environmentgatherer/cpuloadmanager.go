@@ -29,7 +29,7 @@ func (c *CPULoadManager) Start() {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
-	log.Infof("Fetch CPU Start")
+	log.Infof("Fetch CPU Start (%p)", c)
 
 	if !c.isFetching {
 		c.isFetching = true
