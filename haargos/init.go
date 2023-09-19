@@ -62,9 +62,11 @@ func (h *Haargos) calculateDocker(ch chan types.Docker, wg *sync.WaitGroup) {
 
 func (h *Haargos) calculateEnvironment(ch chan types.Environment, wg *sync.WaitGroup) {
 	defer wg.Done()
+	log.Infof("Calculating environment")
 	h.EnvironmentGatherer.PausePeriodicTasks()
 	environment := h.EnvironmentGatherer.CalculateEnvironment()
 	h.EnvironmentGatherer.ResumePeriodicTasks()
+	log.Infof("Got environment")
 	ch <- environment
 }
 
@@ -100,6 +102,7 @@ func (h *Haargos) calculateZigbee(haConfigPath string, z2mPath *string, zhaPath 
 		ch <- types.ZigbeeStatus{Devices: []types.ZigbeeDevice{}}
 		return
 	}
+	log.Infof("Got zigbee status")
 
 	ch <- types.ZigbeeStatus{Devices: devices}
 }
@@ -117,6 +120,7 @@ func (h *Haargos) calculateHAConfig(haConfigPath string, ch chan types.HAConfig,
 
 	// Create the HAConfig structure
 	haConfig := types.HAConfig{Version: strings.TrimSpace(string(versionBytes))}
+	log.Infof("Got HA config")
 	ch <- haConfig
 }
 
@@ -131,6 +135,7 @@ func (h *Haargos) calculateAutomations(
 	gatherer := automationgatherer.AutomationGatherer{}
 	automations := gatherer.GatherAutomations(configPath, restoreState)
 
+	log.Infof("Got automations")
 	ch <- automations
 }
 
@@ -145,6 +150,7 @@ func (h *Haargos) calculateScripts(
 	gatherer := scriptgatherer.ScriptGatherer{}
 	scripts := gatherer.GatherScripts(configPath, restoreState)
 
+	log.Infof("Got scripts")
 	ch <- scripts
 }
 
@@ -157,6 +163,8 @@ func (h *Haargos) calculateScenes(
 	defer wg.Done()
 	gatherer := scenegatherer.SceneGatherer{}
 	scenes := gatherer.GatherScenes(configPath, restoreState)
+
+	log.Infof("Got scenes")
 	ch <- scenes
 }
 
@@ -167,7 +175,7 @@ func (h *Haargos) Run(params RunParams) {
 	if os.Getenv("DEBUG") == "true" {
 		interval = 1 * time.Minute
 	} else {
-		interval = 15 * time.Minute
+		interval = 3 * time.Minute
 	}
 
 	ticker := time.NewTicker(interval)

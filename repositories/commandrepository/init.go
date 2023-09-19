@@ -39,3 +39,15 @@ func (c *CommandRepository) GetLastBootTime() (*string, error) {
 func (c *CommandRepository) GetCPUTemperature() (*string, error) {
 	return c.executeCommand("cat /sys/class/thermal/thermal_zone0/temp | awk '{printf \"%.1f\", $1/1000}'")
 }
+
+func (c *CommandRepository) GetNetworkInterfaces() (*string, error) {
+	return c.executeCommand("ls /sys/class/net/")
+}
+
+func (c *CommandRepository) GetRXBytes(interfaceName string) (*string, error) {
+	return c.executeCommand("cat /sys/class/net/" + interfaceName + "/statistics/rx_bytes")
+}
+
+func (c *CommandRepository) GetTXBytes(interfaceName string) (*string, error) {
+	return c.executeCommand("cat /sys/class/net/" + interfaceName + "/statistics/tx_bytes")
+}
