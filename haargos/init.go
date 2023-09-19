@@ -47,16 +47,20 @@ type RunParams struct {
 func (h *Haargos) fetchLogs(haConfigPath string, ch chan string, wg *sync.WaitGroup) {
 	defer wg.Done()
 
+	log.Infof("Calculating logs")
 	gatherer := loggatherer.LogGatherer{}
 	logContent := gatherer.GatherLogs(haConfigPath)
 
+	log.Infof("Got logs")
 	ch <- logContent
 }
 
 func (h *Haargos) calculateDocker(ch chan types.Docker, wg *sync.WaitGroup) {
 	defer wg.Done()
+	log.Infof("Calculating docker")
 	gatherer := dockergatherer.NewDockerGatherer()
 	dockerInfo := gatherer.GatherDocker()
+	log.Infof("Got docker")
 	ch <- dockerInfo
 }
 

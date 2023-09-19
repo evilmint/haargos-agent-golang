@@ -40,7 +40,11 @@ func (c *CPULoadManager) Stop() {
 	defer c.mutex.Unlock()
 
 	if c.isFetching {
-		c.stopFetching <- true
+		select {
+		case c.stopFetching <- true:
+		default:
+			log.Error("Fetcher wasn't actively listening")
+		}
 		c.isFetching = false
 	}
 }
@@ -79,7 +83,7 @@ func (c *CPULoadManager) fetchCPULoad() {
 
 func (c *CPULoadManager) GetLastCPULoad() float64 {
 	c.mutex.Lock()
-	defer c.mutex.Unlock()
-
-	return c.lastCPULoad
+	load := c.lastCPULoad
+	c.mutex.Unlock()
+	return load
 }
