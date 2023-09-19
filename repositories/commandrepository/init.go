@@ -1,7 +1,9 @@
 package commandrepository
 
 import (
+	"fmt"
 	"os/exec"
+	"strconv"
 	"strings"
 )
 
@@ -44,10 +46,42 @@ func (c *CommandRepository) GetNetworkInterfaces() (*string, error) {
 	return c.executeCommand("ls /sys/class/net/")
 }
 
-func (c *CommandRepository) GetRXBytes(interfaceName string) (*string, error) {
-	return c.executeCommand("cat /sys/class/net/" + interfaceName + "/statistics/rx_bytes")
+func (c *CommandRepository) GetRXTXBytes(interfaceName string, dataType string) (*int, error) {
+	if dataType != "rx" && dataType != "tx" {
+		return nil, fmt.Errorf("Invalid dataType: %s", dataType)
+	}
+
+	cmd := "cat /sys/class/net/" + interfaceName + "/statistics/" + dataType + "_bytes"
+	data, err := c.executeCommand(cmd)
+
+	if err != nil {
+		return nil, err
+	}
+
+	intData, convErr := strconv.Atoi(*data)
+	if convErr != nil {
+		return nil, convErr
+	}
+
+	return &intData, nil
 }
 
-func (c *CommandRepository) GetTXBytes(interfaceName string) (*string, error) {
-	return c.executeCommand("cat /sys/class/net/" + interfaceName + "/statistics/tx_bytes")
+func (c *CommandRepository) GetRXTXPackets(interfaceName string, dataType string) (*int, error) {
+	if dataType != "rx" && dataType != "tx" {
+		return nil, fmt.Errorf("Invalid dataType: %s", dataType)
+	}
+
+	cmd := "cat /sys/class/net/" + interfaceName + "/statistics/" + dataType + "_packets"
+	data, err := c.executeCommand(cmd)
+
+	if err != nil {
+		return nil, err
+	}
+
+	intData, convErr := strconv.Atoi(*data)
+	if convErr != nil {
+		return nil, convErr
+	}
+
+	return &intData, nil
 }

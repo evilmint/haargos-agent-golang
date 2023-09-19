@@ -39,7 +39,23 @@ type Environment struct {
 	Memory   *Memory   `json:"memory"`
 	CPU      *CPU      `json:"cpu"`
 	Storage  []Storage `json:"storage"`
+	Network  *Network  `json:"network"`
 	BootTime string    `json:"boot_time"`
+}
+
+type Network struct {
+	Interfaces []NetworkInterface `json:"interfaces"`
+}
+
+type NetworkInterface struct {
+	Name string                `json:"name"`
+	Rx   *NetworkInterfaceData `json:"rx"`
+	Tx   *NetworkInterfaceData `json:"tx"`
+}
+
+type NetworkInterfaceData struct {
+	Bytes   int `json:"bytes"`
+	Packets int `json:"packets"`
 }
 
 type DockerContainer struct {

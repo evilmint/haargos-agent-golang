@@ -210,6 +210,13 @@ func (e *EnvironmentGatherer) CalculateEnvironment() types.Environment {
 		}
 	}
 
+	network, err := e.getNetworkDetails()
+	if err != nil {
+		log.Error(err)
+	} else {
+		environment.Network = network
+	}
+
 	return environment
 }
 
@@ -219,4 +226,54 @@ func (e *EnvironmentGatherer) PausePeriodicTasks() {
 
 func (e *EnvironmentGatherer) ResumePeriodicTasks() {
 	e.cpuLoadManager.Start()
+}
+
+func (e *EnvironmentGatherer) getNetworkDetails() (*types.Network, error) {
+	networkInterfaces, err := e.commandRepository.GetNetworkInterfaces()
+	if err != nil {
+		return nil, fmt.Errorf("Error getting network interfaces: %v", err)
+	}
+
+	var networks *types.Network = &types.Network{Interfaces: []types.NetworkInterface{}}
+
+	interfaces := strings.Split(strings.TrimSpace(*networkInterfaces), "\n")
+
+	for _, iface := range interfaces {
+		rxBytes, err := e.commandRepository.GetRXTXBytes(iface, "rx")
+		if err != nil {
+			log.Errorf("Failed to fetch RX bytes for interface %s: %v", iface, err)
+			continue
+		}
+
+		txBytes, err := e.commandRepository.GetRXTXBytes(iface, "tx")
+		if err != nil {
+			log.Errorf("Failed to fetch TX bytes for interface %s: %v", iface, err)
+			continue
+		}
+		rxPackets, err := e.commandRepository.GetRXTXPackets(iface, "rx")
+		if err != nil {
+			log.Errorf("Failed to fetch RX packets for interface %s: %v", iface, err)
+			continue
+		}
+
+		txPackets, err := e.commandRepository.GetRXTXPackets(iface, "tx")
+		if err != nil {
+			log.Errorf("Failed to fetch TX packets for interface %s: %v", iface, err)
+			continue
+		}
+
+		networks.Interfaces = append(networks.Interfaces, types.NetworkInterface{
+			Name: iface,
+			Rx: &types.NetworkInterfaceData{
+				Bytes:   *rxBytes,
+				Packets: *rxPackets,
+			},
+			Tx: &types.NetworkInterfaceData{
+				Bytes:   *txBytes,
+				Packets: *txPackets,
+			},
+		})
+	}
+
+	return networks, nil
 }
