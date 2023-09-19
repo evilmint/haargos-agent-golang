@@ -56,7 +56,7 @@ func (c *CPULoadManager) Stop() {
 func (c *CPULoadManager) fetchPeriodically() {
 	time.Sleep(time.Second)
 
-	ticker := time.NewTicker(5 * time.Minute)
+	ticker := time.NewTicker(2 * time.Minute)
 	defer ticker.Stop()
 
 	for {
