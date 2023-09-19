@@ -23,7 +23,7 @@ func NewEnvironmentGatherer(commandRepo *commandrepository.CommandRepository) *E
 		commandRepository: commandRepo,
 		cpuLoadManager:    NewCPULoadManager(commandRepo),
 	}
-	gatherer.cpuLoadManager.Start() // Start fetching CPU load periodically
+
 	return gatherer
 }
 
