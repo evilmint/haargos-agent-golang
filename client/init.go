@@ -2,6 +2,7 @@ package client
 
 import (
 	"bytes"
+	"compress/gzip"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -10,7 +11,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-const apiURL = "https://api.haargos.smartrezydencja.pl/"
+const apiURL = "https://api.haargos.com/"
 
 type Client struct {
 	BaseURL string
@@ -33,11 +34,24 @@ func (c *Client) SendObservation(observation types.Observation, agentToken strin
 	}
 
 	c.Logger.Infof("Sending %s", string(jsonData))
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
+
+	var buf bytes.Buffer
+	g := gzip.NewWriter(&buf)
+	if _, err = g.Write(b); err != nil {
+		c.Logger.Error(err)
+		return nil, fmt.Errorf("error compressin JSON: %v", err)
+	}
+	if err = g.Close(); err != nil {
+		c.Logger.Error(err)
+		return nil, fmt.Errorf("error compressin JSON: %v", err)
+	}
+
+	req, err := http.NewRequest("POST", url, &buf)
 	if err != nil {
 		return nil, fmt.Errorf("error creating request: %v", err)
 	}
 
+	req.Header.Set("Content-Encoding", "gzip")
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("x-agent-token", agentToken)
 
