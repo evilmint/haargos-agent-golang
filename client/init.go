@@ -37,7 +37,7 @@ func (c *Client) SendObservation(observation types.Observation, agentToken strin
 
 	var buf bytes.Buffer
 	g := gzip.NewWriter(&buf)
-	if _, err = g.Write(b); err != nil {
+	if _, err = g.Write(jsonData); err != nil {
 		c.Logger.Error(err)
 		return nil, fmt.Errorf("error compressin JSON: %v", err)
 	}
