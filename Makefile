@@ -5,7 +5,7 @@ DIST_DIR := dist
 OS_ARCH := \
     linux/386   linux/amd64
 
-DOCKER_HUB_REPO := thaxsillion/haargos-addon
+DOCKER_HUB_REPO := haargos/haargos-addon
 VERSION := $(shell cat VERSION)
 
 DOCKER_IMAGE := haargos-build-image

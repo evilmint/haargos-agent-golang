@@ -34,4 +34,4 @@ jobs:
           context: .
           file: Dockerfile.${{ matrix.arch }}
           push: true
-          tags: thaxsillion/haargos-addon:${{ steps.get_version.outputs.VERSION }}-${{ matrix.arch }}
+          tags: haargos/haargos-addon/${{ matrix.arch }}:${{ steps.get_version.outputs.VERSION }}
