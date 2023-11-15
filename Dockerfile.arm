@@ -36,6 +36,6 @@ RUN CGO_ENABLED=1 GOOS=linux go build -v -o haargos .
 # Final stage
 FROM ${FINAL_IMAGE}
 WORKDIR /root/
-COPY run.sh ./run.sh
-COPY --from=builder /app/haargos ./haargos
+COPY --chmod=755 run.sh ./run.sh 
+COPY --from=builder --chmod=755 /app/haargos ./haargos
 ENTRYPOINT ["./run.sh"]

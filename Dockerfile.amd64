@@ -29,5 +29,5 @@ RUN CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -v -o haargos .
 # Final stage
 FROM multiarch/ubuntu-core:amd64-bionic
 WORKDIR /root/
-COPY --from=builder /app/haargos ./haargos
+COPY --chmod=755 --from=builder /app/haargos ./haargos
 ENTRYPOINT ./haargos
