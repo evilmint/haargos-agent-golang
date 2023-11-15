@@ -15,7 +15,7 @@ jobs:
             dockerfile: Dockerfile.amd64
             goarch: amd64
           - arch: i386
-            dockerfile: Dockerfile.386
+            dockerfile: Dockerfile.i386
             goarch: 386
           - arch: armv7
             dockerfile: Dockerfile.arm
