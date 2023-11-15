@@ -5,28 +5,41 @@ DIST_DIR := dist
 OS_ARCH := \
     linux/386   linux/amd64
 
+DOCKER_HUB_REPO := thaxsillion/haargos-addon
 VERSION := $(shell cat VERSION)
 
 DOCKER_IMAGE := haargos-build-image
 
 distribute: docker-build $(OS_ARCH)
 
+docker-push:
+	# Tagging the image for Docker Hub
+	docker tag $(APP_NAME)-amd64 $(DOCKER_HUB_REPO):$(VERSION)-amd64
+	docker tag $(APP_NAME)-i386 $(DOCKER_HUB_REPO):$(VERSION)-i386
+
+	# Pushing the images to Docker Hub
+	docker push $(DOCKER_HUB_REPO):$(VERSION)-amd64
+	docker push $(DOCKER_HUB_REPO):$(VERSION)-i386
+
 docker-build:
-	# Building the Docker image
-	docker build --progress=plain -t $(DOCKER_IMAGE) .
+	# Building the Docker images
+	docker build --progress=plain -t $(APP_NAME)-amd64 -f Dockerfile.amd64 .
+	docker build --progress=plain -t $(APP_NAME)-i386 -f Dockerfile.386 .
 
 	# Create a container from the image
-	docker create --name temp-container $(DOCKER_IMAGE)
+	docker create --name temp-container-amd64 "$(APP_NAME)-amd64"
+	docker create --name temp-container-i386 "$(APP_NAME)-i386"
 
 	# Copy and zip the compiled applications from the container to $(DIST_DIR)
-	docker cp temp-container:/root/app-amd64 $(DIST_DIR)/$(APP_NAME)-$(VERSION)-linux-amd64
-	docker cp temp-container:/root/app-386 $(DIST_DIR)/$(APP_NAME)-$(VERSION)-linux-386
+	docker cp temp-container-amd64:/root/app-amd64 $(DIST_DIR)/$(APP_NAME)-$(VERSION)-linux-amd64
+	docker cp temp-container-i386:/root/app-386 $(DIST_DIR)/$(APP_NAME)-$(VERSION)-linux-386
 
 	zip $(DIST_DIR)/$(APP_NAME)-$(VERSION)-linux-amd64.zip $(DIST_DIR)/$(APP_NAME)-$(VERSION)-linux-amd64
 	zip $(DIST_DIR)/$(APP_NAME)-$(VERSION)-linux-386.zip $(DIST_DIR)/$(APP_NAME)-$(VERSION)-linux-386
 
 	# Remove the temporary container
-	docker rm temp-container
+	docker rm temp-container-amd64
+	docker rm temp-container-i386
 
 # Rule to create the distribution directory
 $(DIST_DIR):

@@ -1,0 +1,31 @@
+# Builder stage
+FROM --platform=linux/386 golang:1.17 AS builder
+
+ENV GOPROXY=https://proxy.golang.org
+ENV GO111MODULE=on
+ENV CGO_ENABLED=1
+ENV GOOS=linux
+ENV GOARCH=386
+
+RUN apt-get update && apt-get upgrade -y \
+    && apt-get install -y libsqlite3-dev build-essential gcc-multilib g++-multilib libc6-dev \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set the working directory and add application code
+WORKDIR /app
+ADD . .
+
+ARG MallocNanoZone=0
+# Copy go mod and sum files and fetch dependencies
+COPY go.mod go.sum ./
+RUN go mod download
+
+# Build for 386
+RUN CGO_ENABLED=1 GOOS=linux GOARCH=386 go build -v -o app-386 .
+
+# Final stage
+FROM --platform=linux/386 debian:buster-slim
+WORKDIR /root/
+COPY --from=builder /app/app-386 ./app-386
+CMD ["./app-386"]

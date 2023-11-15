@@ -26,12 +26,8 @@ ENV CGO_ENABLED=1
 # Build for amd64
 RUN CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -v -o app-amd64 .
 
-# Build for 386
-RUN CGO_ENABLED=1 GOOS=linux GOARCH=386 go build -v -o app-386 .
-
 # Final stage
 FROM multiarch/ubuntu-core:amd64-bionic
 WORKDIR /root/
 COPY --from=builder /app/app-amd64 ./app-amd64
-COPY --from=builder /app/app-386 ./app-386
 CMD ["./app-amd64"]
