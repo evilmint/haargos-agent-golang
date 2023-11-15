@@ -28,4 +28,5 @@ RUN CGO_ENABLED=1 GOOS=linux GOARCH=386 go build -v -o haargos .
 FROM --platform=linux/386 debian:buster-slim
 WORKDIR /root/
 COPY --from=builder /app/haargos ./haargos
+RUN chmod +x ./haargos
 CMD ["./haargos"]
