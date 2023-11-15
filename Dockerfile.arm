@@ -2,6 +2,7 @@
 ARG GOARCH
 ARG GOARM
 ARG BUILD_PLATFORM
+ARG FINAL_IMAGE
 FROM --platform=linux/${BUILD_PLATFORM} golang:1.17 AS builder
 ENV GOPROXY=https://proxy.golang.org
 ENV GO111MODULE=on
@@ -10,6 +11,8 @@ ENV GOOS=linux
 
 ARG GOARCH
 ENV GOARCH=${GOARCH}
+ARG FINAL_IMAGE
+ENV FINAL_IMAGE=${FINAL_IMAGE}
 ENV GOARM=${GOARM}
 RUN apt-get update && apt-get upgrade -y \
     && apt-get install -y libsqlite3-dev build-essential \
@@ -31,7 +34,7 @@ ENV CGO_ENABLED=1
 RUN CGO_ENABLED=1 GOOS=linux go build -v -o haargos .
 
 # Final stage
-FROM arm64v8/ubuntu:mantic
+FROM ${FINAL_IMAGE}
 WORKDIR /root/
 COPY --from=builder /app/haargos ./haargos
 RUN chmod 755 ./haargos

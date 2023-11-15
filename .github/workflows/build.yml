@@ -24,15 +24,18 @@ jobs:
             goarch: arm
             platform: arm/v7
             goarm: 7
+            dest_image: arm64v8/ubuntu:mantic
           - arch: armhf
             dockerfile: Dockerfile.arm
             goarch: arm
             platform: armhf
             goarm: 6
+            dest_image: arm32v7/ubuntu:mantic
           - arch: aarch64
             dockerfile: Dockerfile.arm
             goarch: arm64
             platform: arm64
+            dest_image: arm32v7/ubuntu:mantic
 
     steps:
       - name: Checkout code
@@ -49,7 +52,7 @@ jobs:
 
       - name: Extract version from tag
         id: get_version
-        run: echo "::set-output name=VERSION::${GITHUB_REF#refs/tags/v}"
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v3
@@ -62,3 +65,4 @@ jobs:
             GOARCH=${{ matrix.goarch }}
             BUILD_PLATFORM=${{ matrix.platform }}
             GOARM=${{ matrix.goarm }}
+            FINAL_IMAGE=${{ matrix.dest_image }}
