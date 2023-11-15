@@ -34,5 +34,4 @@ RUN CGO_ENABLED=1 GOOS=linux go build -v -o haargos .
 FROM arm64v8/ubuntu:mantic
 WORKDIR /root/
 COPY --from=builder /app/haargos ./haargos
-RUN chmod +x ./haargos
 ENTRYPOINT ./haargos
