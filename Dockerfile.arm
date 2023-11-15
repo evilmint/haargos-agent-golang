@@ -1,6 +1,6 @@
 # Builder stage
 ARG GOARCH
-FROM --platform=linux/${GOARCH} golang:1.17 AS builder
+FROM --platform=linux/${GOARCH} golang:latest AS builder
 ENV GOPROXY=https://proxy.golang.org
 ENV GO111MODULE=on
 ENV CGO_ENABLED=1
