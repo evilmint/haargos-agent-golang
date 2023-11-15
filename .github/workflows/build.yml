@@ -10,7 +10,23 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        arch: [amd64, i386]
+        include:
+          - arch: amd64
+            dockerfile: Dockerfile.amd64
+            goarch: amd64
+          - arch: i386
+            dockerfile: Dockerfile.386
+            goarch: 386
+          - arch: armv7
+            dockerfile: Dockerfile.arm
+            goarch: armv7
+          - arch: armhf
+            dockerfile: Dockerfile.arm
+            goarch: armhf
+          - arch: aarch64
+            dockerfile: Dockerfile.arm
+            goarch: arm64
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -32,6 +48,8 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           context: .
-          file: Dockerfile.${{ matrix.arch }}
+          file: ${{ matrix.dockerfile }}
           push: true
           tags: haargos/${{ matrix.arch }}:${{ steps.get_version.outputs.VERSION }}
+          build-args:
+            GOARCH: ${{ matrix.goarch }}
