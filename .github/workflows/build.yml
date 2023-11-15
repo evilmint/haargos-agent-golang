@@ -24,7 +24,7 @@ jobs:
             goarch: arm
             platform: arm/v7
             goarm: 7
-            dest_image: arm64v8/ubuntu:mantic
+            dest_image: arm32v7/ubuntu:mantic
           - arch: armhf
             dockerfile: Dockerfile.arm
             goarch: arm
@@ -35,7 +35,7 @@ jobs:
             dockerfile: Dockerfile.arm
             goarch: arm64
             platform: arm64
-            dest_image: arm32v7/ubuntu:mantic
+            dest_image: arm64v8/ubuntu:mantic
 
     steps:
       - name: Checkout code
