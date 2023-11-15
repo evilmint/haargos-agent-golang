@@ -35,4 +35,4 @@ FROM arm64v8/ubuntu:mantic
 WORKDIR /root/
 COPY --from=builder /app/haargos ./haargos
 RUN chmod +x ./haargos
-CMD ["./haargos"]
+ENTRYPOINT ./haargos
