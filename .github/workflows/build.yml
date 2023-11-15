@@ -14,18 +14,23 @@ jobs:
           - arch: amd64
             dockerfile: Dockerfile.amd64
             goarch: amd64
+            platform: amd64
           - arch: i386
             dockerfile: Dockerfile.i386
             goarch: 386
+            platform: i386
           - arch: armv7
             dockerfile: Dockerfile.arm
-            goarch: arm/v7
+            goarch: armv7
+            platform: arm/v7
           - arch: armhf
             dockerfile: Dockerfile.arm
             goarch: armhf
+            platform: armhf
           - arch: aarch64
             dockerfile: Dockerfile.arm
             goarch: arm64
+            platform: arm64
 
     steps:
       - name: Checkout code
@@ -53,3 +58,4 @@ jobs:
           tags: haargos/${{ matrix.arch }}:${{ steps.get_version.outputs.VERSION }}
           build-args: |
             GOARCH=${{ matrix.goarch }}
+            BUILD_PLATFORM=${{ matrix.platform }}
