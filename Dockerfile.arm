@@ -1,5 +1,6 @@
 # Builder stage
 ARG GOARCH
+ARG GOARM
 ARG BUILD_PLATFORM
 FROM --platform=linux/${BUILD_PLATFORM} golang:1.17 AS builder
 ENV GOPROXY=https://proxy.golang.org
@@ -9,7 +10,7 @@ ENV GOOS=linux
 
 ARG GOARCH
 ENV GOARCH=${GOARCH}
-
+ENV GOARM=${GOARM}
 RUN apt-get update && apt-get upgrade -y \
     && apt-get install -y libsqlite3-dev build-essential \
     && apt-get clean \

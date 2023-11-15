@@ -21,12 +21,14 @@ jobs:
             platform: i386
           - arch: armv7
             dockerfile: Dockerfile.arm
-            goarch: armv7
+            goarch: arm
             platform: arm/v7
+            goarm: 7
           - arch: armhf
             dockerfile: Dockerfile.arm
-            goarch: armhf
+            goarch: arm
             platform: armhf
+            goarm: 6
           - arch: aarch64
             dockerfile: Dockerfile.arm
             goarch: arm64
@@ -59,3 +61,4 @@ jobs:
           build-args: |
             GOARCH=${{ matrix.goarch }}
             BUILD_PLATFORM=${{ matrix.platform }}
+            GOARM=${{ matrix.goarm }}
