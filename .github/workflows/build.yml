@@ -51,5 +51,5 @@ jobs:
           file: ${{ matrix.dockerfile }}
           push: true
           tags: haargos/${{ matrix.arch }}:${{ steps.get_version.outputs.VERSION }}
-          build-args:
-            GOARCH: ${{ matrix.goarch }}
+          build-args: |
+            GOARCH=${{ matrix.goarch }}
