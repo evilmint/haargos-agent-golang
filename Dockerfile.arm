@@ -35,7 +35,8 @@ RUN CGO_ENABLED=1 GOOS=linux go build -v -o haargos .
 
 # Final stage
 FROM ${FINAL_IMAGE}
+RUN groupadd mygroup
+RUN useradd -ms /bin/bash -G mygroup john
 WORKDIR /root/
-COPY --from=builder /app/haargos ./haargos
-RUN chmod 755 ./haargos
+COPY --chown=john:mygroup --from=builder /app/haargos ./haargos
 ENTRYPOINT ["./haargos"]
