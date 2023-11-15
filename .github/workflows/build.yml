@@ -19,7 +19,7 @@ jobs:
             goarch: 386
           - arch: armv7
             dockerfile: Dockerfile.arm
-            goarch: armv7
+            goarch: arm/v7
           - arch: armhf
             dockerfile: Dockerfile.arm
             goarch: armhf
