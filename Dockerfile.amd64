@@ -24,10 +24,10 @@ RUN go mod download
 ENV CGO_ENABLED=1
 
 # Build for amd64
-RUN CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -v -o app-amd64 .
+RUN CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -v -o haargos .
 
 # Final stage
 FROM multiarch/ubuntu-core:amd64-bionic
 WORKDIR /root/
-COPY --from=builder /app/app-amd64 ./app-amd64
-CMD ["./app-amd64"]
+COPY --from=builder /app/haargos ./haargos
+CMD ["./haargos"]

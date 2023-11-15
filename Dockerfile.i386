@@ -22,10 +22,10 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 # Build for 386
-RUN CGO_ENABLED=1 GOOS=linux GOARCH=386 go build -v -o app-386 .
+RUN CGO_ENABLED=1 GOOS=linux GOARCH=386 go build -v -o haargos .
 
 # Final stage
 FROM --platform=linux/386 debian:buster-slim
 WORKDIR /root/
-COPY --from=builder /app/app-386 ./app-386
-CMD ["./app-386"]
+COPY --from=builder /app/haargos ./haargos
+CMD ["./haargos"]
