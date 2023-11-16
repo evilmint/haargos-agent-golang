@@ -34,7 +34,7 @@ ENV CGO_ENABLED=1
 RUN CGO_ENABLED=1 GOOS=linux go build -v -o haargos-output .
 
 LABEL \
-  io.hass.version="1.0.30" \
+  io.hass.version="1.0.33" \
   io.hass.type="addon" \
   io.hass.arch="armhf|aarch64|i386|amd64"
 
