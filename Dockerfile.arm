@@ -41,7 +41,5 @@ LABEL \
 # Final stage
 FROM ${FINAL_IMAGE}
 WORKDIR /root/
-COPY --chmod=755 run.sh /root/run.sh 
-COPY --from=builder --chmod=755 /app/haargos-output /root/haargos
-
-ENTRYPOINT /root/run.sh
+COPY --from=builder /app/haargos-output ./haargos
+CMD ["./haargos"]
