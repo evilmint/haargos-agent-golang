@@ -33,6 +33,11 @@ ENV CGO_ENABLED=1
 # Build
 RUN CGO_ENABLED=1 GOOS=linux go build -v -o haargos-output .
 
+LABEL \
+  io.hass.version="1.0.30" \
+  io.hass.type="addon" \
+  io.hass.arch="armhf|aarch64|i386|amd64"
+
 # Final stage
 FROM ${FINAL_IMAGE}
 WORKDIR /root/
