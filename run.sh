@@ -1,4 +1,3 @@
 #!/bin/bash
 
-chmod +x ./haargos
-./haargos
+./haargos run
