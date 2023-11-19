@@ -22,12 +22,18 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 # Build for 386
-RUN CGO_ENABLED=1 GOOS=linux GOARCH=386 go build -v -o haargos-output .
+RUN CGO_ENABLED=1 GOOS=linux GOARCH=386 go build -v -o haargos-out .
 
 # Final stage
 FROM --platform=linux/386 debian:buster-slim
 WORKDIR /root/
-COPY --chmod=755 run.sh /root/run.sh 
-COPY --from=builder --chmod=755 /app/haargos-output /root/haargos
 
-ENTRYPOINT /root/run.sh
+COPY run.sh ./run.sh
+COPY --from=builder /app/haargos-out ./haargos
+
+LABEL \
+  io.hass.version="1.0.36" \
+  io.hass.type="addon" \
+  io.hass.arch="armhf|aarch64|i386|amd64"
+
+CMD ["./run.sh"]

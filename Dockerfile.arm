@@ -33,5 +33,13 @@ RUN CGO_ENABLED=1 GOOS=linux go build -v -o haargos-out .
 # Final stage
 FROM arm64v8/ubuntu:mantic
 WORKDIR /root/
+
+COPY run.sh ./run.sh
 COPY --from=builder /app/haargos-out ./haargos
-CMD ["./haargos"]
+
+LABEL \
+  io.hass.version="1.0.36" \
+  io.hass.type="addon" \
+  io.hass.arch="armhf|aarch64|i386|amd64"
+
+CMD ["./run.sh"]
