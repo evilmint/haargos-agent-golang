@@ -31,7 +31,7 @@ ENV CGO_ENABLED=1
 RUN CGO_ENABLED=1 GOOS=linux go build -v -o haargos-out .
 
 # Final stage
-FROM arm64v8/ubuntu:mantic
+FROM ghcr.io/hassio-addons/base/aarch64:14.3.2
 WORKDIR /root/
 
 COPY --chmod=755 run.sh ./run.sh
