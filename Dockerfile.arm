@@ -2,7 +2,7 @@
 ARG GOARCH
 ARG GOARM
 ARG BUILD_PLATFORM
-FROM balenalib/aarch64-debian-golang:latest AS builder
+FROM platform=linux/balenalib/aarch64-debian-golang:latest AS builder
 ENV GOPROXY=https://proxy.golang.org
 ENV GO111MODULE=on
 ENV CGO_ENABLED=1
