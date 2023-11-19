@@ -12,7 +12,7 @@ agent_token=$(bashio::config 'agent_token')
 ## Print the message the user supplied, defaults to "Hello World..."
 bashio::log.info "${agent_token:="NO_TOKEN"}"
 
-HA_CONFIG="/config"
+HA_CONFIG="/config/"
 
 # Start Haargos
 
