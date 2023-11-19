@@ -2,6 +2,7 @@
 set -e
 
 # Configuration
+CONFIG_PATH=/data/options.json
 
 AGENT_TOKEN=$(bashio::config "agent_token")
 HA_CONFIG="/config"
