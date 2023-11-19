@@ -35,7 +35,7 @@ jobs:
             dockerfile: Dockerfile.arm
             goarch: arm64
             platform: arm64
-            dest_image: arm64v8/ubuntu:mantic
+            dest_image: golang:1.17-alpine
 
     steps:
       - name: Checkout code
