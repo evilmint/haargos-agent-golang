@@ -19,18 +19,18 @@ jobs:
             dockerfile: Dockerfile.i386
             goarch: 386
             platform: i386
-          - arch: armv7
-            dockerfile: Dockerfile.arm
-            goarch: arm
-            platform: arm/v7
-            goarm: 7
-            dest_image: arm32v7/ubuntu:mantic
-          - arch: armhf
-            dockerfile: Dockerfile.arm
-            goarch: arm
-            platform: armhf
-            goarm: 6
-            dest_image: arm32v7/ubuntu:mantic
+          # - arch: armv7
+          #   dockerfile: Dockerfile.arm
+          #   goarch: arm
+          #   platform: arm/v7
+          #   goarm: 7
+          #   dest_image: arm32v7/ubuntu:mantic
+          # - arch: armhf
+          #   dockerfile: Dockerfile.arm
+          #   goarch: arm
+          #   platform: armhf
+          #   goarm: 6
+          #   dest_image: arm32v7/ubuntu:mantic
           - arch: aarch64
             dockerfile: Dockerfile.arm
             goarch: arm64
