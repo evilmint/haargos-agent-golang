@@ -11,4 +11,4 @@ HA_CONFIG="/config"
 
 bashio::log.info "Starting Haargos..."
 
-./haargos run --agent-token "${AGENT_TOKEN} --ha-config "${HA_CONFIG}
+./haargos run --agent-token "${AGENT_TOKEN}" --ha-config "${HA_CONFIG}"
