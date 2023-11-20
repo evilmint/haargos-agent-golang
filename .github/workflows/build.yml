@@ -38,7 +38,7 @@ jobs:
             goarch: arm64
             platform: arm64
             dest_image: ghcr.io/hassio-addons/base/aarch64:14.3.2
-
+  
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -68,3 +68,4 @@ jobs:
             BUILD_PLATFORM=${{ matrix.platform }}
             GOARM=${{ matrix.goarm }}
             FINAL_IMAGE=${{ matrix.dest_image }}
+
