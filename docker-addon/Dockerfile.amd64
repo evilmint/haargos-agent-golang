@@ -1,16 +1,10 @@
 # Builder stage
-FROM --platform=linux/amd64 golang:1.17 AS builder
+FROM golang:1.17-alpine AS builder
 ENV GOPROXY=https://proxy.golang.org
 ENV GO111MODULE=on
 ENV CGO_ENABLED=1
 ENV GOOS=linux
 ENV GOARCH=amd64
-
-RUN apt-get update && apt-get upgrade -y \
-    && apt-get install -y libsqlite3-dev build-essential g++-x86-64-linux-gnu libc6-dev-amd64-cross \
-    && apt-get install -y gcc-multilib g++-multilib libc6-dev-i386 \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
 
 # Set the working directory and add application code
 WORKDIR /app
@@ -24,7 +18,7 @@ RUN go mod download
 ENV CGO_ENABLED=1
 
 # Build for amd64
-RUN CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -v -o haargos-out .
+RUN GOOS=linux GOARCH=amd64 go build -v -o haargos-out .
 
 # Final stage
 FROM multiarch/ubuntu-core:amd64-bionic
