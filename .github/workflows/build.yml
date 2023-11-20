@@ -50,7 +50,7 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           context: .
-          file: docker-addon/Dockerfile.generic
+          file: docker-addon/Dockerfile
           push: true
           tags: |
             haargos/${{ matrix.arch }}:${{ steps.get_version.outputs.VERSION }}
