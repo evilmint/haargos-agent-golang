@@ -18,7 +18,7 @@ RUN go mod download
 ENV CGO_ENABLED=1
 
 # Build for amd64
-RUN GOOS=linux GOARCH=amd64 go build -v -o haargos-out .
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -v -o haargos-out .
 
 # Final stage
 FROM multiarch/ubuntu-core:amd64-bionic

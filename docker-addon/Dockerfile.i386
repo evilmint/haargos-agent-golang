@@ -17,7 +17,7 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 # Build for 386
-RUN GOOS=linux GOARCH=386 go build -v -o haargos-out .
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=386 go build -v -o haargos-out .
 
 # Final stage
 FROM --platform=linux/386 debian:buster-slim
