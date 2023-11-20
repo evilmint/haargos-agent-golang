@@ -12,32 +12,22 @@ jobs:
       matrix:
         include:
           - arch: amd64
-            dockerfile: docker-addon/Dockerfile.generic
             goarch: amd64
             platform: amd64
-            dest_image: ghcr.io/hassio-addons/base/amd64:14.3.2
           - arch: i386
-            dockerfile: docker-addon/Dockerfile.generic
             goarch: 386
             platform: i386
-            dest_image: ghcr.io/hassio-addons/base/i386:14.3.2
           - arch: armv7
-            dockerfile: docker-addon/Dockerfile.generic
             goarch: arm
             platform: arm/v7
             goarm: 7
-            dest_image: ghcr.io/hassio-addons/base/armv7:14.3.2
           - arch: armhf
-            dockerfile: docker-addon/Dockerfile.generic
             goarch: arm
             platform: armhf
             goarm: 6
-            dest_image: ghcr.io/hassio-addons/base/armhf:14.3.2
           - arch: aarch64
-            dockerfile: docker-addon/Dockerfile.generic
             goarch: arm64
             platform: arm64
-            dest_image: ghcr.io/hassio-addons/base/aarch64:14.3.2
   
     steps:
       - name: Checkout code
@@ -60,12 +50,12 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           context: .
-          file: ${{ matrix.dockerfile }}
+          file: docker-addon/Dockerfile.generic
           push: true
-          tags: haargos/${{ matrix.arch }}:${{ steps.get_version.outputs.VERSION }}
+          tags: |
+            haargos/${{ matrix.arch }}:${{ steps.get_version.outputs.VERSION }}
           build-args: |
             GOARCH=${{ matrix.goarch }}
             BUILD_PLATFORM=${{ matrix.platform }}
             GOARM=${{ matrix.goarm }}
-            FINAL_IMAGE=${{ matrix.dest_image }}
-
+            FINAL_IMAGE=ghcr.io/hassio-addons/base/${{ matrix.arch }}:14.3.2
