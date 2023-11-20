@@ -1,36 +1,39 @@
 # Builder stage
+ARG GOARCH
+ARG GOARM
+ARG BUILD_PLATFORM
+ARG FINAL_IMAGE
+
 FROM golang:1.17-alpine AS builder
 
 ENV GOPROXY=https://proxy.golang.org
 ENV GO111MODULE=on
 ENV CGO_ENABLED=1
 ENV GOOS=linux
-ENV GOARCH=386
+ENV CGO_ENABLED=0
+ENV GOARCH=${GOARCH}
+ENV GOARM=${GOARM}
+ENV FINAL_IMAGE=${FINAL_IMAGE}
 
-# Set the working directory and add application code
 WORKDIR /app
 ADD . .
 
-ARG MallocNanoZone=0
-# Copy go mod and sum files and fetch dependencies
 COPY go.mod go.sum ./
 RUN go mod download
 
-# Build for 386
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=386 go build -v -o haargos-out .
+# Build
+RUN go build -v -o haargos-out .
 
 # Final stage
-FROM --platform=linux/386 debian:buster-slim
+FROM "$FINAL_IMAGE"
 WORKDIR /root/
 
 COPY --chmod=755 docker-addon/run.sh ./run.sh
 COPY --from=builder /app/haargos-out ./haargos
 
 LABEL \
-  io.hass.version="1.0.42" \
+  io.hass.version="1.0.65" \
   io.hass.type="addon" \
   io.hass.arch="armhf|aarch64|i386|amd64"
-
-RUN chmod +x ./run.sh
 
 CMD ["./run.sh"]
