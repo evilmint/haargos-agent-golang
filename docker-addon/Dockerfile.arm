@@ -31,7 +31,7 @@ ENV CGO_ENABLED=0
 RUN CGO_ENABLED=0 GOOS=linux go build -v -o haargos-out .
 
 # Final stage
-FROM FINAL_IMAGE
+FROM "$FINAL_IMAGE"
 WORKDIR /root/
 
 COPY --chmod=755 docker-addon/run.sh ./run.sh
