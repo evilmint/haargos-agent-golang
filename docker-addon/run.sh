@@ -3,16 +3,15 @@ set -e
 
 # Configuration
 CONFIG_PATH=/data/options.json
-
 declare agent_token
 
-## Get the 'message' key from the user config options.
 agent_token=$(bashio::config 'agent_token')
-
-## Print the message the user supplied, defaults to "Hello World..."
-bashio::log.info "${agent_token:="NO_TOKEN"}"
-
 HA_CONFIG="/config/"
+
+if [ -z "${agent_token}" ]; then
+    bashio::log.error "Agent token is not set. Exiting..."
+    exit 1
+fi
 
 # Start Haargos
 
