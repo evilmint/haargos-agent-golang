@@ -35,7 +35,7 @@ jobs:
             dockerfile: docker-addon/Dockerfile.arm
             goarch: arm64
             platform: arm64
-            dest_image: golang:1.17-alpine
+            dest_image: ghcr.io/hassio-addons/base/aarch64:14.3.2
 
     steps:
       - name: Checkout code

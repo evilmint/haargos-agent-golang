@@ -15,7 +15,7 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 # Set environment for cgo
-ENV CGO_ENABLED=1
+ENV CGO_ENABLED=0
 
 # Build for amd64
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -v -o haargos-out .
