@@ -28,7 +28,7 @@ RUN CGO_ENABLED=1 GOOS=linux GOARCH=386 go build -v -o haargos-out .
 FROM --platform=linux/386 debian:buster-slim
 WORKDIR /root/
 
-COPY --chmod=755 run.sh ./run.sh
+COPY --chmod=755 docker-addon/run.sh ./run.sh
 COPY --from=builder /app/haargos-out ./haargos
 
 LABEL \

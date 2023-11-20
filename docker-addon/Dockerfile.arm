@@ -31,7 +31,7 @@ RUN CGO_ENABLED=0 GOOS=linux go build -v -o haargos-out .
 FROM ghcr.io/hassio-addons/base/aarch64:14.3.2
 WORKDIR /root/
 
-COPY --chmod=755 run.sh ./run.sh
+COPY --chmod=755 docker-addon/run.sh ./run.sh
 COPY --from=builder /app/haargos-out ./haargos
 
 LABEL \
