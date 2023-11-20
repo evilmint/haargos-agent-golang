@@ -12,27 +12,29 @@ jobs:
       matrix:
         include:
           - arch: amd64
-            dockerfile: docker-addon/Dockerfile.amd64
+            dockerfile: docker-addon/Dockerfile.generic
             goarch: amd64
             platform: amd64
+            dest_image: ghcr.io/hassio-addons/base/amd64:14.3.2
           - arch: i386
-            dockerfile: docker-addon/Dockerfile.i386
+            dockerfile: docker-addon/Dockerfile.generic
             goarch: 386
             platform: i386
-          # - arch: armv7
-          #   dockerfile: docker-addon/Dockerfile.arm
-          #   goarch: arm
-          #   platform: arm/v7
-          #   goarm: 7
-          #   dest_image: arm32v7/ubuntu:mantic
-          # - arch: armhf
-          #   dockerfile: docker-addon/Dockerfile.arm
-          #   goarch: arm
-          #   platform: armhf
-          #   goarm: 6
-          #   dest_image: arm32v7/ubuntu:mantic
+            dest_image: ghcr.io/hassio-addons/base/i386:14.3.2
+          - arch: armv7
+            dockerfile: docker-addon/Dockerfile.generic
+            goarch: arm
+            platform: arm/v7
+            goarm: 7
+            dest_image: ghcr.io/hassio-addons/base/armv7:14.3.2
+          - arch: armhf
+            dockerfile: docker-addon/Dockerfile.generic
+            goarch: arm
+            platform: armhf
+            goarm: 6
+            dest_image: ghcr.io/hassio-addons/base/armhf:14.3.2
           - arch: aarch64
-            dockerfile: docker-addon/Dockerfile.arm
+            dockerfile: docker-addon/Dockerfile.generic
             goarch: arm64
             platform: arm64
             dest_image: ghcr.io/hassio-addons/base/aarch64:14.3.2
