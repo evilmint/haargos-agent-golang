@@ -9,8 +9,7 @@
 
 ### Add-on
 
-1. Bump version in docker-addon/Dockerfile under labels
-2. Push code, tag & push tags
-3. Watch github runners to complete
-4. Test add-on locally
-5. Update add-on repository with new version
+1. Push code, tag & push tags
+2. Watch github runners to complete
+3. Test add-on locally
+4. Update add-on repository with new version
