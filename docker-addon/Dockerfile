@@ -27,7 +27,7 @@ RUN apk add gcc g++ build-base
 COPY go.mod go.sum ./
 RUN go mod download
 
-RUN wget -P ~/compiler.tgz https://musl.cc/aarch64-linux-musl-cross.tgz
+RUN wget -O ~/compiler.tgz https://musl.cc/aarch64-linux-musl-cross.tgz
 RUN tar -xvf ~/compiler.tgz -C ~
 
 # Build
