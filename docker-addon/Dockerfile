@@ -31,7 +31,8 @@ RUN wget -O ~/compiler.tgz https://musl.cc/aarch64-linux-musl-cross.tgz
 RUN tar -xvf ~/compiler.tgz -C ~
 
 # Build
-RUN CGO_ENABLED=1 CC=~/aarch64-linux-musl-cross/bin/aarch64-linux-musl-gcc GOOS=linux go build -v -o haargos-out .
+RUN ls ~/compiler
+RUN CGO_ENABLED=1 CC=~/compiler/bin/aarch64-linux-musl-gcc GOOS=linux go build -v -o haargos-out .
 
 
 # Final stage
