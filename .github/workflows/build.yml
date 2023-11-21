@@ -11,20 +11,20 @@ jobs:
     strategy:
       matrix:
         include:
-          - arch: amd64
-            goarch: amd64
-            platform: amd64
-          - arch: i386
-            goarch: 386
-            platform: i386
-          - arch: armv7
-            goarch: arm
-            platform: arm/v7
-            goarm: 7
-          - arch: armhf
-            goarch: arm
-            platform: armhf
-            goarm: 6
+          # - arch: amd64
+          #   goarch: amd64
+          #   platform: amd64
+          # - arch: i386
+          #   goarch: 386
+          #   platform: i386
+          # - arch: armv7
+          #   goarch: arm
+          #   platform: arm/v7
+          #   goarm: 7
+          # - arch: armhf
+          #   goarch: arm
+          #   platform: armhf
+          #   goarm: 6
           - arch: aarch64
             goarch: arm64
             platform: arm64
