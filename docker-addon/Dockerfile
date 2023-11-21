@@ -28,7 +28,7 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 RUN wget -O ~/compiler.tgz https://musl.cc/aarch64-linux-musl-cross.tgz
-RUN tar -xvf ~/compiler.tgz -C ~/compiler
+RUN mkdir ~/compiler && tar -xvf ~/compiler.tgz -C ~/compiler
 
 # Build
 RUN ls /
