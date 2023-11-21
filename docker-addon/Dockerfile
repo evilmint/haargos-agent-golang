@@ -22,7 +22,7 @@ ARG GOARCH
 ENV GOARCH=${GOARCH}
 ENV GOARM=${GOARM}
 
-RUN apk add build-base
+RUN apk add gcc g++ build-base
 
 COPY go.mod go.sum ./
 RUN go mod download
