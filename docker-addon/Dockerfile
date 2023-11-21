@@ -18,6 +18,11 @@ ENV FINAL_IMAGE=${FINAL_IMAGE}
 WORKDIR /app
 ADD . .
 
+ARG GOARCH
+ENV GOARCH=${GOARCH}
+ENV GOARM=${GOARM}
+
+
 COPY go.mod go.sum ./
 RUN go mod download
 
