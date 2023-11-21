@@ -22,7 +22,7 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 # Build
-RUN go build -v -o haargos-out .
+RUN CGO_ENABLED=0 go build -v -o haargos-out .
 
 # Final stage
 FROM "$FINAL_IMAGE"
