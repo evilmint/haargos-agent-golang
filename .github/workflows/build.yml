@@ -21,13 +21,16 @@ jobs:
           #   goarch: arm
           #   platform: arm/v7
           #   goarm: 7
-          # - arch: armhf
-          #   goarch: arm
-          #   platform: armhf
-          #   goarm: 6
+          - arch: armhf
+            goarch: arm
+            platform: armhf
+            goarm: 6
           - arch: aarch64
             goarch: arm64
             platform: arm64
+            compiler:
+              link: https://musl.cc/aarch64-linux-musl-cross.tgz
+              binary_name: aarch64-linux-musl-gcc
   
     steps:
       - name: Checkout code
@@ -59,3 +62,5 @@ jobs:
             BUILD_PLATFORM=${{ matrix.platform }}
             GOARM=${{ matrix.goarm }}
             FINAL_IMAGE=ghcr.io/hassio-addons/base/${{ matrix.arch }}:14.3.2
+            COMPILER_LINK=${{ matrix.compiler.link }}
+            COMPILER_BINARY_NAME=${{ matrix.compiler.binary_name }}
