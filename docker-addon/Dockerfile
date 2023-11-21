@@ -28,9 +28,10 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 RUN wget -O ~/compiler.tgz https://musl.cc/aarch64-linux-musl-cross.tgz
-RUN tar -xvf ~/compiler.tgz -C ~
+RUN tar -xvf ~/compiler.tgz -C ~/compiler
 
 # Build
+RUN ls /
 RUN ls ~/compiler
 RUN CGO_ENABLED=1 CC=~/compiler/bin/aarch64-linux-musl-gcc GOOS=linux go build -v -o haargos-out .
 
