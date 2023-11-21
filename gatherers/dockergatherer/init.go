@@ -25,7 +25,7 @@ func (dg *DockerGatherer) GatherDocker() types.Docker {
 	dockerPs, err := dg.executeShellCommand("docker ps --format json")
 	if err != nil {
 		dg.log.Error("Failed to gather Docker process status")
-		return types.Docker{}
+		return types.Docker{Containers: []types.DockerContainer{}}
 	}
 
 	entries := dg.parseDockerPsOutput(dockerPs)
