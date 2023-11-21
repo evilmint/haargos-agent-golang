@@ -22,12 +22,11 @@ ARG GOARCH
 ENV GOARCH=${GOARCH}
 ENV GOARM=${GOARM}
 
-
 COPY go.mod go.sum ./
 RUN go mod download
 
 # Build
-RUN CGO_ENABLED=0 GOOS=linux go build -v -o haargos-out .
+RUN CGO_ENABLED=1 GOOS=linux go build -v -o haargos-out .
 
 # Final stage
 FROM "$FINAL_IMAGE"
@@ -37,7 +36,7 @@ COPY --chmod=755 docker-addon/run.sh ./run.sh
 COPY --from=builder /app/haargos-out ./haargos
 
 LABEL \
-  io.hass.version="1.0.65" \
+  io.hass.version="1.0.72" \
   io.hass.type="addon" \
   io.hass.arch="armhf|aarch64|i386|amd64"
 
