@@ -27,8 +27,13 @@ RUN apk add gcc g++ build-base
 COPY go.mod go.sum ./
 RUN go mod download
 
+RUN wget -P ~ https://musl.cc/aarch64-linux-musl-cross.tgz
+RUN tar -xvf ~/aarch64-linux-musl-cross.tgz -C ~
+
+
 # Build
-RUN CGO_ENABLED=1 GOOS=linux go build -v -o haargos-out .
+RUN CGO_ENABLED=1 CC=~/aarch64-linux-musl-cross/bin/aarch64-linux-musl-gcc GOOS=linux go build -v -o haargos-out .
+
 
 # Final stage
 FROM "$FINAL_IMAGE"
