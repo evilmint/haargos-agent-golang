@@ -4,6 +4,7 @@ ARG GOARM
 ARG BUILD_PLATFORM
 ARG FINAL_IMAGE
 
+ARG HAARGOS_VERSION
 ARG COMPILER_LINK
 ARG COMPILER_BINARY_NAME
 
@@ -16,6 +17,7 @@ ENV GOOS=linux
 ENV CGO_ENABLED=0
 ENV GOARCH=${GOARCH}
 ENV GOARM=${GOARM}
+ARG HAARGOS_VERSION
 ENV FINAL_IMAGE=${FINAL_IMAGE}
 ENV COMPILER_LINK=${COMPILER_LINK}
 ENV COMPILER_BINARY_NAME=${COMPILER_BINARY_NAME}
@@ -49,11 +51,12 @@ RUN CGO_ENABLED=1 CC=~/compiler/bin/$COMPILER_BINARY_NAME GOOS=linux go build -v
 FROM "$FINAL_IMAGE"
 WORKDIR /root/
 
+ARG HAARGOS_VERSION
 COPY --chmod=755 docker-addon/run.sh ./run.sh
 COPY --from=builder /app/haargos-out ./haargos
 
 LABEL \
-  io.hass.version="1.0.72" \
+  io.hass.version="$HAARGOS_VERSION" \
   io.hass.type="addon" \
   io.hass.arch="armhf|aarch64|i386|amd64"
 

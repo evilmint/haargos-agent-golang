@@ -57,6 +57,7 @@ jobs:
           tags: |
             haargos/${{ matrix.arch }}:${{ steps.get_version.outputs.VERSION }}
           build-args: |
+            HAARGOS_VERSION=${{ steps.get_version.outputs.VERSION }}
             GOARCH=${{ matrix.goarch }}
             BUILD_PLATFORM=${{ matrix.platform }}
             GOARM=${{ matrix.goarm }}
