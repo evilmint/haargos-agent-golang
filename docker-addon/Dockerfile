@@ -34,7 +34,7 @@ RUN apk add gcc g++ build-base
 COPY go.mod go.sum ./
 RUN go mod download
 
-RUN wget -O ~/compiler.tgz $COMPILER_LINK
+RUN wget -O ~/compiler.tgz "$COMPILER_LINK"
 RUN mkdir ~/compiler && tar -xvf ~/compiler.tgz -C ~/compiler --strip-components=1
 
 # Build
