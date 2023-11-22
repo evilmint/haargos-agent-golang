@@ -16,9 +16,11 @@ jobs:
             platform: amd64
             compiler_link: https://musl.cc/x86_64-linux-musl-cross.tgz
             compiler_binary_name: x86_64-linux-musl-gcc
-          # - arch: i386
-          #   goarch: 386
-          #   platform: i386
+          - arch: i386
+            goarch: 386
+            platform: i386
+            compiler_link: https://musl.cc/i486-linux-musl-cross.tgz
+            compiler_binary_name: i486-linux-musl-gcc
           - arch: armv7
             goarch: arm
             platform: arm/v7
