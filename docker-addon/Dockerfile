@@ -1,14 +1,12 @@
 # Builder stage
+FROM golang:1.17-alpine AS builder
+
 ARG GOARCH
 ARG GOARM
-ARG BUILD_PLATFORM
 ARG FINAL_IMAGE
-
 ARG HAARGOS_VERSION
 ARG COMPILER_LINK
 ARG COMPILER_BINARY_NAME
-
-FROM golang:1.17-alpine AS builder
 
 ENV GOPROXY=https://proxy.golang.org \
     GO111MODULE=on \
