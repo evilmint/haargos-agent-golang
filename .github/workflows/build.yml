@@ -11,20 +11,26 @@ jobs:
     strategy:
       matrix:
         include:
-          # - arch: amd64
-          #   goarch: amd64
-          #   platform: amd64
+          - arch: amd64
+            goarch: amd64
+            platform: amd64
+            compiler_link: https://musl.cc/x86_64-linux-musl-cross.tgz
+            compiler_binary_name: x86_64-linux-musl-gcc
           # - arch: i386
           #   goarch: 386
           #   platform: i386
-          # - arch: armv7
-          #   goarch: arm
-          #   platform: arm/v7
-          #   goarm: 7
-          # - arch: armhf
-          #   goarch: arm
-          #   platform: armhf
-          #   goarm: 6
+          - arch: armv7
+            goarch: arm
+            platform: arm/v7
+            goarm: 7
+            compiler_link: armv7m-linux-musleabi-cross.tgz
+            compiler_binary_name: armv7m-linux-musleabi-gcc
+          - arch: armhf
+            goarch: arm
+            platform: armhf
+            goarm: 6
+            compiler_link: armv6-linux-musleabihf-cross.tgz
+            compiler_binary_name: armv6-linux-musleabihf-gcc
           - arch: aarch64
             goarch: arm64
             platform: arm64
