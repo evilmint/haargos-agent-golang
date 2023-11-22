@@ -26,6 +26,14 @@ func main() {
 	}
 }
 
+// func main() {
+// 	gatherer := dockergatherer.NewDockerGatherer("/var/run/docker.sock")
+
+// 	data := gatherer.GatherDocker()
+
+// 	fmt.Print(data)
+// }
+
 func createVersionCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "version",

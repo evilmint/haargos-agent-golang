@@ -58,7 +58,7 @@ func (h *Haargos) fetchLogs(haConfigPath string, ch chan string, wg *sync.WaitGr
 func (h *Haargos) calculateDocker(ch chan types.Docker, wg *sync.WaitGroup) {
 	defer wg.Done()
 	log.Infof("Calculating docker")
-	gatherer := dockergatherer.NewDockerGatherer()
+	gatherer := dockergatherer.NewDockerGatherer("/var/run/docker.sock")
 	dockerInfo := gatherer.GatherDocker()
 	log.Infof("Got docker")
 	ch <- dockerInfo

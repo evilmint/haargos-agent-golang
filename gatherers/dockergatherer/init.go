@@ -1,95 +1,121 @@
 package dockergatherer
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
-	"os/exec"
-	"strings"
+	"net"
+	"net/http"
+	"time"
 
 	"github.com/evilmint/haargos-agent-golang/types"
 	"github.com/sirupsen/logrus"
 )
 
-type DockerGatherer struct {
-	log *logrus.Logger
+type DockerAPIContainer struct {
+	ID     string `json:"Id"`
+	Names  []string
+	Image  string
+	State  string
+	Status string
 }
 
-func NewDockerGatherer() *DockerGatherer {
+type DockerAPIContainerDetails struct {
+	Name  string
+	State struct {
+		Running    bool
+		Restarting bool
+		StartedAt  string `json:"StartedAt"`
+		FinishedAt string `json:"FinishedAt"`
+	}
+	// Include other fields as necessary...
+}
+
+type DockerGatherer struct {
+	log        *logrus.Logger
+	httpClient *http.Client
+	socketPath string
+}
+
+func NewDockerGatherer(socketPath string) *DockerGatherer {
+	httpClient := &http.Client{
+		Transport: &http.Transport{
+			DialContext: func(ctx context.Context, _, _ string) (net.Conn, error) {
+				return net.Dial("unix", socketPath)
+			},
+		},
+		Timeout: 30 * time.Second,
+	}
+
 	return &DockerGatherer{
-		log: logrus.New(),
+		log:        logrus.New(),
+		httpClient: httpClient,
+		socketPath: socketPath,
 	}
 }
 
 func (dg *DockerGatherer) GatherDocker() types.Docker {
-	// Simulating shell command execution
-	dockerPs, err := dg.executeShellCommand("docker ps --format json")
+	req, err := http.NewRequest("GET", "http://localhost/containers/json", nil)
+	if err != nil {
+		dg.log.Error("Failed to create request for Docker API")
+		return types.Docker{Containers: []types.DockerContainer{}}
+	}
+
+	resp, err := dg.httpClient.Do(req)
 	if err != nil {
 		dg.log.Error("Failed to gather Docker process status")
 		return types.Docker{Containers: []types.DockerContainer{}}
 	}
+	defer resp.Body.Close()
 
-	entries := dg.parseDockerPsOutput(dockerPs)
+	var entries []DockerAPIContainer
+	err = json.NewDecoder(resp.Body).Decode(&entries)
+	if err != nil {
+		dg.log.Error("Failed to decode Docker JSON response")
+		return types.Docker{Containers: []types.DockerContainer{}}
+	}
 
 	var containers []types.DockerContainer
 	for _, entry := range entries {
-		inspectString, err := dg.executeShellCommand("docker inspect " + entry.ID)
+		containerDetails, err := dg.inspectContainer(entry.ID)
 		if err != nil {
-			dg.log.Errorf("Failed to inspect entry %s", entry.Names)
+			dg.log.Errorf("Failed to inspect container %s: %v", entry.ID, err)
 			continue
 		}
 
-		container, err := dg.containerFromInspect(inspectString, entry)
-		if err == nil {
-			containers = append(containers, container)
+		container := types.DockerContainer{
+			Name:       containerDetails.Name,
+			Image:      entry.Image,
+			State:      entry.State,
+			Status:     entry.Status,
+			Running:    containerDetails.State.Running,
+			Restarting: fmt.Sprintf("%v", containerDetails.State.Restarting),
+			StartedAt:  containerDetails.State.StartedAt,
+			FinishedAt: containerDetails.State.FinishedAt,
 		}
+		containers = append(containers, container)
 	}
 
 	return types.Docker{Containers: containers}
 }
 
-func (dg *DockerGatherer) parseDockerPsOutput(output string) []types.DockerPsEntry {
-	jsonStringArray := strings.Split(output, "\n")
-
-	var entries []types.DockerPsEntry
-	for _, jsonStr := range jsonStringArray {
-		if strings.TrimSpace(jsonStr) == "" {
-			continue
-		}
-
-		var entry types.DockerPsEntry
-		err := json.Unmarshal([]byte(jsonStr), &entry)
-		if err == nil {
-			entries = append(entries, entry)
-		} else {
-			dg.log.Errorf("Failed to decode docker JSON: [%s] %s\n", jsonStr, err)
-		}
+func (dg *DockerGatherer) inspectContainer(containerID string) (*DockerAPIContainerDetails, error) {
+	req, err := http.NewRequest("GET", fmt.Sprintf("http://localhost/containers/%s/json", containerID), nil)
+	if err != nil {
+		return nil, err
 	}
 
-	return entries
-}
-
-func (dg *DockerGatherer) containerFromInspect(inspectString string, entry types.DockerPsEntry) (types.DockerContainer, error) {
-	inspectData := []types.DockerInspectResult{}
-	err := json.Unmarshal([]byte(inspectString), &inspectData)
-	if err != nil || len(inspectData) == 0 {
-		return types.DockerContainer{}, err
+	resp, err := dg.httpClient.Do(req)
+	if err != nil {
+		return nil, err
 	}
-	inspect := inspectData[0]
+	defer resp.Body.Close()
 
-	return types.DockerContainer{
-		Name:       inspect.Name,
-		Image:      entry.Image,
-		State:      entry.State,
-		Status:     entry.Status,
-		Running:    inspect.State.IsRunning,
-		Restarting: fmt.Sprintf("%v", inspect.State.IsRestarting),
-		StartedAt:  inspect.State.StartedAt,
-		FinishedAt: inspect.State.FinishedAt,
-	}, nil
-}
+	var details DockerAPIContainerDetails
+	err = json.NewDecoder(resp.Body).Decode(&details)
+	if err != nil {
+		return nil, err
+	}
 
-func (dg *DockerGatherer) executeShellCommand(command string) (string, error) {
-	cmd := exec.Command("/bin/bash", "-c", command)
-	output, err := cmd.Output()
-	return string(output), err
+	return &details, nil
 }
