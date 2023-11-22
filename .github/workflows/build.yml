@@ -23,13 +23,13 @@ jobs:
             goarch: arm
             platform: arm/v7
             goarm: 7
-            compiler_link: armv7m-linux-musleabi-cross.tgz
+            compiler_link: https://musl.cc/armv7m-linux-musleabi-cross.tgz
             compiler_binary_name: armv7m-linux-musleabi-gcc
           - arch: armhf
             goarch: arm
             platform: armhf
             goarm: 6
-            compiler_link: armv6-linux-musleabihf-cross.tgz
+            compiler_link: https://musl.cc/armv6-linux-musleabihf-cross.tgz
             compiler_binary_name: armv6-linux-musleabihf-gcc
           - arch: aarch64
             goarch: arm64
