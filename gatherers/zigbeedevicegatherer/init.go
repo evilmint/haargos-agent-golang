@@ -284,6 +284,16 @@ func (z *ZigbeeDeviceGatherer) gatherFromZHA(databasePath string, nameByIEEE map
 	db, err := sql.Open("sqlite3", databasePath)
 	defer db.Close()
 
+	_, err = db.Exec("PRAGMA journal_mode = WAL;")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	_, err = db.Exec("PRAGMA synchronous = normal;")
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	if err != nil {
 		log.Errorf("Error: %s failed to open path: %s", err, databasePath)
 		return []types.ZigbeeDevice{}
