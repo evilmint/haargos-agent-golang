@@ -285,7 +285,7 @@ func (z *ZigbeeDeviceGatherer) gatherFromZHA(databasePath string, nameByIEEE map
 	defer db.Close()
 
 	if err != nil {
-		log.Errorf("Error: %s", err)
+		log.Errorf("Error: %s path: %s", err, databasePath)
 		return []types.ZigbeeDevice{}
 	}
 
