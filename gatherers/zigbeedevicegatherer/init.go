@@ -285,7 +285,7 @@ func (z *ZigbeeDeviceGatherer) gatherFromZHA(databasePath string, nameByIEEE map
 	defer db.Close()
 
 	if err != nil {
-		log.Errorf("Error: %s path: %s", err, databasePath)
+		log.Errorf("Error: %s failed to open path: %s", err, databasePath)
 		return []types.ZigbeeDevice{}
 	}
 
@@ -302,7 +302,7 @@ func (z *ZigbeeDeviceGatherer) gatherFromZHA(databasePath string, nameByIEEE map
 
 	rows, err := db.Query(fmt.Sprintf("SELECT ieee, attrid, value FROM %s", attributesTable))
 	if err != nil {
-		log.Errorf("Error: %s", err)
+		log.Errorf("Error: %s failed to query ieee, attrid", err)
 		return []types.ZigbeeDevice{}
 	}
 	defer rows.Close()
@@ -312,7 +312,7 @@ func (z *ZigbeeDeviceGatherer) gatherFromZHA(databasePath string, nameByIEEE map
 		var attridValue int
 		var valueStr string
 		if err := rows.Scan(&deviceIeee, &attridValue, &valueStr); err != nil {
-			log.Errorf("Error: %s", err)
+			log.Errorf("Error: %s failed to scan", err)
 			return []types.ZigbeeDevice{}
 		}
 
