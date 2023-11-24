@@ -17,4 +17,7 @@ fi
 
 bashio::log.info "Starting Haargos..."
 
+ls /config/
+stat /config/zigbee.db
+
 ./haargos run --agent-token "${agent_token}" --zha-path "${HA_CONFIG}zigbee.db" --ha-config "${HA_CONFIG}"
