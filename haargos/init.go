@@ -39,6 +39,7 @@ var log = logrus.New()
 
 type RunParams struct {
 	AgentToken   string
+	AgentType    string
 	HaConfigPath string
 	Z2MPath      string
 	ZHAPath      string
@@ -172,8 +173,20 @@ func (h *Haargos) calculateScenes(
 	ch <- scenes
 }
 
+type AgentType string
+
+// Define constants for AgentType.
+const (
+	AgentTypeBin   AgentType = "bin"
+	AgentTypeAddon AgentType = "addon"
+)
+
 func (h *Haargos) Run(params RunParams) {
 	var interval time.Duration
+
+	if params.AgentType != "bin" && params.AgentType != "addon" {
+		log.Fatalf("Invalid agent type.")
+	}
 
 	// Check the environment variable for debug mode
 	if os.Getenv("DEBUG") == "true" {
@@ -227,6 +240,7 @@ func (h *Haargos) Run(params RunParams) {
 		observation.Scenes = <-scenesCh
 		observation.AgentVersion = "Release 1.0.0"
 		observation.Logs = <-logsCh
+		observation.AgentType = params.AgentType
 
 		client := client.NewClient()
 		response, err := client.SendObservation(observation, params.AgentToken)

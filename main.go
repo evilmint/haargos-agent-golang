@@ -57,7 +57,7 @@ func createHelpCommand() *cobra.Command {
 }
 
 func createRunCommand() *cobra.Command {
-	var haConfigPath, z2mPath, zhaPath, agentToken string
+	var haConfigPath, z2mPath, zhaPath, agentType, agentToken string
 
 	cmdRun := &cobra.Command{
 		Use:   "run",
@@ -72,6 +72,7 @@ func createRunCommand() *cobra.Command {
 			haargosClient.Run(
 				haargos.RunParams{
 					AgentToken:   agentToken,
+					AgentType:    agentType,
 					HaConfigPath: haConfigPath,
 					Z2MPath:      z2mPath,
 					ZHAPath:      zhaPath,
@@ -83,6 +84,7 @@ func createRunCommand() *cobra.Command {
 	cmdRun.Flags().StringVarP(&haConfigPath, "ha-config", "c", "", "Path to the Home Assistant configuration")
 	cmdRun.Flags().StringVarP(&z2mPath, "z2m-path", "z", "", "Path to Z2M database")
 	cmdRun.Flags().StringVarP(&zhaPath, "zha-path", "x", "", "Path to ZHA database")
+	cmdRun.Flags().StringVarP(&agentType, "agent-type", "t", "bin", "Agent type")
 	cmdRun.Flags().StringVarP(&agentToken, "agent-token", "", "", "Agent Token")
 
 	return cmdRun

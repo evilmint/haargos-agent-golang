@@ -80,6 +80,7 @@ type Auth struct {
 
 type Observation struct {
 	Docker       Docker       `json:"docker"`
+	AgentType    string       `json:"agent_type"`
 	AgentVersion string       `json:"agent_version"`
 	Environment  Environment  `json:"environment"`
 	Logs         string       `json:"logs"`

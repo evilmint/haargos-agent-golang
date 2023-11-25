@@ -39,11 +39,11 @@ func (c *Client) SendObservation(observation types.Observation, agentToken strin
 	g := gzip.NewWriter(&buf)
 	if _, err = g.Write(jsonData); err != nil {
 		c.Logger.Error(err)
-		return nil, fmt.Errorf("error compressin JSON: %v", err)
+		return nil, fmt.Errorf("error compressing JSON: %v", err)
 	}
 	if err = g.Close(); err != nil {
 		c.Logger.Error(err)
-		return nil, fmt.Errorf("error compressin JSON: %v", err)
+		return nil, fmt.Errorf("error compressing JSON: %v", err)
 	}
 
 	req, err := http.NewRequest("POST", url, &buf)
