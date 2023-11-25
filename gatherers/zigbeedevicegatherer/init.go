@@ -283,20 +283,19 @@ func (z *ZigbeeDeviceGatherer) gatherFromZ2M(path string, nameByIEEE map[string]
 
 func (z *ZigbeeDeviceGatherer) gatherFromZHA(databasePath string, nameByIEEE map[string]string, stateByIeee map[string]string) []types.ZigbeeDevice {
 	// Create a temporary directory
-	tempDir, err := os.MkdirTemp("", "home-assistant-")
+	tempDir, err := os.MkdirTemp("", "zha-temp-")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	log.Infof("Created temp dir at %s", tempDir)
 	tempDbPath := filepath.Join(tempDir, filepath.Base(databasePath))
 	if err := copyFile(databasePath, tempDbPath); err != nil {
 		log.Fatal(err)
 	}
-	log.Infof("Copied zigbee.db to %s", tempDbPath)
 
 	db, err := sql.Open("sqlite3", tempDbPath)
 	defer db.Close()
+	defer os.RemoveAll(tempDir)
 
 	_, err = db.Exec("PRAGMA journal_mode = WAL;")
 	if err != nil {
@@ -326,7 +325,7 @@ func (z *ZigbeeDeviceGatherer) gatherFromZHA(databasePath string, nameByIEEE map
 
 	rows, err := db.Query(fmt.Sprintf("SELECT ieee, attrid, value FROM %s", attributesTable))
 	if err != nil {
-		log.Errorf("Error: %s failed to query ieee, attrid", err)
+		log.Errorf("Error: %s. Failed to query attributes.", err)
 		return []types.ZigbeeDevice{}
 	}
 	defer rows.Close()
@@ -336,7 +335,7 @@ func (z *ZigbeeDeviceGatherer) gatherFromZHA(databasePath string, nameByIEEE map
 		var attridValue int
 		var valueStr string
 		if err := rows.Scan(&deviceIeee, &attridValue, &valueStr); err != nil {
-			log.Errorf("Error: %s failed to scan", err)
+			log.Errorf("Error: %s. Failed to scan attributes.", err)
 			return []types.ZigbeeDevice{}
 		}
 
