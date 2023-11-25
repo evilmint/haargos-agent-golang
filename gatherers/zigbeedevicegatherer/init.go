@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -281,7 +282,20 @@ func (z *ZigbeeDeviceGatherer) gatherFromZ2M(path string, nameByIEEE map[string]
 }
 
 func (z *ZigbeeDeviceGatherer) gatherFromZHA(databasePath string, nameByIEEE map[string]string, stateByIeee map[string]string) []types.ZigbeeDevice {
-	db, err := sql.Open("sqlite3", databasePath)
+	// Create a temporary directory
+	tempDir, err := os.MkdirTemp("", "home-assistant-")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Infof("Created temp dir at %s", tempDir)
+	tempDbPath := filepath.Join(tempDir, filepath.Base(databasePath))
+	if err := copyFile(databasePath, tempDbPath); err != nil {
+		log.Fatal(err)
+	}
+	log.Infof("Copied zigbee.db to %s", tempDbPath)
+
+	db, err := sql.Open("sqlite3", tempDbPath)
 	defer db.Close()
 
 	_, err = db.Exec("PRAGMA journal_mode = WAL;")
