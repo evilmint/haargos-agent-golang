@@ -34,7 +34,7 @@ func NewClient(agentToken string) *HaargosClient {
 }
 
 func (c *HaargosClient) FetchAgentConfig() (*AgentConfig, error) {
-	url := c.BaseURL + "agent-token"
+	url := c.BaseURL + "agent-config"
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
