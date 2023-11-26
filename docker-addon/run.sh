@@ -4,9 +4,10 @@ set -e
 # Configuration
 CONFIG_PATH=/data/options.json
 declare agent_token
+declare debug_mode
 
 agent_token=$(bashio::config 'agent_token')
-debug_mode=$(bashio::config 'debug_mode':=false)
+debug_mode=$(bashio::config 'debug_mode')
 HA_CONFIG="/config/"
 
 if [ -z "${agent_token}" ]; then
@@ -18,7 +19,7 @@ fi
 
 bashio::log.info "Starting Haargos..."
 
-if [ "${debug_mode}" = true ]; then
+if bashio::config.true 'debug_mode'; then
     bashio::log.info "Debug mode is enabled."
 fi
 
