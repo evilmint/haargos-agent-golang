@@ -188,11 +188,19 @@ func (h *Haargos) Run(params RunParams) {
 		log.Fatalf("Invalid agent type.")
 	}
 
+	client := client.NewClient(params.AgentToken)
+	agentConfig, err := client.FetchAgentConfig()
+
+	if err != nil {
+		log.Fatalf("Failed to fetch agent config: %s", err)
+		return
+	}
+
 	// Check the environment variable for debug mode
 	if os.Getenv("DEBUG") == "true" {
 		interval = 1 * time.Minute
 	} else {
-		interval = 15 * time.Minute
+		interval = time.Duration(agentConfig.CycleInterval) * time.Second
 	}
 
 	ticker := time.NewTicker(interval)
@@ -242,8 +250,7 @@ func (h *Haargos) Run(params RunParams) {
 		observation.Logs = <-logsCh
 		observation.AgentType = params.AgentType
 
-		client := client.NewClient()
-		response, err := client.SendObservation(observation, params.AgentToken)
+		response, err := client.SendObservation(observation)
 
 		if err != nil || response.Status != "200 OK" {
 			log.Errorf("Error sending request request: %v", err)
