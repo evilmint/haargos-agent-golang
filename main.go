@@ -61,6 +61,8 @@ func createRunCommand() *cobra.Command {
 
 			debugEnabled := os.Getenv("DEBUG") == "true"
 
+			log.Errorf("Debug enabled: %s", os.Getenv("DEBUG"))
+
 			haargosClient := haargos.NewHaargos(debugEnabled)
 			haargosClient.Run(
 				haargos.RunParams{
