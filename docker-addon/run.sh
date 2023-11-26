@@ -6,6 +6,7 @@ CONFIG_PATH=/data/options.json
 declare agent_token
 
 agent_token=$(bashio::config 'agent_token')
+debug_mode=$(bashio::config 'debug_mode':=false)
 HA_CONFIG="/config/"
 
 if [ -z "${agent_token}" ]; then
@@ -17,4 +18,8 @@ fi
 
 bashio::log.info "Starting Haargos..."
 
-HAARGOS_AGENT_TOKEN="${agent_token}" ./haargos run --agent-type addon --zha-path "${HA_CONFIG}zigbee.db" --ha-config "${HA_CONFIG}"
+if [ "${debug_mode}" = true ]; then
+    bashio::log.info "Debug mode is enabled."
+fi
+
+DEBUG="${debug_mode}" HAARGOS_AGENT_TOKEN="${agent_token}" ./haargos run --agent-type addon --zha-path "${HA_CONFIG}zigbee.db" --ha-config "${HA_CONFIG}"
