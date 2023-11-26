@@ -21,6 +21,10 @@ type HaargosClient struct {
 	Logger     *logrus.Logger
 }
 
+type AgentConfigResponse struct {
+	Body AgentConfig `json:"body"`
+}
+
 type AgentConfig struct {
 	CycleInterval int `json:"cycle_interval"`
 }
@@ -59,12 +63,12 @@ func (c *HaargosClient) FetchAgentConfig() (*AgentConfig, error) {
 		return nil, fmt.Errorf("error reading response body: %v", err)
 	}
 
-	var config AgentConfig
+	var config AgentConfigResponse
 	if err := json.Unmarshal(bodyBytes, &config); err != nil {
 		return nil, fmt.Errorf("error unmarshaling response: %v", err)
 	}
 
-	return &config, nil
+	return &config.Body, nil
 }
 
 func (c *HaargosClient) SendObservation(observation types.Observation) (*http.Response, error) {
