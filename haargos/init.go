@@ -212,7 +212,7 @@ func (h *Haargos) Run(params RunParams) {
 	// 	interval = time.Duration(agentConfig.CycleInterval) * time.Second
 	// }
 
-	log.Errorf("cycle interval: %d", agentConfig.CycleInterval)
+	// log.Errorf("cycle interval: %d", agentConfig.CycleInterval)
 
 	interval = time.Duration(agentConfig.CycleInterval) * time.Second
 

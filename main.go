@@ -21,8 +21,7 @@ func main() {
 	rootCmd.AddCommand(createRunCommand())
 
 	if err := rootCmd.Execute(); err != nil {
-		log.Errorf("Error executing command: %v", err)
-		os.Exit(1)
+		log.Fatalf("Error executing command: %v", err)
 	}
 }
 
@@ -49,7 +48,8 @@ func createHelpCommand() *cobra.Command {
 }
 
 func createRunCommand() *cobra.Command {
-	var haConfigPath, z2mPath, zhaPath, agentType, agentToken string
+	var haConfigPath, z2mPath, zhaPath, agentType string
+	agentToken := os.Getenv("HAARGOS_AGENT_TOKEN")
 
 	cmdRun := &cobra.Command{
 		Use:   "run",
@@ -57,7 +57,6 @@ func createRunCommand() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			if haConfigPath == "" || agentToken == "" {
 				logMissingFlags(haConfigPath, agentToken)
-				os.Exit(1)
 			}
 
 			debugEnabled := os.Getenv("DEBUG") == "true"
@@ -79,16 +78,15 @@ func createRunCommand() *cobra.Command {
 	cmdRun.Flags().StringVarP(&z2mPath, "z2m-path", "z", "", "Path to Z2M database")
 	cmdRun.Flags().StringVarP(&zhaPath, "zha-path", "x", "", "Path to ZHA database")
 	cmdRun.Flags().StringVarP(&agentType, "agent-type", "t", "bin", "Agent type")
-	cmdRun.Flags().StringVarP(&agentToken, "agent-token", "", "", "Agent Token")
 
 	return cmdRun
 }
 
 func logMissingFlags(haConfigPath, agentToken string) {
 	if haConfigPath == "" {
-		log.Error("The --ha-config flag must be provided")
+		log.Fatal("The --ha-config flag must be provided")
 	}
 	if agentToken == "" {
-		log.Error("The --agent-token flag must be provided.")
+		log.Fatal("The agent-token environment variable must be provided.")
 	}
 }

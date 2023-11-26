@@ -17,4 +17,4 @@ fi
 
 bashio::log.info "Starting Haargos..."
 
-./haargos run --agent-type addon --agent-token "${agent_token}" --zha-path "${HA_CONFIG}zigbee.db" --ha-config "${HA_CONFIG}"
+HAARGOS_AGENT_TOKEN="${agent_token}" ./haargos run --agent-type addon --zha-path "${HA_CONFIG}zigbee.db" --ha-config "${HA_CONFIG}"
