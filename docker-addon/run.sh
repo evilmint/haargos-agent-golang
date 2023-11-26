@@ -7,7 +7,7 @@ declare agent_token
 declare debug_mode
 
 agent_token=$(bashio::config 'agent_token')
-debug_mode=$(bashio::config 'debug_mode')
+debug_mode=$(bashio::config.true 'debug_mode')
 HA_CONFIG="/config/"
 
 if [ -z "${agent_token}" ]; then
