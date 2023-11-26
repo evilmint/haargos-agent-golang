@@ -97,7 +97,7 @@ func (h *Haargos) readRestoreStateResponse(filePath string) (types.RestoreStateR
 
 func (h *Haargos) calculateZigbee(haConfigPath string, z2mPath *string, zhaPath *string, ch chan types.ZigbeeStatus, wg *sync.WaitGroup) {
 	defer wg.Done()
-	gatherer := zigbeedevicegatherer.ZigbeeDeviceGatherer{}
+	gatherer := zigbeedevicegatherer.NewZigbeeDeviceGatherer(h.Logger)
 	deviceRegistry, _ := registry.ReadDeviceRegistry(h.Logger, haConfigPath)
 	entityRegistry, _ := registry.ReadEntityRegistry(haConfigPath)
 	devices, err := gatherer.GatherDevices(z2mPath, zhaPath, &deviceRegistry, &entityRegistry, haConfigPath)
