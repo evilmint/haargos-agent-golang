@@ -17,9 +17,14 @@ import (
 )
 
 type ZigbeeDeviceGatherer struct {
+	Logger *logrus.Logger
 }
 
-var log = logrus.New()
+func NewZigbeeDeviceGatherer(logger *logrus.Logger) *ZigbeeDeviceGatherer {
+	return &ZigbeeDeviceGatherer{
+		Logger: logger,
+	}
+}
 
 func copyFile(src, dst string) error {
 	// Open the source file for reading
@@ -116,7 +121,7 @@ func (z *ZigbeeDeviceGatherer) GatherDevices(z2mPath *string, zhaPath *string, d
 	// Create a temporary directory
 	tempDir, err := os.MkdirTemp("", "home-assistant-")
 	if err != nil {
-		log.Fatal(err)
+		z.Logger.Fatal(err)
 	}
 
 	// Copy main DB, SHM, and WAL files if they exist
@@ -132,24 +137,24 @@ func (z *ZigbeeDeviceGatherer) GatherDevices(z2mPath *string, zhaPath *string, d
 	// tempDbPath := filepath.Join(tempDir, filepath.Base(dbPath))
 	db, err := sql.Open("sqlite3", dbPath)
 	if err != nil {
-		log.Fatal(err)
+		z.Logger.Fatal(err)
 	}
 	defer db.Close()
 	defer os.RemoveAll(tempDir)
 
 	_, err = db.Exec("PRAGMA journal_mode = WAL;")
 	if err != nil {
-		log.Fatal(err)
+		z.Logger.Fatal(err)
 	}
 
 	_, err = db.Exec("PRAGMA synchronous = normal;")
 	if err != nil {
-		log.Fatal(err)
+		z.Logger.Fatal(err)
 	}
 
 	results, err := queryStatesMeta(db, entityIds)
 	if err != nil {
-		log.Fatal(err)
+		z.Logger.Fatal(err)
 	}
 
 	var metadataIDs []int
@@ -169,7 +174,7 @@ func (z *ZigbeeDeviceGatherer) GatherDevices(z2mPath *string, zhaPath *string, d
 
 	stateRows, err := db.Query(stateQuery, stateParams...)
 	if err != nil {
-		log.Fatal(err)
+		z.Logger.Fatal(err)
 	}
 	defer stateRows.Close()
 
@@ -179,7 +184,7 @@ func (z *ZigbeeDeviceGatherer) GatherDevices(z2mPath *string, zhaPath *string, d
 		var state sql.NullString
 		err = stateRows.Scan(&metadataId2, &state)
 		if err != nil {
-			log.Fatal(err)
+			z.Logger.Fatal(err)
 		}
 		if state.Valid {
 			stateByMetadataId[metadataId2] = state.String
@@ -203,16 +208,16 @@ func (z *ZigbeeDeviceGatherer) GatherDevices(z2mPath *string, zhaPath *string, d
 	var zigbeeDevices = make([]types.ZigbeeDevice, 0)
 
 	if z2mPath != nil && *z2mPath != "" {
-		log.Debugf("Gathering Z2M from %s", *z2mPath)
+		z.Logger.Debugf("Gathering Z2M from %s", *z2mPath)
 		zigbeeDevices = append(zigbeeDevices, z.gatherFromZ2M(*z2mPath, nameByIEEE, stateByIeee)...)
 	}
 
 	if zhaPath != nil && *zhaPath != "" {
-		log.Debugf("Gathering ZHA from %s", *zhaPath)
+		z.Logger.Debugf("Gathering ZHA from %s", *zhaPath)
 		zigbeeDevices = append(zigbeeDevices, z.gatherFromZHA(*zhaPath, nameByIEEE, stateByIeee)...)
 	}
 
-	log.Debugf("Devices count: %d", len(zigbeeDevices))
+	z.Logger.Debugf("Devices count: %d", len(zigbeeDevices))
 
 	return zigbeeDevices, nil
 }
@@ -237,7 +242,7 @@ func convertHex(hexStr string) string {
 func (z *ZigbeeDeviceGatherer) gatherFromZ2M(path string, nameByIEEE map[string]string, stateByIeee map[string]string) []types.ZigbeeDevice {
 	data, err := os.ReadFile(path)
 	if err != nil {
-		log.Fatalf("Can not parse z2m database at: %s", path)
+		z.Logger.Fatalf("Can not parse z2m database at: %s", path)
 		return nil
 	}
 
@@ -260,7 +265,7 @@ func (z *ZigbeeDeviceGatherer) gatherFromZ2M(path string, nameByIEEE map[string]
 		if ok && batteryLevelStr != "" {
 			batteryLevel, err = strconv.Atoi(batteryLevelStr)
 			if err != nil {
-				log.Errorf("Failed converting battery level to integer.")
+				z.Logger.Errorf("Failed converting battery level to integer.")
 				batteryLevel = 0
 			}
 		}
@@ -277,7 +282,7 @@ func (z *ZigbeeDeviceGatherer) gatherFromZ2M(path string, nameByIEEE map[string]
 		))
 	}
 
-	log.Debugf("Gathered %d Z2M devices", len(zigbeeDevices))
+	z.Logger.Debugf("Gathered %d Z2M devices", len(zigbeeDevices))
 	return zigbeeDevices
 }
 
@@ -285,12 +290,12 @@ func (z *ZigbeeDeviceGatherer) gatherFromZHA(databasePath string, nameByIEEE map
 	// Create a temporary directory
 	tempDir, err := os.MkdirTemp("", "zha-temp-")
 	if err != nil {
-		log.Fatal(err)
+		z.Logger.Fatal(err)
 	}
 
 	tempDbPath := filepath.Join(tempDir, filepath.Base(databasePath))
 	if err := copyFile(databasePath, tempDbPath); err != nil {
-		log.Fatal(err)
+		z.Logger.Fatal(err)
 	}
 
 	db, err := sql.Open("sqlite3", tempDbPath)
@@ -299,16 +304,16 @@ func (z *ZigbeeDeviceGatherer) gatherFromZHA(databasePath string, nameByIEEE map
 
 	_, err = db.Exec("PRAGMA journal_mode = WAL;")
 	if err != nil {
-		log.Fatal(err)
+		z.Logger.Fatal(err)
 	}
 
 	_, err = db.Exec("PRAGMA synchronous = normal;")
 	if err != nil {
-		log.Fatal(err)
+		z.Logger.Fatal(err)
 	}
 
 	if err != nil {
-		log.Errorf("Error: %s failed to open path: %s", err, databasePath)
+		z.Logger.Errorf("Error: %s failed to open path: %s", err, databasePath)
 		return []types.ZigbeeDevice{}
 	}
 
@@ -325,7 +330,7 @@ func (z *ZigbeeDeviceGatherer) gatherFromZHA(databasePath string, nameByIEEE map
 
 	rows, err := db.Query(fmt.Sprintf("SELECT ieee, attrid, value FROM %s", attributesTable))
 	if err != nil {
-		log.Errorf("Error: %s. Failed to query attributes.", err)
+		z.Logger.Errorf("Error: %s. Failed to query attributes.", err)
 		return []types.ZigbeeDevice{}
 	}
 	defer rows.Close()
@@ -335,7 +340,7 @@ func (z *ZigbeeDeviceGatherer) gatherFromZHA(databasePath string, nameByIEEE map
 		var attridValue int
 		var valueStr string
 		if err := rows.Scan(&deviceIeee, &attridValue, &valueStr); err != nil {
-			log.Errorf("Error: %s. Failed to scan attributes.", err)
+			z.Logger.Errorf("Error: %s. Failed to scan attributes.", err)
 			return []types.ZigbeeDevice{}
 		}
 
@@ -403,6 +408,6 @@ func (z *ZigbeeDeviceGatherer) gatherFromZHA(databasePath string, nameByIEEE map
 		zigbeeDevices = append(zigbeeDevices, device)
 	}
 
-	log.Debugf("Gathered %d ZHA devices", len(zigbeeDevices))
+	z.Logger.Debugf("Gathered %d ZHA devices", len(zigbeeDevices))
 	return zigbeeDevices
 }

@@ -9,9 +9,15 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-var log = logrus.New()
+type ScriptGatherer struct {
+	Logger *logrus.Logger
+}
 
-type ScriptGatherer struct{}
+func NewScriptGatherer(logger *logrus.Logger) *ScriptGatherer {
+	return &ScriptGatherer{
+		Logger: logger,
+	}
+}
 
 func (s *ScriptGatherer) GatherScripts(configPath string, restoreState types.RestoreStateResponse) []types.Script {
 
@@ -19,14 +25,14 @@ func (s *ScriptGatherer) GatherScripts(configPath string, restoreState types.Res
 	scriptsFilePath := configPath + "scripts.yaml"
 	scriptsData, err := os.ReadFile(scriptsFilePath)
 	if err != nil {
-		log.Println("Error reading scripts file:", err)
+		s.Logger.Println("Error reading scripts file:", err)
 		return []types.Script{}
 	}
 
 	// Unmarshal scripts from YAML
 	var scriptsMap map[string]types.Script
 	if err := yaml.Unmarshal(scriptsData, &scriptsMap); err != nil {
-		log.Println("Error unmarshaling scripts data:", err)
+		s.Logger.Println("Error unmarshaling scripts data:", err)
 		return []types.Script{}
 	}
 

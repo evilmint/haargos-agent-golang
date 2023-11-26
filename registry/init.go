@@ -9,13 +9,11 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var log = logrus.New()
-
-func ReadDeviceRegistry(haConfigPath string) (types.DeviceRegistry, error) {
+func ReadDeviceRegistry(logger *logrus.Logger, haConfigPath string) (types.DeviceRegistry, error) {
 	path := haConfigPath + ".storage/core.device_registry"
 	file, err := os.Open(path)
 	if err != nil {
-		log.Errorf("Failed %s", err)
+		logger.Errorf("Failed %s", err)
 		return types.DeviceRegistry{}, fmt.Errorf("Error opening file %s: %w", path, err)
 	}
 	defer file.Close()
@@ -23,7 +21,7 @@ func ReadDeviceRegistry(haConfigPath string) (types.DeviceRegistry, error) {
 	var response types.DeviceRegistry
 	decoder := json.NewDecoder(file)
 	if err := decoder.Decode(&response); err != nil {
-		log.Errorf("Failed %s", err)
+		logger.Errorf("Failed %s", err)
 		return types.DeviceRegistry{}, fmt.Errorf(
 			"Error decoding JSON from file %s: %w",
 			path,

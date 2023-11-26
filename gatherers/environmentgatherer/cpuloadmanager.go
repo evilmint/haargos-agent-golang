@@ -7,9 +7,11 @@ import (
 	"time"
 
 	"github.com/evilmint/haargos-agent-golang/repositories/commandrepository"
+	"github.com/sirupsen/logrus"
 )
 
 type CPULoadManager struct {
+	Logger       *logrus.Logger
 	lastCPULoad  float64
 	commandRepo  *commandrepository.CommandRepository
 	stopFetching chan bool
@@ -17,8 +19,9 @@ type CPULoadManager struct {
 	mutex        sync.Mutex
 }
 
-func NewCPULoadManager(commandRepo *commandrepository.CommandRepository) *CPULoadManager {
+func NewCPULoadManager(logger *logrus.Logger, commandRepo *commandrepository.CommandRepository) *CPULoadManager {
 	manager := &CPULoadManager{
+		Logger:       logger,
 		commandRepo:  commandRepo,
 		stopFetching: make(chan bool),
 	}
@@ -29,7 +32,7 @@ func (c *CPULoadManager) Start() {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
-	log.Infof("Fetch CPU Start (%p)", c)
+	c.Logger.Debugf("Fetch CPU Start (%p)", c)
 
 	if !c.isFetching {
 		c.isFetching = true
@@ -41,13 +44,13 @@ func (c *CPULoadManager) Stop() {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
-	log.Infof("Fetch CPU Stop")
+	c.Logger.Debugf("Fetch CPU Stop")
 
 	if c.isFetching {
 		select {
 		case c.stopFetching <- true:
 		default:
-			log.Error("Fetcher wasn't actively listening")
+			c.Logger.Error("Fetcher wasn't actively listening")
 		}
 		c.isFetching = false
 	}
@@ -63,12 +66,12 @@ func (c *CPULoadManager) fetchPeriodically() {
 		select {
 		case <-ticker.C:
 
-			log.Infof("Fetch perdiocally CPU start")
+			c.Logger.Debugf("Fetch perdiocally CPU start")
 			c.fetchCPULoad()
-			log.Infof("Fetch perdiocally CPU done")
+			c.Logger.Debugf("Fetch perdiocally CPU done")
 		case <-c.stopFetching:
 
-			log.Infof("Got CPU fetch end event")
+			c.Logger.Debugf("Got CPU fetch end event")
 			return
 		}
 	}
@@ -77,13 +80,13 @@ func (c *CPULoadManager) fetchPeriodically() {
 func (c *CPULoadManager) fetchCPULoad() {
 	top, err := c.commandRepo.GetCPULoad()
 	if err != nil {
-		log.Errorf("Error fetching CPU load: %v", err)
+		c.Logger.Errorf("Error fetching CPU load: %v", err)
 		return
 	}
 
 	load, err := strconv.ParseFloat(strings.TrimSpace(*top), 64)
 	if err != nil {
-		log.Errorf("Error parsing CPU load: %v", err)
+		c.Logger.Errorf("Error parsing CPU load: %v", err)
 		return
 	}
 

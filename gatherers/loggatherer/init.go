@@ -9,9 +9,15 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var log = logrus.New()
+type LogGatherer struct {
+	Logger *logrus.Logger
+}
 
-type LogGatherer struct{}
+func NewLogGatherer(logger *logrus.Logger) *LogGatherer {
+	return &LogGatherer{
+		Logger: logger,
+	}
+}
 
 // GatherLogs retrieves the log entries with WARNING or ERROR levels.
 // It returns the last 200 such lines as a single string.
@@ -19,7 +25,7 @@ func (l *LogGatherer) GatherLogs(haConfigPath string) string {
 	logFile := haConfigPath + "home-assistant.log"
 	lines, err := readLogLines(logFile)
 	if err != nil {
-		log.Errorf("Error reading log file: %v", err)
+		l.Logger.Errorf("Error reading log file: %v", err)
 		return ""
 	}
 

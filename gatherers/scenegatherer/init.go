@@ -9,14 +9,20 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-var log = logrus.New()
+type SceneGatherer struct {
+	Logger *logrus.Logger
+}
 
-type SceneGatherer struct{}
+func NewSceneGatherer(logger *logrus.Logger) *SceneGatherer {
+	return &SceneGatherer{
+		Logger: logger,
+	}
+}
 
 func (sg *SceneGatherer) GatherScenes(configPath string, restoreState types.RestoreStateResponse) []types.Scene {
 	scenes, err := sg.readScenesFromFile(configPath + "scenes.yaml")
 	if err != nil {
-		log.Println("Error reading scenes file:", err)
+		sg.Logger.Println("Error reading scenes file:", err)
 		return []types.Scene{}
 	}
 

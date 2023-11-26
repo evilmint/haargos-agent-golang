@@ -11,17 +11,17 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var log = logrus.New()
-
 type EnvironmentGatherer struct {
+	Logger            *logrus.Logger
 	commandRepository *commandrepository.CommandRepository
 	cpuLoadManager    *CPULoadManager
 }
 
-func NewEnvironmentGatherer(commandRepo *commandrepository.CommandRepository) *EnvironmentGatherer {
+func NewEnvironmentGatherer(logger *logrus.Logger, commandRepo *commandrepository.CommandRepository) *EnvironmentGatherer {
 	gatherer := &EnvironmentGatherer{
+		Logger:            logger,
 		commandRepository: commandRepo,
-		cpuLoadManager:    NewCPULoadManager(commandRepo),
+		cpuLoadManager:    NewCPULoadManager(logger, commandRepo),
 	}
 
 	return gatherer
@@ -57,11 +57,11 @@ func (e *EnvironmentGatherer) getMemoryInfo() (*types.Memory, error) {
 	if len(swapInfo) >= 3 {
 		memory.SwapTotal, err = strconv.Atoi(swapInfo[1])
 		if err != nil {
-			log.Errorf("Failed to parse swap total: %v", err)
+			e.Logger.Errorf("Failed to parse swap total: %v", err)
 		}
 		memory.SwapUsed, err = strconv.Atoi(swapInfo[2])
 		if err != nil {
-			log.Errorf("Failed to parse swap used: %v", err)
+			e.Logger.Errorf("Failed to parse swap used: %v", err)
 		}
 	}
 
@@ -185,34 +185,34 @@ func (e *EnvironmentGatherer) CalculateEnvironment() types.Environment {
 
 	memory, err := e.getMemoryInfo()
 	if err != nil {
-		log.Error(err)
+		e.Logger.Error(err)
 	} else {
 		environment.Memory = memory
 	}
 
 	fileSystems, err := e.getFileSystems()
 	if err != nil {
-		log.Error(err)
+		e.Logger.Error(err)
 	} else {
 		environment.Storage = fileSystems
 	}
 
 	bootTime, err := e.getLastBootTime()
 	if err != nil {
-		log.Error(err)
+		e.Logger.Error(err)
 	} else {
 		environment.BootTime = bootTime
 	}
 
 	cpuDetails, err := e.getCPUDetails()
 	if err != nil {
-		log.Error(err)
+		e.Logger.Error(err)
 	} else {
 		environment.CPU = cpuDetails
 
 		cpuTemp, err := e.getCPUTemperature()
 		if err != nil {
-			log.Error(err)
+			e.Logger.Error(err)
 		} else {
 			environment.CPU.Temperature = cpuTemp
 		}
@@ -220,7 +220,7 @@ func (e *EnvironmentGatherer) CalculateEnvironment() types.Environment {
 
 	network, err := e.getNetworkDetails()
 	if err != nil {
-		log.Error(err)
+		e.Logger.Error(err)
 	} else {
 		environment.Network = network
 	}
@@ -249,24 +249,24 @@ func (e *EnvironmentGatherer) getNetworkDetails() (*types.Network, error) {
 	for _, iface := range interfaces {
 		rxBytes, err := e.commandRepository.GetRXTXBytes(iface, "rx")
 		if err != nil {
-			log.Errorf("Failed to fetch RX bytes for interface %s: %v", iface, err)
+			e.Logger.Errorf("Failed to fetch RX bytes for interface %s: %v", iface, err)
 			continue
 		}
 
 		txBytes, err := e.commandRepository.GetRXTXBytes(iface, "tx")
 		if err != nil {
-			log.Errorf("Failed to fetch TX bytes for interface %s: %v", iface, err)
+			e.Logger.Errorf("Failed to fetch TX bytes for interface %s: %v", iface, err)
 			continue
 		}
 		rxPackets, err := e.commandRepository.GetRXTXPackets(iface, "rx")
 		if err != nil {
-			log.Errorf("Failed to fetch RX packets for interface %s: %v", iface, err)
+			e.Logger.Errorf("Failed to fetch RX packets for interface %s: %v", iface, err)
 			continue
 		}
 
 		txPackets, err := e.commandRepository.GetRXTXPackets(iface, "tx")
 		if err != nil {
-			log.Errorf("Failed to fetch TX packets for interface %s: %v", iface, err)
+			e.Logger.Errorf("Failed to fetch TX packets for interface %s: %v", iface, err)
 			continue
 		}
 

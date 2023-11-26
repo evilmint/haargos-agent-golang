@@ -11,9 +11,17 @@ import (
 
 const version = "1.0.0"
 
-var log = logrus.New()
+var logger = logrus.New()
 
 func main() {
+	debugEnabled := os.Getenv("DEBUG") == "true"
+
+	if debugEnabled {
+		logger.Level = logrus.DebugLevel
+	} else {
+		logger.Level = logrus.InfoLevel
+	}
+
 	rootCmd := &cobra.Command{Use: "haargos"}
 
 	rootCmd.AddCommand(createVersionCommand())
@@ -21,7 +29,7 @@ func main() {
 	rootCmd.AddCommand(createRunCommand())
 
 	if err := rootCmd.Execute(); err != nil {
-		log.Fatalf("Error executing command: %v", err)
+		logger.Fatalf("Error executing command: %v", err)
 	}
 }
 
@@ -60,10 +68,7 @@ func createRunCommand() *cobra.Command {
 			}
 
 			debugEnabled := os.Getenv("DEBUG") == "true"
-
-			log.Errorf("Debug enabled: %s", os.Getenv("DEBUG"))
-
-			haargosClient := haargos.NewHaargos(debugEnabled)
+			haargosClient := haargos.NewHaargos(logger, debugEnabled)
 			haargosClient.Run(
 				haargos.RunParams{
 					AgentToken:   agentToken,
@@ -86,9 +91,9 @@ func createRunCommand() *cobra.Command {
 
 func logMissingFlags(haConfigPath, agentToken string) {
 	if haConfigPath == "" {
-		log.Fatal("The --ha-config flag must be provided")
+		logger.Fatal("The --ha-config flag must be provided")
 	}
 	if agentToken == "" {
-		log.Fatal("The agent-token environment variable must be provided.")
+		logger.Fatal("The agent-token environment variable must be provided.")
 	}
 }

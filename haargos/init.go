@@ -30,22 +30,12 @@ type Haargos struct {
 	Logger              *logrus.Logger
 }
 
-func NewHaargos(debugEnabled bool) *Haargos {
-	var logger = logrus.New()
-
-	if debugEnabled {
-		logger.Level = logrus.DebugLevel
-	} else {
-		logger.Level = logrus.InfoLevel
-	}
-
+func NewHaargos(logger *logrus.Logger, debugEnabled bool) *Haargos {
 	return &Haargos{
-		EnvironmentGatherer: environmentgatherer.NewEnvironmentGatherer(&commandrepository.CommandRepository{}),
+		EnvironmentGatherer: environmentgatherer.NewEnvironmentGatherer(logger, &commandrepository.CommandRepository{}),
 		Logger:              logger,
 	}
 }
-
-var log = logrus.New()
 
 type RunParams struct {
 	AgentToken   string
@@ -58,30 +48,30 @@ type RunParams struct {
 func (h *Haargos) fetchLogs(haConfigPath string, ch chan string, wg *sync.WaitGroup) {
 	defer wg.Done()
 
-	log.Debugf("Calculating logs")
-	gatherer := loggatherer.LogGatherer{}
+	h.Logger.Debugf("Calculating logs")
+	gatherer := loggatherer.NewLogGatherer(h.Logger)
 	logContent := gatherer.GatherLogs(haConfigPath)
 
-	log.Debugf("Got logs")
+	h.Logger.Debugf("Got logs")
 	ch <- logContent
 }
 
 func (h *Haargos) calculateDocker(ch chan types.Docker, wg *sync.WaitGroup) {
 	defer wg.Done()
-	log.Debugf("Calculating docker")
+	h.Logger.Debugf("Calculating docker")
 	gatherer := dockergatherer.NewDockerGatherer("/var/run/docker.sock")
 	dockerInfo := gatherer.GatherDocker()
-	log.Debugf("Got docker")
+	h.Logger.Debugf("Got docker")
 	ch <- dockerInfo
 }
 
 func (h *Haargos) calculateEnvironment(ch chan types.Environment, wg *sync.WaitGroup) {
 	defer wg.Done()
-	log.Debugf("Calculating environment")
+	h.Logger.Debugf("Calculating environment")
 	h.EnvironmentGatherer.PausePeriodicTasks()
 	environment := h.EnvironmentGatherer.CalculateEnvironment()
 	h.EnvironmentGatherer.ResumePeriodicTasks()
-	log.Debugf("Got environment")
+	h.Logger.Debugf("Got environment")
 	ch <- environment
 }
 
@@ -108,16 +98,16 @@ func (h *Haargos) readRestoreStateResponse(filePath string) (types.RestoreStateR
 func (h *Haargos) calculateZigbee(haConfigPath string, z2mPath *string, zhaPath *string, ch chan types.ZigbeeStatus, wg *sync.WaitGroup) {
 	defer wg.Done()
 	gatherer := zigbeedevicegatherer.ZigbeeDeviceGatherer{}
-	deviceRegistry, _ := registry.ReadDeviceRegistry(haConfigPath)
+	deviceRegistry, _ := registry.ReadDeviceRegistry(h.Logger, haConfigPath)
 	entityRegistry, _ := registry.ReadEntityRegistry(haConfigPath)
 	devices, err := gatherer.GatherDevices(z2mPath, zhaPath, &deviceRegistry, &entityRegistry, haConfigPath)
 
 	if err != nil {
-		log.Errorf("Error while gathering zigbee devices: %s", err)
+		h.Logger.Errorf("Error while gathering zigbee devices: %s", err)
 		ch <- types.ZigbeeStatus{Devices: []types.ZigbeeDevice{}}
 		return
 	}
-	log.Debugf("Got zigbee status")
+	h.Logger.Debugf("Got zigbee status")
 
 	ch <- types.ZigbeeStatus{Devices: devices}
 }
@@ -128,13 +118,13 @@ func (h *Haargos) calculateHAConfig(haConfigPath string, ch chan types.HAConfig,
 	versionFilePath := path.Join(haConfigPath, ".HA_VERSION")
 	versionBytes, err := os.ReadFile(versionFilePath)
 	if err != nil {
-		log.Errorf("Error reading HA_VERSION file: %v", err)
+		h.Logger.Errorf("Error reading HA_VERSION file: %v", err)
 		ch <- types.HAConfig{}
 		return
 	}
 
 	haConfig := types.HAConfig{Version: strings.TrimSpace(string(versionBytes))}
-	log.Debugf("Got HA config")
+	h.Logger.Debugf("Got HA config")
 	ch <- haConfig
 }
 
@@ -149,7 +139,7 @@ func (h *Haargos) calculateAutomations(
 	gatherer := automationgatherer.AutomationGatherer{}
 	automations := gatherer.GatherAutomations(configPath, restoreState)
 
-	log.Debugf("Got automations")
+	h.Logger.Debugf("Got automations")
 	ch <- automations
 }
 
@@ -161,10 +151,10 @@ func (h *Haargos) calculateScripts(
 ) {
 	defer wg.Done()
 
-	gatherer := scriptgatherer.ScriptGatherer{}
+	gatherer := scriptgatherer.NewScriptGatherer(h.Logger)
 	scripts := gatherer.GatherScripts(configPath, restoreState)
 
-	log.Debugf("Got scripts")
+	h.Logger.Debugf("Got scripts")
 	ch <- scripts
 }
 
@@ -175,10 +165,10 @@ func (h *Haargos) calculateScenes(
 	wg *sync.WaitGroup,
 ) {
 	defer wg.Done()
-	gatherer := scenegatherer.SceneGatherer{}
+	gatherer := scenegatherer.NewSceneGatherer(h.Logger)
 	scenes := gatherer.GatherScenes(configPath, restoreState)
 
-	log.Debugf("Got scenes")
+	h.Logger.Debugf("Got scenes")
 	ch <- scenes
 }
 
@@ -194,14 +184,14 @@ func (h *Haargos) Run(params RunParams) {
 	var interval time.Duration
 
 	if params.AgentType != "bin" && params.AgentType != "addon" {
-		log.Fatalf("Invalid agent type.")
+		h.Logger.Fatalf("Invalid agent type.")
 	}
 
 	client := client.NewClient(params.AgentToken)
 	agentConfig, err := client.FetchAgentConfig()
 
 	if err != nil {
-		log.Fatalf("Failed to fetch agent config: %s", err)
+		h.Logger.Fatalf("Failed to fetch agent config: %s", err)
 		return
 	}
 
@@ -266,17 +256,17 @@ func (h *Haargos) Run(params RunParams) {
 		response, err := client.SendObservation(observation)
 
 		if err != nil || response.Status != "200 OK" {
-			log.Errorf("Error sending request request: %v", err)
+			h.Logger.Errorf("Error sending request request: %v", err)
 
 			bodyBytes, err := io.ReadAll(response.Body)
 			if err != nil {
-				log.Errorf("Sending request failed: %v", err)
+				h.Logger.Errorf("Sending request failed: %v", err)
 				return
 			}
 
 			bodyString := string(bodyBytes)
 			if bodyString != "" {
-				log.Errorf("Response body: %s\n", bodyString)
+				h.Logger.Errorf("Response body: %s\n", bodyString)
 			}
 		}
 
