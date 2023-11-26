@@ -27,11 +27,21 @@ import (
 
 type Haargos struct {
 	EnvironmentGatherer *environmentgatherer.EnvironmentGatherer
+	Logger              *logrus.Logger
 }
 
-func NewHaargos() *Haargos {
+func NewHaargos(debugEnabled bool) *Haargos {
+	var logger = logrus.New()
+
+	if debugEnabled {
+		logger.Level = logrus.DebugLevel
+	} else {
+		logger.Level = logrus.InfoLevel
+	}
+
 	return &Haargos{
 		EnvironmentGatherer: environmentgatherer.NewEnvironmentGatherer(&commandrepository.CommandRepository{}),
+		Logger:              logger,
 	}
 }
 
@@ -48,30 +58,30 @@ type RunParams struct {
 func (h *Haargos) fetchLogs(haConfigPath string, ch chan string, wg *sync.WaitGroup) {
 	defer wg.Done()
 
-	log.Infof("Calculating logs")
+	log.Debugf("Calculating logs")
 	gatherer := loggatherer.LogGatherer{}
 	logContent := gatherer.GatherLogs(haConfigPath)
 
-	log.Infof("Got logs")
+	log.Debugf("Got logs")
 	ch <- logContent
 }
 
 func (h *Haargos) calculateDocker(ch chan types.Docker, wg *sync.WaitGroup) {
 	defer wg.Done()
-	log.Infof("Calculating docker")
+	log.Debugf("Calculating docker")
 	gatherer := dockergatherer.NewDockerGatherer("/var/run/docker.sock")
 	dockerInfo := gatherer.GatherDocker()
-	log.Infof("Got docker")
+	log.Debugf("Got docker")
 	ch <- dockerInfo
 }
 
 func (h *Haargos) calculateEnvironment(ch chan types.Environment, wg *sync.WaitGroup) {
 	defer wg.Done()
-	log.Infof("Calculating environment")
+	log.Debugf("Calculating environment")
 	h.EnvironmentGatherer.PausePeriodicTasks()
 	environment := h.EnvironmentGatherer.CalculateEnvironment()
 	h.EnvironmentGatherer.ResumePeriodicTasks()
-	log.Infof("Got environment")
+	log.Debugf("Got environment")
 	ch <- environment
 }
 
@@ -107,7 +117,7 @@ func (h *Haargos) calculateZigbee(haConfigPath string, z2mPath *string, zhaPath 
 		ch <- types.ZigbeeStatus{Devices: []types.ZigbeeDevice{}}
 		return
 	}
-	log.Infof("Got zigbee status")
+	log.Debugf("Got zigbee status")
 
 	ch <- types.ZigbeeStatus{Devices: devices}
 }
@@ -119,13 +129,12 @@ func (h *Haargos) calculateHAConfig(haConfigPath string, ch chan types.HAConfig,
 	versionBytes, err := os.ReadFile(versionFilePath)
 	if err != nil {
 		log.Errorf("Error reading HA_VERSION file: %v", err)
-		ch <- types.HAConfig{} // Send an empty config if there's an error
+		ch <- types.HAConfig{}
 		return
 	}
 
-	// Create the HAConfig structure
 	haConfig := types.HAConfig{Version: strings.TrimSpace(string(versionBytes))}
-	log.Infof("Got HA config")
+	log.Debugf("Got HA config")
 	ch <- haConfig
 }
 
@@ -140,7 +149,7 @@ func (h *Haargos) calculateAutomations(
 	gatherer := automationgatherer.AutomationGatherer{}
 	automations := gatherer.GatherAutomations(configPath, restoreState)
 
-	log.Infof("Got automations")
+	log.Debugf("Got automations")
 	ch <- automations
 }
 
@@ -155,7 +164,7 @@ func (h *Haargos) calculateScripts(
 	gatherer := scriptgatherer.ScriptGatherer{}
 	scripts := gatherer.GatherScripts(configPath, restoreState)
 
-	log.Infof("Got scripts")
+	log.Debugf("Got scripts")
 	ch <- scripts
 }
 
@@ -169,7 +178,7 @@ func (h *Haargos) calculateScenes(
 	gatherer := scenegatherer.SceneGatherer{}
 	scenes := gatherer.GatherScenes(configPath, restoreState)
 
-	log.Infof("Got scenes")
+	log.Debugf("Got scenes")
 	ch <- scenes
 }
 
@@ -197,11 +206,15 @@ func (h *Haargos) Run(params RunParams) {
 	}
 
 	// Check the environment variable for debug mode
-	if os.Getenv("DEBUG") == "true" {
-		interval = 1 * time.Minute
-	} else {
-		interval = time.Duration(agentConfig.CycleInterval) * time.Second
-	}
+	// if os.Getenv("DEBUG") == "true" {
+	// 	interval = 1 * time.Minute
+	// } else {
+	// 	interval = time.Duration(agentConfig.CycleInterval) * time.Second
+	// }
+
+	log.Errorf("cycle interval: %d", agentConfig.CycleInterval)
+
+	interval = time.Duration(agentConfig.CycleInterval) * time.Second
 
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
@@ -270,9 +283,9 @@ func (h *Haargos) Run(params RunParams) {
 		response.Body.Close()
 	}
 
-	handleTick() // Call the function once before starting the ticker
+	handleTick()
 
 	for range ticker.C {
-		handleTick() // Call the function on each tick
+		handleTick()
 	}
 }

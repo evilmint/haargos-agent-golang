@@ -26,14 +26,6 @@ func main() {
 	}
 }
 
-// func main() {
-// 	gatherer := dockergatherer.NewDockerGatherer("/var/run/docker.sock")
-
-// 	data := gatherer.GatherDocker()
-
-// 	fmt.Print(data)
-// }
-
 func createVersionCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "version",
@@ -68,7 +60,9 @@ func createRunCommand() *cobra.Command {
 				os.Exit(1)
 			}
 
-			haargosClient := haargos.NewHaargos()
+			debugEnabled := os.Getenv("DEBUG") == "true"
+
+			haargosClient := haargos.NewHaargos(debugEnabled)
 			haargosClient.Run(
 				haargos.RunParams{
 					AgentToken:   agentToken,

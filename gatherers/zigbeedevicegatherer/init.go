@@ -107,7 +107,7 @@ func (z *ZigbeeDeviceGatherer) GatherDevices(z2mPath *string, zhaPath *string, d
 		}
 
 		deviceIDToEntityIDMap[*entity.DeviceID] = entity.EntityID
-		// log.Infof("Setting deviceid of %s with entityid %s", *entity.DeviceID, entity.EntityID)
+		// log.Debugf("Setting deviceid of %s with entityid %s", *entity.DeviceID, entity.EntityID)
 		entityIds = append(entityIds, entity.EntityID)
 	}
 
@@ -203,16 +203,16 @@ func (z *ZigbeeDeviceGatherer) GatherDevices(z2mPath *string, zhaPath *string, d
 	var zigbeeDevices = make([]types.ZigbeeDevice, 0)
 
 	if z2mPath != nil && *z2mPath != "" {
-		log.Infof("Gathering Z2M from %s", *z2mPath)
+		log.Debugf("Gathering Z2M from %s", *z2mPath)
 		zigbeeDevices = append(zigbeeDevices, z.gatherFromZ2M(*z2mPath, nameByIEEE, stateByIeee)...)
 	}
 
 	if zhaPath != nil && *zhaPath != "" {
-		log.Infof("Gathering ZHA from %s", *zhaPath)
+		log.Debugf("Gathering ZHA from %s", *zhaPath)
 		zigbeeDevices = append(zigbeeDevices, z.gatherFromZHA(*zhaPath, nameByIEEE, stateByIeee)...)
 	}
 
-	log.Infof("Devices count: %d", len(zigbeeDevices))
+	log.Debugf("Devices count: %d", len(zigbeeDevices))
 
 	return zigbeeDevices, nil
 }
@@ -277,7 +277,7 @@ func (z *ZigbeeDeviceGatherer) gatherFromZ2M(path string, nameByIEEE map[string]
 		))
 	}
 
-	log.Infof("Gathered %d Z2M devices", len(zigbeeDevices))
+	log.Debugf("Gathered %d Z2M devices", len(zigbeeDevices))
 	return zigbeeDevices
 }
 
@@ -403,6 +403,6 @@ func (z *ZigbeeDeviceGatherer) gatherFromZHA(databasePath string, nameByIEEE map
 		zigbeeDevices = append(zigbeeDevices, device)
 	}
 
-	log.Infof("Gathered %d ZHA devices", len(zigbeeDevices))
+	log.Debugf("Gathered %d ZHA devices", len(zigbeeDevices))
 	return zigbeeDevices
 }

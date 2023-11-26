@@ -22,7 +22,7 @@ type HaargosClient struct {
 }
 
 type AgentConfig struct {
-	CycleInterval int64 `json:"cycle_interval"`
+	CycleInterval int `json:"cycle_interval"`
 }
 
 func NewClient(agentToken string) *HaargosClient {
@@ -75,7 +75,7 @@ func (c *HaargosClient) SendObservation(observation types.Observation) (*http.Re
 		return nil, fmt.Errorf("error marshaling JSON: %v", err)
 	}
 
-	c.Logger.Infof("Sending %s", string(jsonData))
+	c.Logger.Debugf("Sending %s", string(jsonData))
 
 	var buf bytes.Buffer
 	g := gzip.NewWriter(&buf)
