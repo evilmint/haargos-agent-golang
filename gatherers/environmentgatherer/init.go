@@ -119,42 +119,16 @@ func (e *EnvironmentGatherer) getFileSystems() ([]types.Storage, error) {
 }
 
 func (e *EnvironmentGatherer) getCPUDetails() (*types.CPU, error) {
-	cpuDetails := &types.CPU{Load: 3}
-	cpuDetails.Architecture = "x86_64"
-	cpuDetails.CPUMHz = "2500"
-	cpuDetails.ModelName = "Intel(R) Celeron(R) J4105 CPU @ 1.50GHz"
-	cpuDetails.Temperature = 32
+	load := e.cpuLoadManager.GetLastCPULoad()
+
+	cpuInfo, err := e.commandRepository.GetCPUInfo()
+	if err != nil {
+		return nil, fmt.Errorf("Error getting CPU info: %v", err)
+	}
+
+	cpuDetails := &types.CPU{ModelName: cpuInfo.Model, Architecture: cpuInfo.Architecture, Load: load, CPUMHz: cpuInfo.MHz}
 
 	return cpuDetails, nil
-
-	// load := e.cpuLoadManager.GetLastCPULoad()
-
-	// cpuInfo, err := e.commandRepository.GetCPUInfo()
-	// if err != nil {
-	// 	return nil, fmt.Errorf("Error getting CPU info: %v", err)
-	// }
-
-	// lines := strings.Split(strings.TrimSpace(*cpuInfo), "\n")
-	// cpuDetails := &types.CPU{Load: load}
-	// for _, line := range lines {
-	// 	components := strings.SplitN(line, ":", 2)
-	// 	if len(components) != 2 {
-	// 		continue
-	// 	}
-
-	// 	key := strings.TrimSpace(components[0])
-	// 	value := strings.TrimSpace(components[1])
-	// 	switch key {
-	// 	case "Architecture":
-	// 		cpuDetails.Architecture = value
-	// 	case "Model name":
-	// 		cpuDetails.ModelName = value
-	// 	case "CPU MHz":
-	// 		cpuDetails.CPUMHz = value
-	// 	}
-	// }
-
-	// return cpuDetails, nil
 }
 
 func (e *EnvironmentGatherer) getCPUTemperature() (float64, error) {
