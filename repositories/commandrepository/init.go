@@ -31,12 +31,30 @@ func (c *CommandRepository) GetCPULoad() (*string, error) {
 	return c.executeCommand("top -bn 1 | awk 'NR == 3 {printf \"%.2f\", 100 - $8}'")
 }
 
-func readArchitecture() (string, error) {
+func readArchitecture() (*string, error) {
 	bytes, err := os.ReadFile("/proc/sys/kernel/arch")
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	return strings.TrimSpace(string(bytes)), nil
+
+	str := strings.TrimSpace(string(bytes))
+	return &str, nil
+}
+
+func readCurrentFrequency() (*float32, error) {
+	bytes, err := os.ReadFile("/sys/devices/system/cpu/cpufreq/policy0/cpuinfo_cur_freq")
+	if err != nil {
+		return nil, err
+	}
+
+	str := strings.TrimSpace(string(bytes))
+	freq, err := strconv.ParseFloat(str, 32) // Parse as float32
+	if err != nil {
+		return nil, err
+	}
+
+	freq32 := float32(freq)
+	return &freq32, nil
 }
 
 func (c *CommandRepository) GetCPUInfo() (*CPUInfo, error) {
@@ -55,26 +73,22 @@ func (c *CommandRepository) GetCPUInfo() (*CPUInfo, error) {
 		return nil, err
 	}
 
+	mHz, err := readCurrentFrequency()
+	cpuInfo.Architecture = *arch
+
+	if err != nil {
+		cpuInfo.MHz = fmt.Sprintf("%.4f", *mHz/1000.0)
+	}
+
 	for scanner.Scan() {
 		line := scanner.Text()
 		if strings.HasPrefix(line, "processor") {
 			cpuCount++
 		}
-		cpuInfo.Architecture = arch
 		if strings.HasPrefix(line, "model name") || strings.HasPrefix(line, "CPU part") {
 			parts := strings.Split(line, ":")
 			if len(parts) == 2 {
-				cpuInfo.Model = strings.TrimSpace(parts[1])
-				cpuInfo.Model = decodeCPUModel(cpuInfo.Model)
-			}
-		}
-		if strings.HasPrefix(line, "cpu MHz") {
-			parts := strings.Split(line, ":")
-			if len(parts) == 2 {
-				mhz := strings.TrimSpace(parts[1])
-				if err == nil {
-					cpuInfo.MHz = mhz
-				}
+				cpuInfo.Model = decodeCPUModel(strings.TrimSpace(parts[1]))
 			}
 		}
 	}
