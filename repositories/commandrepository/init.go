@@ -7,9 +7,19 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
+
+	"github.com/sirupsen/logrus"
 )
 
-type CommandRepository struct{}
+type CommandRepository struct {
+	Logger *logrus.Logger
+}
+
+func (c *CommandRepository) NewCommandRepository(logger *logrus.Logger) *CommandRepository {
+	return &CommandRepository{
+		Logger: logger,
+	}
+}
 
 type CPUInfo struct {
 	Architecture string
@@ -77,7 +87,10 @@ func (c *CommandRepository) GetCPUInfo() (*CPUInfo, error) {
 	cpuInfo.Architecture = *arch
 
 	if err != nil {
+		c.Logger.Infof("Read frequency: %f", *mHz)
 		cpuInfo.MHz = fmt.Sprintf("%.4f", *mHz/1000.0)
+	} else {
+		c.Logger.Errorf("Failed to read frequency: %s", err)
 	}
 
 	for scanner.Scan() {
