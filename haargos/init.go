@@ -32,7 +32,7 @@ type Haargos struct {
 
 func NewHaargos(logger *logrus.Logger, debugEnabled bool) *Haargos {
 	return &Haargos{
-		EnvironmentGatherer: environmentgatherer.NewEnvironmentGatherer(logger, &commandrepository.CommandRepository{}),
+		EnvironmentGatherer: environmentgatherer.NewEnvironmentGatherer(logger, commandrepository.NewCommandRepository(logger)),
 		Logger:              logger,
 	}
 }

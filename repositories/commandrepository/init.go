@@ -15,7 +15,7 @@ type CommandRepository struct {
 	Logger *logrus.Logger
 }
 
-func (c *CommandRepository) NewCommandRepository(logger *logrus.Logger) *CommandRepository {
+func NewCommandRepository(logger *logrus.Logger) *CommandRepository {
 	return &CommandRepository{
 		Logger: logger,
 	}
