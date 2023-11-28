@@ -208,16 +208,16 @@ func (z *ZigbeeDeviceGatherer) GatherDevices(z2mPath *string, zhaPath *string, d
 	var zigbeeDevices = make([]types.ZigbeeDevice, 0)
 
 	if z2mPath != nil && *z2mPath != "" {
-		z.Logger.Debugf("Gathering Z2M from %s", *z2mPath)
 		zigbeeDevices = append(zigbeeDevices, z.gatherFromZ2M(*z2mPath, nameByIEEE, stateByIeee)...)
+		z.Logger.Debugf("Acquired Zigbee Z2M network status.")
 	}
 
 	if zhaPath != nil && *zhaPath != "" {
-		z.Logger.Debugf("Gathering ZHA from %s", *zhaPath)
 		zigbeeDevices = append(zigbeeDevices, z.gatherFromZHA(*zhaPath, nameByIEEE, stateByIeee)...)
+		z.Logger.Debugf("Acquired Zigbee ZHA network status.")
 	}
 
-	z.Logger.Debugf("Devices count: %d", len(zigbeeDevices))
+	z.Logger.Debugf("Total Zigbee devices count: %d", len(zigbeeDevices))
 
 	return zigbeeDevices, nil
 }

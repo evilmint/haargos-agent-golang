@@ -48,30 +48,26 @@ type RunParams struct {
 func (h *Haargos) fetchLogs(haConfigPath string, ch chan string, wg *sync.WaitGroup) {
 	defer wg.Done()
 
-	h.Logger.Debugf("Calculating logs")
 	gatherer := loggatherer.NewLogGatherer(h.Logger)
 	logContent := gatherer.GatherLogs(haConfigPath)
-
-	h.Logger.Debugf("Got logs")
+	h.Logger.Debugf("Collected logs.")
 	ch <- logContent
 }
 
 func (h *Haargos) calculateDocker(ch chan types.Docker, wg *sync.WaitGroup) {
 	defer wg.Done()
-	h.Logger.Debugf("Calculating docker")
+	h.Logger.Debugf("Analyzing Docker environment")
 	gatherer := dockergatherer.NewDockerGatherer("/var/run/docker.sock")
 	dockerInfo := gatherer.GatherDocker()
-	h.Logger.Debugf("Got docker")
 	ch <- dockerInfo
 }
 
 func (h *Haargos) calculateEnvironment(ch chan types.Environment, wg *sync.WaitGroup) {
 	defer wg.Done()
-	h.Logger.Debugf("Calculating environment")
 	h.EnvironmentGatherer.PausePeriodicTasks()
 	environment := h.EnvironmentGatherer.CalculateEnvironment()
 	h.EnvironmentGatherer.ResumePeriodicTasks()
-	h.Logger.Debugf("Got environment")
+	h.Logger.Debugf("Retrieved environment data")
 	ch <- environment
 }
 
@@ -107,7 +103,6 @@ func (h *Haargos) calculateZigbee(haConfigPath string, z2mPath *string, zhaPath 
 		ch <- types.ZigbeeStatus{Devices: []types.ZigbeeDevice{}}
 		return
 	}
-	h.Logger.Debugf("Got zigbee status")
 
 	ch <- types.ZigbeeStatus{Devices: devices}
 }
@@ -124,7 +119,7 @@ func (h *Haargos) calculateHAConfig(haConfigPath string, ch chan types.HAConfig,
 	}
 
 	haConfig := types.HAConfig{Version: strings.TrimSpace(string(versionBytes))}
-	h.Logger.Debugf("Got HA config")
+	h.Logger.Debugf("Retrieved Home Assistant configuration.")
 	ch <- haConfig
 }
 
@@ -139,7 +134,7 @@ func (h *Haargos) calculateAutomations(
 	gatherer := automationgatherer.AutomationGatherer{}
 	automations := gatherer.GatherAutomations(configPath, restoreState)
 
-	h.Logger.Debugf("Got automations")
+	h.Logger.Debugf("Retrieved HomeAssistant Automations (%d)", len(automations))
 	ch <- automations
 }
 
@@ -154,7 +149,7 @@ func (h *Haargos) calculateScripts(
 	gatherer := scriptgatherer.NewScriptGatherer(h.Logger)
 	scripts := gatherer.GatherScripts(configPath, restoreState)
 
-	h.Logger.Debugf("Got scripts")
+	h.Logger.Debugf("Retrieved HomeAssistant Scripts (%d)", len(scripts))
 	ch <- scripts
 }
 
@@ -168,7 +163,7 @@ func (h *Haargos) calculateScenes(
 	gatherer := scenegatherer.NewSceneGatherer(h.Logger)
 	scenes := gatherer.GatherScenes(configPath, restoreState)
 
-	h.Logger.Debugf("Got scenes")
+	h.Logger.Debugf("Retrieved HomeAssistant Scenes (%d)", len(scenes))
 	ch <- scenes
 }
 

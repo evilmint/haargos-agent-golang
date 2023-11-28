@@ -65,13 +65,8 @@ func (c *CPULoadManager) fetchPeriodically() {
 	for {
 		select {
 		case <-ticker.C:
-
-			c.Logger.Debugf("Fetch perdiocally CPU start")
 			c.fetchCPULoad()
-			c.Logger.Debugf("Fetch perdiocally CPU done")
 		case <-c.stopFetching:
-
-			c.Logger.Debugf("Got CPU fetch end event")
 			return
 		}
 	}

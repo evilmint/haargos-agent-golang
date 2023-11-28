@@ -57,13 +57,13 @@ func NewDockerGatherer(socketPath string) *DockerGatherer {
 func (dg *DockerGatherer) GatherDocker() types.Docker {
 	req, err := http.NewRequest("GET", "http://localhost/containers/json", nil)
 	if err != nil {
-		dg.log.Error("Failed to create request for Docker API")
+		dg.log.Error("Error encountered while connecting to Docker socket.")
 		return types.Docker{Containers: []types.DockerContainer{}}
 	}
 
 	resp, err := dg.httpClient.Do(req)
 	if err != nil {
-		dg.log.Error("Failed to gather Docker process status")
+		dg.log.Error("Error encountered while gathering Docker process status.")
 		return types.Docker{Containers: []types.DockerContainer{}}
 	}
 	defer resp.Body.Close()
