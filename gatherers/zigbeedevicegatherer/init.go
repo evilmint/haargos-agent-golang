@@ -217,7 +217,7 @@ func (z *ZigbeeDeviceGatherer) GatherDevices(z2mPath *string, zhaPath *string, d
 		z.Logger.Debugf("Acquired Zigbee ZHA network status.")
 	}
 
-	z.Logger.Debugf("Total Zigbee devices count: %d", len(zigbeeDevices))
+	z.Logger.Debugf("Total Zigbee devices count: %d.", len(zigbeeDevices))
 
 	return zigbeeDevices, nil
 }
@@ -408,6 +408,5 @@ func (z *ZigbeeDeviceGatherer) gatherFromZHA(databasePath string, nameByIEEE map
 		zigbeeDevices = append(zigbeeDevices, device)
 	}
 
-	z.Logger.Debugf("Gathered %d ZHA devices", len(zigbeeDevices))
 	return zigbeeDevices
 }

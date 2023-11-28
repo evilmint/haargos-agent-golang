@@ -56,7 +56,7 @@ func (h *Haargos) fetchLogs(haConfigPath string, ch chan string, wg *sync.WaitGr
 
 func (h *Haargos) calculateDocker(ch chan types.Docker, wg *sync.WaitGroup) {
 	defer wg.Done()
-	h.Logger.Debugf("Analyzing Docker environment")
+	h.Logger.Debugf("Analyzing Docker environment.")
 	gatherer := dockergatherer.NewDockerGatherer("/var/run/docker.sock")
 	dockerInfo := gatherer.GatherDocker()
 	ch <- dockerInfo
@@ -67,7 +67,7 @@ func (h *Haargos) calculateEnvironment(ch chan types.Environment, wg *sync.WaitG
 	h.EnvironmentGatherer.PausePeriodicTasks()
 	environment := h.EnvironmentGatherer.CalculateEnvironment()
 	h.EnvironmentGatherer.ResumePeriodicTasks()
-	h.Logger.Debugf("Retrieved environment data")
+	h.Logger.Debugf("Retrieved environment data.")
 	ch <- environment
 }
 
@@ -134,7 +134,7 @@ func (h *Haargos) calculateAutomations(
 	gatherer := automationgatherer.AutomationGatherer{}
 	automations := gatherer.GatherAutomations(configPath, restoreState)
 
-	h.Logger.Debugf("Retrieved HomeAssistant Automations (%d)", len(automations))
+	h.Logger.Debugf("Retrieved HomeAssistant Automations (%d).", len(automations))
 	ch <- automations
 }
 
@@ -149,7 +149,7 @@ func (h *Haargos) calculateScripts(
 	gatherer := scriptgatherer.NewScriptGatherer(h.Logger)
 	scripts := gatherer.GatherScripts(configPath, restoreState)
 
-	h.Logger.Debugf("Retrieved HomeAssistant Scripts (%d)", len(scripts))
+	h.Logger.Debugf("Retrieved HomeAssistant Scripts (%d).", len(scripts))
 	ch <- scripts
 }
 
@@ -163,7 +163,7 @@ func (h *Haargos) calculateScenes(
 	gatherer := scenegatherer.NewSceneGatherer(h.Logger)
 	scenes := gatherer.GatherScenes(configPath, restoreState)
 
-	h.Logger.Debugf("Retrieved HomeAssistant Scenes (%d)", len(scenes))
+	h.Logger.Debugf("Retrieved HomeAssistant Scenes (%d).", len(scenes))
 	ch <- scenes
 }
 

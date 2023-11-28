@@ -87,9 +87,8 @@ func (c *CommandRepository) GetCPUInfo() (*CPUInfo, error) {
 	cpuInfo.Architecture = *arch
 
 	if err != nil {
-		c.Logger.Errorf("Failed to read frequency: %s", err)
+		c.Logger.Errorf("Failed to read CPU frequency: %s.", err)
 	} else {
-		c.Logger.Infof("Read frequency: %f", *mHz)
 		cpuInfo.MHz = fmt.Sprintf("%.4f", *mHz/1000.0)
 	}
 

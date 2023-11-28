@@ -32,8 +32,6 @@ func (c *CPULoadManager) Start() {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
-	c.Logger.Debugf("Fetch CPU Start (%p)", c)
-
 	if !c.isFetching {
 		c.isFetching = true
 		go c.fetchPeriodically()
@@ -43,8 +41,6 @@ func (c *CPULoadManager) Start() {
 func (c *CPULoadManager) Stop() {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
-
-	c.Logger.Debugf("Fetch CPU Stop")
 
 	if c.isFetching {
 		select {
