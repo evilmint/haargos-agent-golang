@@ -1,4 +1,4 @@
-#!/usr/bin
+#!/bin/sh
 set -e
 
 if [ -z "${HAARGOS_AGENT_TOKEN}" ]; then
