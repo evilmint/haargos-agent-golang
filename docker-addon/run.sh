@@ -31,4 +31,6 @@ if bashio::config.true 'debug_mode'; then
     bashio::log.info "Debug mode is enabled."
 fi
 
+sleep 3600
+
 DEBUG="${XDEBUG}" HAARGOS_AGENT_TOKEN="${agent_token}" ./haargos run --agent-type addon --zha-path "${HA_CONFIG}zigbee.db" --ha-config "${HA_CONFIG}"
