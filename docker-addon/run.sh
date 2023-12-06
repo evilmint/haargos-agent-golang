@@ -15,6 +15,12 @@ fi
 
 # Start Haargos
 
+echo "ls /"
+ls /
+echo "ls /data"
+ls /data
+cat /data/options.json
+
 bashio::log.info "Starting Haargos..."
 
 XDEBUG="false"
