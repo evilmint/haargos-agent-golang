@@ -21,6 +21,7 @@ echo "ls /data"
 ls /data
 cat /data/options.json
 
+echo "Agent token is ${agent_token}"
 bashio::log.info "Starting Haargos..."
 
 XDEBUG="false"
