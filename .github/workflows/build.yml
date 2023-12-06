@@ -63,7 +63,7 @@ jobs:
           file: docker-addon/Dockerfile
           push: true
           tags: |
-#            haargos/${{ matrix.arch }}:${{ steps.get_version.outputs.VERSION }}
+            haargos/${{ matrix.arch }}:${{ steps.get_version.outputs.VERSION }}
             haargos/${{ matrix.arch }}:latest
           build-args: |
             HAARGOS_VERSION=${{ steps.get_version.outputs.VERSION }}
