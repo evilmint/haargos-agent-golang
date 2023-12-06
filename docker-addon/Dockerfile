@@ -53,6 +53,8 @@ FROM "$FINAL_IMAGE"
 WORKDIR /root/
 
 ARG HAARGOS_VERSION
+ARG RUN_SCRIPT_NAME
+
 COPY --chmod=755 "docker-addon/$RUN_SCRIPT_NAME" ./run.sh
 COPY --from=builder /app/haargos-out ./haargos
 
