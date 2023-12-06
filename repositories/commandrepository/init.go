@@ -29,7 +29,7 @@ type CPUInfo struct {
 }
 
 func (c *CommandRepository) executeCommand(cmd string) (*string, error) {
-	out, err := exec.Command("bash", "-c", cmd).Output()
+	out, err := exec.Command("sh", "-c", cmd).Output()
 	if err != nil || strings.TrimSpace(string(out)) == "" {
 		return nil, err
 	}
