@@ -73,3 +73,4 @@ jobs:
             FINAL_IMAGE=ghcr.io/hassio-addons/base/${{ matrix.arch }}:14.3.2
             COMPILER_LINK=${{ matrix.compiler_link }}
             COMPILER_BINARY_NAME=${{ matrix.compiler_binary_name }}
+            RUN_SCRIPT_NAME=run-hassio.sh

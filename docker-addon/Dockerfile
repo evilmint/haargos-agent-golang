@@ -4,6 +4,7 @@ ARG FINAL_IMAGE
 ARG HAARGOS_VERSION
 ARG COMPILER_LINK
 ARG COMPILER_BINARY_NAME
+ARG RUN_SCRIPT_NAME
 
 # Builder stage
 FROM golang:1.17-alpine AS builder
@@ -14,6 +15,7 @@ ARG FINAL_IMAGE
 ARG HAARGOS_VERSION
 ARG COMPILER_LINK
 ARG COMPILER_BINARY_NAME
+ARG RUN_SCRIPT_NAME
 
 ENV GOPROXY=https://proxy.golang.org \
     GO111MODULE=on \
@@ -51,7 +53,7 @@ FROM "$FINAL_IMAGE"
 WORKDIR /root/
 
 ARG HAARGOS_VERSION
-COPY --chmod=755 docker-addon/run.sh ./run.sh
+COPY --chmod=755 "docker-addon/$RUN_SCRIPT_NAME" ./run.sh
 COPY --from=builder /app/haargos-out ./haargos
 
 LABEL \
