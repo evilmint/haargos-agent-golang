@@ -78,7 +78,7 @@ func (c *CommandRepository) GetCPUInfo() (*CPUInfo, error) {
 	scanner := bufio.NewScanner(file)
 	cpuCount := 0
 
-	arch, err := readArchitecture()
+	arch, err := c.executeCommand("uname -m")
 	if err != nil {
 		return nil, err
 	}
