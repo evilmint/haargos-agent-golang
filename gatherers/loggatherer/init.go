@@ -41,14 +41,34 @@ func readLogLines(filePath string) ([]string, error) {
 	}
 	defer file.Close()
 
+	reader := bufio.NewReader(file)
 	var lines []string
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		lines = append(lines, scanner.Text())
+	var line []byte
+	var isPrefix bool
+
+	for {
+		line, isPrefix, err = reader.ReadLine()
+		if err != nil {
+			break
+		}
+
+		fullLine := append([]byte(nil), line...)
+		for isPrefix {
+			line, isPrefix, err = reader.ReadLine()
+			if err != nil {
+				break
+			}
+			fullLine = append(fullLine, line...)
+		}
+		if err != nil {
+			break
+		}
+
+		lines = append(lines, string(fullLine))
 	}
 
-	if err := scanner.Err(); err != nil {
-		return nil, fmt.Errorf("Error scanning log file: %w", err)
+	if err != nil && err.Error() != "EOF" {
+		return nil, fmt.Errorf("Error reading log file: %w", err)
 	}
 
 	return lines, nil
