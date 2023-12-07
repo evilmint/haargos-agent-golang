@@ -151,11 +151,14 @@ func (z *ZigbeeDeviceGatherer) GatherDevices(z2mPath *string, zhaPath *string, d
 	if err != nil {
 		z.Logger.Fatal(err)
 	}
+	z.Logger.Infof("Querying state metas for %d entity ids.", len(entityIds))
 
 	results, err := queryStatesMeta(db, entityIds)
 	if err != nil {
 		z.Logger.Fatal(err)
 	}
+
+	z.Logger.Infof("Received %d states meta results.", len(results))
 
 	var metadataIDs []int
 	for _, metadataID := range results {
