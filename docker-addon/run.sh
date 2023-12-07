@@ -10,4 +10,4 @@ fi
 
 echo "Starting Haargos..."
 
-DEBUG="${DEBUG}" HAARGOS_AGENT_TOKEN="${HAARGOS_AGENT_TOKEN}" ./haargos run --agent-type addon --zha-path "/config/zigbee.db" --ha-config "/config/"
+DEBUG="${DEBUG}" HAARGOS_AGENT_TOKEN="${HAARGOS_AGENT_TOKEN}" ./haargos run --agent-type docker --zha-path "/config/zigbee.db" --ha-config "/config/"
