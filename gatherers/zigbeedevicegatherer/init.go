@@ -125,17 +125,17 @@ func (z *ZigbeeDeviceGatherer) GatherDevices(z2mPath *string, zhaPath *string, d
 	}
 
 	// Copy main DB, SHM, and WAL files if they exist
-	for _, ext := range []string{"", "-shm", "-wal"} {
-		src := dbPath + ext
-		dst := filepath.Join(tempDir, filepath.Base(dbPath)+ext)
-		if err := copyFile(src, dst); err != nil {
-			z.Logger.Fatal(err)
-		}
-	}
+	// for _, ext := range []string{"", "-shm", "-wal"} {
+	// 	src := dbPath + ext
+	// 	dst := filepath.Join(tempDir, filepath.Base(dbPath)+ext)
+	// 	if err := copyFile(src, dst); err != nil {
+	// 		log.Fatal(err)
+	// 	}
+	// }
 
-	// Open the SQLite database from the copied temporary path
-	tempDbPath := filepath.Join(tempDir, filepath.Base(dbPath))
-	db, err := sql.Open("sqlite3", tempDbPath)
+	// // Open the SQLite database from the copied temporary path
+	// tempDbPath := filepath.Join(tempDir, filepath.Base(dbPath))
+	db, err := sql.Open("sqlite3", dbPath)
 	if err != nil {
 		z.Logger.Fatal(err)
 	}
@@ -151,46 +151,46 @@ func (z *ZigbeeDeviceGatherer) GatherDevices(z2mPath *string, zhaPath *string, d
 	if err != nil {
 		z.Logger.Fatal(err)
 	}
-	z.Logger.Infof("Querying state metas for %d entity ids (%s).", len(entityIds), strings.Join(entityIds, ", "))
 
 	results, err := queryStatesMeta(db, entityIds)
 	if err != nil {
 		z.Logger.Fatal(err)
 	}
 
-	z.Logger.Infof("Received %d states meta results.", len(results))
-
 	var metadataIDs []int
 	for _, metadataID := range results {
 		metadataIDs = append(metadataIDs, metadataID)
 	}
 
-	// Construct stateQuery with ? placeholders
-	placeholders := strings.Repeat(",?", len(metadataIDs)-1)
-	stateQuery := "SELECT metadata_id, state FROM states WHERE state IS NOT NULL AND metadata_id IN (?" + placeholders + ")"
-
-	// Convert metadataIDs to []interface{} for db.Query
-	stateParams := make([]interface{}, len(metadataIDs))
-	for i, v := range metadataIDs {
-		stateParams[i] = v
-	}
-
-	stateRows, err := db.Query(stateQuery, stateParams...)
-	if err != nil {
-		z.Logger.Fatal(err)
-	}
-	defer stateRows.Close()
-
 	stateByMetadataId := make(map[int]string)
-	for stateRows.Next() {
-		var metadataId2 int
-		var state sql.NullString
-		err = stateRows.Scan(&metadataId2, &state)
+
+	if len(metadataIDs) > 0 {
+		// Construct stateQuery with ? placeholders
+		placeholders := strings.Repeat(",?", len(metadataIDs)-1)
+		stateQuery := "SELECT metadata_id, state FROM states WHERE state IS NOT NULL AND metadata_id IN (?" + placeholders + ")"
+
+		// Convert metadataIDs to []interface{} for db.Query
+		stateParams := make([]interface{}, len(metadataIDs))
+		for i, v := range metadataIDs {
+			stateParams[i] = v
+		}
+
+		stateRows, err := db.Query(stateQuery, stateParams...)
 		if err != nil {
 			z.Logger.Fatal(err)
 		}
-		if state.Valid {
-			stateByMetadataId[metadataId2] = state.String
+		defer stateRows.Close()
+
+		for stateRows.Next() {
+			var metadataId2 int
+			var state sql.NullString
+			err = stateRows.Scan(&metadataId2, &state)
+			if err != nil {
+				z.Logger.Fatal(err)
+			}
+			if state.Valid {
+				stateByMetadataId[metadataId2] = state.String
+			}
 		}
 	}
 
@@ -220,7 +220,7 @@ func (z *ZigbeeDeviceGatherer) GatherDevices(z2mPath *string, zhaPath *string, d
 		z.Logger.Debugf("Acquired Zigbee ZHA network status.")
 	}
 
-	z.Logger.Debugf("Total Zigbee devices count: %d.", len(zigbeeDevices))
+	z.Logger.Debugf("Total Zigbee devices count: %d", len(zigbeeDevices))
 
 	return zigbeeDevices, nil
 }
