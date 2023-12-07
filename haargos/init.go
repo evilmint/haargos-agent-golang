@@ -178,7 +178,17 @@ const (
 func (h *Haargos) Run(params RunParams) {
 	var interval time.Duration
 
-	if params.AgentType != "bin" && params.AgentType != "addon" {
+	validAgentTypes := []string{"bin", "addon", "docker"}
+
+	isAgentTypeValid := false
+	for _, t := range validAgentTypes {
+		if params.AgentType == t {
+			isAgentTypeValid = true
+			break
+		}
+	}
+
+	if !isAgentTypeValid {
 		h.Logger.Fatalf("Invalid agent type.")
 	}
 
