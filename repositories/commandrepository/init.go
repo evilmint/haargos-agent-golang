@@ -51,21 +51,40 @@ func readArchitecture() (*string, error) {
 	return &str, nil
 }
 
+package main
+
+import (
+	"os"
+	"strconv"
+	"strings"
+)
+
 func readCurrentFrequency() (*float32, error) {
-	bytes, err := os.ReadFile("/sys/devices/system/cpu/cpufreq/policy0/cpuinfo_cur_freq")
-	if err != nil {
-		return nil, err
+	files := []string{
+		"/sys/devices/system/cpu/cpufreq/policy0/cpuinfo_cur_freq",
+		"/sys/devices/system/cpu/cpufreq/policy0/scaling_cur_freq",
+		"/sys/devices/system/cpu/cpufreq/policy0/cpuinfo_max_freq",
+		"/sys/devices/system/cpu/cpufreq/policy0/scaling_max_freq",
 	}
 
-	str := strings.TrimSpace(string(bytes))
-	freq, err := strconv.ParseFloat(str, 32) // Parse as float32
-	if err != nil {
-		return nil, err
+	var err error
+	for _, file := range files {
+		var bytes []byte
+		bytes, err = os.ReadFile(file)
+		if err == nil {
+			str := strings.TrimSpace(string(bytes))
+			var freq float64
+			freq, err = strconv.ParseFloat(str, 32)
+			if err == nil {
+				freq32 := float32(freq)
+				return &freq32, nil
+			}
+		}
 	}
 
-	freq32 := float32(freq)
-	return &freq32, nil
+	return nil, err
 }
+
 
 func (c *CommandRepository) GetCPUInfo() (*CPUInfo, error) {
 	file, err := os.Open("/proc/cpuinfo")
