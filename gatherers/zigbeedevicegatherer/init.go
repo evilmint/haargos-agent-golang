@@ -125,17 +125,17 @@ func (z *ZigbeeDeviceGatherer) GatherDevices(z2mPath *string, zhaPath *string, d
 	}
 
 	// Copy main DB, SHM, and WAL files if they exist
-	// for _, ext := range []string{"", "-shm", "-wal"} {
-	// 	src := dbPath + ext
-	// 	dst := filepath.Join(tempDir, filepath.Base(dbPath)+ext)
-	// 	if err := copyFile(src, dst); err != nil {
-	// 		log.Fatal(err)
-	// 	}
-	// }
+	for _, ext := range []string{"", "-shm", "-wal"} {
+		src := dbPath + ext
+		dst := filepath.Join(tempDir, filepath.Base(dbPath)+ext)
+		if err := copyFile(src, dst); err != nil {
+			z.Logger.Fatal(err)
+		}
+	}
 
-	// // Open the SQLite database from the copied temporary path
-	// tempDbPath := filepath.Join(tempDir, filepath.Base(dbPath))
-	db, err := sql.Open("sqlite3", dbPath)
+	// Open the SQLite database from the copied temporary path
+	tempDbPath := filepath.Join(tempDir, filepath.Base(dbPath))
+	db, err := sql.Open("sqlite3", tempDbPath)
 	if err != nil {
 		z.Logger.Fatal(err)
 	}
