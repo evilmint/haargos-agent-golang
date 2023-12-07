@@ -51,14 +51,6 @@ func readArchitecture() (*string, error) {
 	return &str, nil
 }
 
-package main
-
-import (
-	"os"
-	"strconv"
-	"strings"
-)
-
 func readCurrentFrequency() (*float32, error) {
 	files := []string{
 		"/sys/devices/system/cpu/cpufreq/policy0/cpuinfo_cur_freq",
@@ -84,7 +76,6 @@ func readCurrentFrequency() (*float32, error) {
 
 	return nil, err
 }
-
 
 func (c *CommandRepository) GetCPUInfo() (*CPUInfo, error) {
 	file, err := os.Open("/proc/cpuinfo")
