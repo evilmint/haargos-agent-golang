@@ -115,6 +115,7 @@ type ZigbeeDevice struct {
 	Ieee            string    `json:"ieee"`
 	Lqi             int       `json:"lqi"`
 	LastUpdated     time.Time `json:"last_updated"`
+	DeviceID        string    `json:"device_id"`
 	NameByUser      *string   `json:"name_by_user"` // can be string or null
 	PowerSource     *string   `json:"power_source"` // can be string or null
 	EntityName      string    `json:"entity_name"`
@@ -138,8 +139,9 @@ type Automation struct {
 
 type Script struct {
 	FriendlyName  string    `json:"friendly_name"  yaml:"friendly_name"`
-	State         string    `json:"state"         yaml:"state"`
-	Alias         string    `json:"alias"                   yaml:"alias"`
+	State         string    `json:"state"          yaml:"state"`
+	Alias         string    `json:"alias"          yaml:"alias"`
+	UniqueId      string    `json:"unique_id"      yaml:"unique_id"`
 	LastTriggered time.Time `json:"last_triggered" yaml:"last_triggered"`
 }
 

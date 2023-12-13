@@ -88,6 +88,7 @@ func queryStatesMeta(db *sql.DB, entityIDs []string) (map[string]int, error) {
 func (z *ZigbeeDeviceGatherer) GatherDevices(z2mPath *string, zhaPath *string, deviceRegistry *types.DeviceRegistry, entityRegistry *types.EntityRegistry, configPath string) ([]types.ZigbeeDevice, error) {
 	nameByIEEE := make(map[string]string)
 	ieeeByDeviceId := make(map[string]string)
+	deviceIdByIeee := make(map[string]string)
 
 	for _, device := range deviceRegistry.Data.Devices {
 		for _, connection := range device.Connections {
@@ -98,6 +99,7 @@ func (z *ZigbeeDeviceGatherer) GatherDevices(z2mPath *string, zhaPath *string, d
 				}
 				nameByIEEE[connection[1]] = nameByUser
 				ieeeByDeviceId[device.ID] = connection[1]
+				deviceIdByIeee[connection[1]] = device.ID
 			}
 		}
 	}
@@ -211,12 +213,24 @@ func (z *ZigbeeDeviceGatherer) GatherDevices(z2mPath *string, zhaPath *string, d
 	var zigbeeDevices = make([]types.ZigbeeDevice, 0)
 
 	if z2mPath != nil && *z2mPath != "" {
-		zigbeeDevices = append(zigbeeDevices, z.gatherFromZ2M(*z2mPath, nameByIEEE, stateByIeee)...)
+		z2mDevices := z.gatherFromZ2M(*z2mPath, nameByIEEE, stateByIeee)
+		for i, device := range z2mDevices {
+			if deviceId, ok := deviceIdByIeee[device.Ieee]; ok {
+				z2mDevices[i].DeviceID = deviceId
+			}
+		}
+		zigbeeDevices = append(zigbeeDevices, z2mDevices...)
 		z.Logger.Debugf("Acquired Zigbee Z2M network status.")
 	}
 
 	if zhaPath != nil && *zhaPath != "" {
-		zigbeeDevices = append(zigbeeDevices, z.gatherFromZHA(*zhaPath, nameByIEEE, stateByIeee)...)
+		zhaDevices := z.gatherFromZHA(*zhaPath, nameByIEEE, stateByIeee)
+		for i, device := range zhaDevices {
+			if deviceId, ok := deviceIdByIeee[device.Ieee]; ok {
+				zhaDevices[i].DeviceID = deviceId
+			}
+		}
+		zigbeeDevices = append(zigbeeDevices, zhaDevices...)
 		z.Logger.Debugf("Acquired Zigbee ZHA network status.")
 	}
 

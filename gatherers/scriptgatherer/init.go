@@ -38,7 +38,9 @@ func (s *ScriptGatherer) GatherScripts(configPath string, restoreState types.Res
 
 	// Convert map to slice
 	scripts := make([]types.Script, 0, len(scriptsMap))
-	for _, script := range scriptsMap {
+	for uniqueId, script := range scriptsMap {
+		var script = script
+		script.UniqueId = uniqueId
 		scripts = append(scripts, script)
 	}
 
