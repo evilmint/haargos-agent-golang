@@ -17,6 +17,12 @@ fi
 
 bashio::log.info "Starting Haargos..."
 
+XSTAGE="production"
+if bashio::config.true 'dev'; then
+    XSTAGE="dev"
+    bashio::log.info "Connecting to dev."
+fi
+
 XDEBUG="false"
 # Check for debug mode without causing the script to exit if debug mode is false
 if bashio::config.true 'debug_mode'; then
@@ -24,4 +30,4 @@ if bashio::config.true 'debug_mode'; then
     bashio::log.info "Debug mode is enabled."
 fi
 
-DEBUG="${XDEBUG}" HAARGOS_AGENT_TOKEN="${agent_token}" ./haargos run --agent-type addon --zha-path "${HA_CONFIG}zigbee.db" --ha-config "${HA_CONFIG}"
+STAGE="${XSTAGE}" DEBUG="${XDEBUG}" HAARGOS_AGENT_TOKEN="${agent_token}" ./haargos run --agent-type addon --zha-path "${HA_CONFIG}zigbee.db" --ha-config "${HA_CONFIG}"

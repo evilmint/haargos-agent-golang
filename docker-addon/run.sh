@@ -6,8 +6,10 @@ if [ -z "${HAARGOS_AGENT_TOKEN}" ]; then
     exit 1
 fi
 
-# Start Haargos
+# Set STAGE to 'production' if not set
+STAGE=${STAGE:-production}
 
+# Start Haargos
 echo "Starting Haargos..."
 
-DEBUG="${DEBUG}" HAARGOS_AGENT_TOKEN="${HAARGOS_AGENT_TOKEN}" ./haargos run --agent-type docker --zha-path "/config/zigbee.db" --ha-config "/config/"
+STAGE="${STAGE}" DEBUG="${DEBUG}" HAARGOS_AGENT_TOKEN="${HAARGOS_AGENT_TOKEN}" ./haargos run --agent-type docker --zha-path "/config/zigbee.db" --ha-config "/config/"
