@@ -37,12 +37,18 @@ func NewHaargos(logger *logrus.Logger, debugEnabled bool) *Haargos {
 	}
 }
 
+const (
+	Production string = "production"
+	Dev               = "dev"
+)
+
 type RunParams struct {
 	AgentToken   string
 	AgentType    string
 	HaConfigPath string
 	Z2MPath      string
 	ZHAPath      string
+	Stage        string
 }
 
 func (h *Haargos) fetchLogs(haConfigPath string, ch chan string, wg *sync.WaitGroup) {
@@ -192,7 +198,15 @@ func (h *Haargos) Run(params RunParams) {
 		h.Logger.Fatalf("Invalid agent type.")
 	}
 
-	client := client.NewClient(params.AgentToken)
+	var apiURL string
+
+	if params.Stage == Dev {
+		apiURL = "https://api.haargos.com/"
+	} else {
+		apiURL = "https://api.dev.haargos.com/"
+	}
+
+	client := client.NewClient(apiURL, params.AgentToken)
 	agentConfig, err := client.FetchAgentConfig()
 
 	if err != nil {

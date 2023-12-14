@@ -58,6 +58,13 @@ func createHelpCommand() *cobra.Command {
 func createRunCommand() *cobra.Command {
 	var haConfigPath, z2mPath, zhaPath, agentType string
 	agentToken := os.Getenv("HAARGOS_AGENT_TOKEN")
+	var stage = os.Getenv("STAGE")
+
+	if stage == "" {
+		stage = "production"
+	} else if stage != "production" && stage != "dev" {
+		logger.Fatal("The stage env must be production or dev.")
+	}
 
 	cmdRun := &cobra.Command{
 		Use:   "run",
@@ -76,6 +83,7 @@ func createRunCommand() *cobra.Command {
 					HaConfigPath: haConfigPath,
 					Z2MPath:      z2mPath,
 					ZHAPath:      zhaPath,
+					Stage:        stage,
 				},
 			)
 		},

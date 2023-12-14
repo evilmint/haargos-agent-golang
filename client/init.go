@@ -13,8 +13,6 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-const apiURL = "https://api.haargos.com/"
-
 type HaargosClient struct {
 	BaseURL    string
 	AgentToken string
@@ -29,7 +27,7 @@ type AgentConfig struct {
 	CycleInterval int `json:"cycle_interval"`
 }
 
-func NewClient(agentToken string) *HaargosClient {
+func NewClient(apiURL string, agentToken string) *HaargosClient {
 	return &HaargosClient{
 		BaseURL:    apiURL,
 		AgentToken: agentToken,
