@@ -201,9 +201,9 @@ func (h *Haargos) Run(params RunParams) {
 	var apiURL string
 
 	if params.Stage == Dev {
-		apiURL = "https://api.haargos.com/"
-	} else {
 		apiURL = "https://api.dev.haargos.com/"
+	} else {
+		apiURL = "https://api.haargos.com/"
 	}
 
 	client := client.NewClient(apiURL, params.AgentToken)
