@@ -247,9 +247,9 @@ func (h *Haargos) Run(params RunParams) {
 		automationsCh := make(chan []types.Automation, 1)
 		scriptsCh := make(chan []types.Script, 1)
 		scenesCh := make(chan []types.Scene, 1)
-		logsCh := make(chan string, 1)
+		//logsCh := make(chan string, 1)
 
-		wg.Add(8)
+		wg.Add(7)
 		go h.calculateDocker(dockerCh, &wg)
 		go h.calculateEnvironment(environmentCh, &wg)
 		go h.calculateZigbee(params.HaConfigPath, &params.Z2MPath, &params.ZHAPath, zigbeeCh, &wg)
@@ -257,7 +257,7 @@ func (h *Haargos) Run(params RunParams) {
 		go h.calculateAutomations(params.HaConfigPath, restoreStateResponse, automationsCh, &wg)
 		go h.calculateScripts(params.HaConfigPath, restoreStateResponse, scriptsCh, &wg)
 		go h.calculateScenes(params.HaConfigPath, restoreStateResponse, scenesCh, &wg)
-		go h.fetchLogs(params.HaConfigPath, logsCh, &wg)
+		//go h.fetchLogs(params.HaConfigPath, logsCh, &wg)
 
 		wg.Wait()
 
@@ -269,7 +269,7 @@ func (h *Haargos) Run(params RunParams) {
 		observation.Scripts = <-scriptsCh
 		observation.Scenes = <-scenesCh
 		observation.AgentVersion = "Release 1.0.0"
-		observation.Logs = <-logsCh
+		//observation.Logs = <-logsCh
 		observation.AgentType = params.AgentType
 
 		response, err := client.SendObservation(observation)
