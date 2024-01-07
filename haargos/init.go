@@ -223,10 +223,9 @@ func (h *Haargos) Run(params RunParams) {
 
 	// log.Errorf("cycle interval: %d", agentConfig.CycleInterval)
 
-	logInterval := 5 * time.Minute // Adjust the interval as needed
-	go h.sendLogsTick(params.HaConfigPath, client, logInterval)
-
 	interval = time.Duration(agentConfig.CycleInterval) * time.Second
+
+	go h.sendLogsTick(params.HaConfigPath, client, interval)
 
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
@@ -310,9 +309,23 @@ func (h *Haargos) sendLogs(haConfigPath string, client *client.HaargosClient) {
 	logs := types.Logs{Type: "core", Content: logContent}
 
 	// Send the logs
-	if response, err := client.SendLogs(logs); err != nil {
-		h.Logger.Errorf("Error sending logs: %v, Status %s", err, response.Status)
+	response, err := client.SendLogs(logs)
+	if err != nil || response.Status != "200 OK" {
+		h.Logger.Errorf("Error sending request request: %v", err)
+
+		bodyBytes, err := io.ReadAll(response.Body)
+		if err != nil {
+			h.Logger.Errorf("Sending request failed: %v", err)
+			return
+		}
+
+		bodyString := string(bodyBytes)
+		if bodyString != "" {
+			h.Logger.Errorf("Response body: %s\n", bodyString)
+		}
 	}
+
+	response.Body.Close()
 }
 
 func (h *Haargos) sendLogsTick(haConfigPath string, client *client.HaargosClient, logInterval time.Duration) {
