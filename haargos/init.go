@@ -223,6 +223,9 @@ func (h *Haargos) Run(params RunParams) {
 
 	// log.Errorf("cycle interval: %d", agentConfig.CycleInterval)
 
+	logInterval := 5 * time.Minute // Adjust the interval as needed
+	go h.sendLogsTick(params.HaConfigPath, client, logInterval)
+
 	interval = time.Duration(agentConfig.CycleInterval) * time.Second
 
 	ticker := time.NewTicker(interval)
@@ -269,7 +272,7 @@ func (h *Haargos) Run(params RunParams) {
 		observation.Scripts = <-scriptsCh
 		observation.Scenes = <-scenesCh
 		observation.AgentVersion = "Release 1.0.0"
-		//observation.Logs = <-logsCh
+		// observation.Logs = <-logsCh
 		observation.AgentType = params.AgentType
 
 		response, err := client.SendObservation(observation)
@@ -296,5 +299,27 @@ func (h *Haargos) Run(params RunParams) {
 
 	for range ticker.C {
 		handleTick()
+	}
+}
+
+func (h *Haargos) sendLogs(haConfigPath string, client *client.HaargosClient) {
+	gatherer := loggatherer.NewLogGatherer(h.Logger)
+	logContent := gatherer.GatherLogs(haConfigPath)
+	h.Logger.Debugf("Collected core logs.")
+
+	logs := types.Logs{Type: "core", Content: logContent}
+
+	// Send the logs
+	if response, err := client.SendLogs(logs); err != nil {
+		h.Logger.Errorf("Error sending logs: %v, Status %s", err, response.Status)
+	}
+}
+
+func (h *Haargos) sendLogsTick(haConfigPath string, client *client.HaargosClient, logInterval time.Duration) {
+	logTicker := time.NewTicker(logInterval)
+	defer logTicker.Stop()
+
+	for range logTicker.C {
+		h.sendLogs(haConfigPath, client)
 	}
 }

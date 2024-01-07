@@ -69,6 +69,46 @@ func (c *HaargosClient) FetchAgentConfig() (*AgentConfig, error) {
 	return &config.Body, nil
 }
 
+func (c *HaargosClient) SendLogs(logs types.Logs) (*http.Response, error) {
+	url := c.BaseURL + "logs"
+
+	jsonData, err := json.Marshal(logs)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling JSON: %v", err)
+	}
+
+	c.Logger.Debugf("Sending %s", string(jsonData))
+
+	var buf bytes.Buffer
+	g := gzip.NewWriter(&buf)
+	if _, err = g.Write(jsonData); err != nil {
+		c.Logger.Error(err)
+		return nil, fmt.Errorf("error compressing JSON: %v", err)
+	}
+	if err = g.Close(); err != nil {
+		c.Logger.Error(err)
+		return nil, fmt.Errorf("error compressing JSON: %v", err)
+	}
+
+	req, err := http.NewRequest("PUT", url, &buf)
+	if err != nil {
+		return nil, fmt.Errorf("error creating request: %v", err)
+	}
+
+	req.Header.Set("Content-Encoding", "gzip")
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("x-agent-token", c.AgentToken)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("error sending request: %v", err)
+	}
+
+	fmt.Printf("Response status: %s\n", resp.Status)
+	return resp, nil
+}
+
 func (c *HaargosClient) SendObservation(observation types.Observation) (*http.Response, error) {
 	url := c.BaseURL + "observations"
 

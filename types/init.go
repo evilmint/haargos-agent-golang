@@ -83,7 +83,6 @@ type Observation struct {
 	AgentType    string       `json:"agent_type"`
 	AgentVersion string       `json:"agent_version"`
 	Environment  Environment  `json:"environment"`
-	Logs         string       `json:"logs"`
 	Zigbee       ZigbeeStatus `json:"zigbee"`
 	HAConfig     HAConfig     `json:"ha_config"`
 	Automations  []Automation `json:"automations"`
@@ -348,6 +347,11 @@ type Z2MDevice struct {
 	ZclVersion         int
 	InterviewCompleted bool
 	LastSeen           int64
+}
+
+type Logs struct {
+	Type    string `json:"type"`
+	Content string `json:"content"`
 }
 
 func ifEmpty(value string, defaultValue string) string {
