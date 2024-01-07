@@ -319,6 +319,7 @@ func (h *Haargos) sendLogsTick(haConfigPath string, client *client.HaargosClient
 	logTicker := time.NewTicker(logInterval)
 	defer logTicker.Stop()
 
+	h.sendLogs(haConfigPath, client)
 	for range logTicker.C {
 		h.sendLogs(haConfigPath, client)
 	}

@@ -70,7 +70,7 @@ func (c *HaargosClient) FetchAgentConfig() (*AgentConfig, error) {
 }
 
 func (c *HaargosClient) SendLogs(logs types.Logs) (*http.Response, error) {
-	url := c.BaseURL + "logs"
+	url := c.BaseURL + "installations/logs"
 
 	jsonData, err := json.Marshal(logs)
 	if err != nil {
