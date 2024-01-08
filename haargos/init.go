@@ -227,7 +227,7 @@ func (h *Haargos) Run(params RunParams) {
 	interval = time.Duration(agentConfig.CycleInterval) * time.Second
 
 	go h.sendLogsTick(params.HaConfigPath, client, interval)
-	go h.sendNotificationsTick(params.HaConfigPath, interval)
+	go h.sendNotificationsTick(params.HaConfigPath, client, interval)
 
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
