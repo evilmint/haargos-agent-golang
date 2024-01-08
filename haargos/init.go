@@ -22,6 +22,7 @@ import (
 	"github.com/evilmint/haargos-agent-golang/registry"
 	"github.com/evilmint/haargos-agent-golang/repositories/commandrepository"
 	"github.com/evilmint/haargos-agent-golang/types"
+	websocketclient "github.com/evilmint/haargos-agent-golang/websocket-client"
 	"github.com/sirupsen/logrus"
 )
 
@@ -226,6 +227,7 @@ func (h *Haargos) Run(params RunParams) {
 	interval = time.Duration(agentConfig.CycleInterval) * time.Second
 
 	go h.sendLogsTick(params.HaConfigPath, client, interval)
+	go h.sendNotificationsTick(params.HaConfigPath, interval)
 
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
@@ -335,5 +337,49 @@ func (h *Haargos) sendLogsTick(haConfigPath string, client *client.HaargosClient
 	h.sendLogs(haConfigPath, client)
 	for range logTicker.C {
 		h.sendLogs(haConfigPath, client)
+	}
+}
+
+func (h *Haargos) sendNotifications(haConfigPath string, client *client.HaargosClient) {
+	wsClient := websocketclient.NewWebSocketClient("ws://homeassistant.local:8123/api/websocket")
+
+	notification, err := wsClient.FetchNotifications()
+	if err != nil {
+		h.Logger.Fatalf("Error fetching notifications: %v", err)
+	}
+
+	h.Logger.Infof("Notification count: %d\n", len(notification.Event.Notifications))
+
+	for _, notification := range notification.Event.Notifications {
+		h.Logger.Infof("Notification: %s\n\n", notification)
+	}
+
+	// // Send the logs
+	// response, err := client.SendLogs(logs)
+	// if err != nil || response.Status != "200 OK" {
+	// 	h.Logger.Errorf("Error sending request request: %v", err)
+
+	// 	bodyBytes, err := io.ReadAll(response.Body)
+	// 	if err != nil {
+	// 		h.Logger.Errorf("Sending request failed: %v", err)
+	// 		return
+	// 	}
+
+	// 	bodyString := string(bodyBytes)
+	// 	if bodyString != "" {
+	// 		h.Logger.Errorf("Response body: %s\n", bodyString)
+	// 	}
+	// }
+
+	// response.Body.Close()
+}
+
+func (h *Haargos) sendNotificationsTick(haConfigPath string, client *client.HaargosClient, notificationsInterval time.Duration) {
+	notificationsTicker := time.NewTicker(notificationsInterval)
+	defer notificationsTicker.Stop()
+
+	h.sendNotifications(haConfigPath, client)
+	for range notificationsTicker.C {
+		h.sendNotifications(haConfigPath, client)
 	}
 }
