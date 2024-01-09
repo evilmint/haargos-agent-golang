@@ -66,7 +66,7 @@ type WebsocketMessageBody struct {
 const WebsocketMessageTypeAuthRequired = "auth_required"
 const WebsocketMessageTypeAuthOK = "auth_ok"
 
-func (client *WebSocketClient) FetchNotifications() (*WSAPINotification, error) {
+func (client *WebSocketClient) FetchNotifications(accessToken string) (*WSAPINotification, error) {
 	err := client.Connect()
 	if err != nil {
 		return nil, err
@@ -86,7 +86,7 @@ func (client *WebSocketClient) FetchNotifications() (*WSAPINotification, error) 
 		}
 
 		if response.Type == WebsocketMessageTypeAuthRequired {
-			stringJSON, _ := json.Marshal(WebsocketMessageAuthBody{Type: "auth", AccessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJiZDNhZWU4NThhZmY0NDc4YjY4Zjg2YTUxYjEwY2MzNyIsImlhdCI6MTcwMjY0NzIxMywiZXhwIjoyMDE4MDA3MjEzfQ.qBb6Kb125brlMp7AX5VBguIwn6eSp4zprAEdBkuLIaQ"})
+			stringJSON, _ := json.Marshal(WebsocketMessageAuthBody{Type: "auth", AccessToken: accessToken})
 			client.Conn.WriteMessage(websocket.TextMessage, []byte(stringJSON))
 		} else if response.Type == WebsocketMessageTypeAuthOK {
 			stringJSON, _ := json.Marshal(WebsocketMessageBody{Id: 5, Type: "persistent_notification/subscribe"})

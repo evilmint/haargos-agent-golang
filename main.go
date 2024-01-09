@@ -56,7 +56,7 @@ func createHelpCommand() *cobra.Command {
 }
 
 func createRunCommand() *cobra.Command {
-	var haConfigPath, z2mPath, zhaPath, agentType string
+	var haConfigPath, z2mPath, zhaPath, agentType, accessToken, haEndpoint string
 	agentToken := os.Getenv("HAARGOS_AGENT_TOKEN")
 	var stage = os.Getenv("STAGE")
 
@@ -84,6 +84,8 @@ func createRunCommand() *cobra.Command {
 					Z2MPath:      z2mPath,
 					ZHAPath:      zhaPath,
 					Stage:        stage,
+					AccessToken:  accessToken,
+					HAEndpoint:   haEndpoint,
 				},
 			)
 		},
@@ -93,6 +95,8 @@ func createRunCommand() *cobra.Command {
 	cmdRun.Flags().StringVarP(&z2mPath, "z2m-path", "z", "", "Path to Z2M database")
 	cmdRun.Flags().StringVarP(&zhaPath, "zha-path", "x", "", "Path to ZHA database")
 	cmdRun.Flags().StringVarP(&agentType, "agent-type", "t", "bin", "Agent type")
+	cmdRun.Flags().StringVarP(&accessToken, "access-token", "a", "", "Access token")
+	cmdRun.Flags().StringVarP(&haEndpoint, "ha-endpoint", "e", "bin", "HA endpoint")
 
 	return cmdRun
 }

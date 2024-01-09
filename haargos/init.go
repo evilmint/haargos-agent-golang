@@ -51,6 +51,8 @@ type RunParams struct {
 	Z2MPath      string
 	ZHAPath      string
 	Stage        string
+	AccessToken  string
+	HAEndpoint   string
 }
 
 func (h *Haargos) fetchLogs(haConfigPath string, ch chan string, wg *sync.WaitGroup) {
@@ -228,7 +230,16 @@ func (h *Haargos) Run(params RunParams) {
 	interval = time.Duration(agentConfig.CycleInterval) * time.Second
 
 	go h.sendLogsTick(params.HaConfigPath, client, interval)
-	go h.sendNotificationsTick(params.HaConfigPath, client, interval)
+
+	if params.AccessToken != "" {
+		var haEndpoint = params.HAEndpoint
+
+		if haEndpoint == "" {
+			haEndpoint = "homeassistant.local"
+		}
+
+		go h.sendNotificationsTick(params.HaConfigPath, client, interval, params.AccessToken, params.HAEndpoint)
+	}
 
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
@@ -252,7 +263,6 @@ func (h *Haargos) Run(params RunParams) {
 		automationsCh := make(chan []types.Automation, 1)
 		scriptsCh := make(chan []types.Script, 1)
 		scenesCh := make(chan []types.Scene, 1)
-		//logsCh := make(chan string, 1)
 
 		wg.Add(7)
 		go h.calculateDocker(dockerCh, &wg)
@@ -262,7 +272,6 @@ func (h *Haargos) Run(params RunParams) {
 		go h.calculateAutomations(params.HaConfigPath, restoreStateResponse, automationsCh, &wg)
 		go h.calculateScripts(params.HaConfigPath, restoreStateResponse, scriptsCh, &wg)
 		go h.calculateScenes(params.HaConfigPath, restoreStateResponse, scenesCh, &wg)
-		//go h.fetchLogs(params.HaConfigPath, logsCh, &wg)
 
 		wg.Wait()
 
@@ -274,7 +283,6 @@ func (h *Haargos) Run(params RunParams) {
 		observation.Scripts = <-scriptsCh
 		observation.Scenes = <-scenesCh
 		observation.AgentVersion = "Release 1.0.0"
-		// observation.Logs = <-logsCh
 		observation.AgentType = params.AgentType
 
 		response, err := client.SendObservation(observation)
@@ -362,7 +370,7 @@ func (h *Haargos) readConfiguration(haConfigPath string) (*Configuration, error)
 	return &haConfig, err
 }
 
-func (h *Haargos) sendNotifications(haConfigPath string, client *client.HaargosClient) {
+func (h *Haargos) sendNotifications(haConfigPath string, client *client.HaargosClient, accessToken string, endpoint string) {
 	port := 8123
 
 	configuration, err := h.readConfiguration(haConfigPath)
@@ -370,14 +378,14 @@ func (h *Haargos) sendNotifications(haConfigPath string, client *client.HaargosC
 		port = *configuration.Http.ServerPort
 	}
 
-	wsClient := websocketclient.NewWebSocketClient(fmt.Sprintf("ws://homeassistant.local:%d/api/websocket", port))
+	wsClient := websocketclient.NewWebSocketClient(fmt.Sprintf("ws://%s:%d/api/websocket", endpoint, port))
 
-	notification, err := wsClient.FetchNotifications()
+	notification, err := wsClient.FetchNotifications(accessToken)
 	if err != nil {
 		h.Logger.Fatalf("Error fetching notifications: %v", err)
 	}
 
-	h.Logger.Infof("Read %d notifications\n", len(notification.Event.Notifications))
+	h.Logger.Infof("Read %d notifications", len(notification.Event.Notifications))
 
 	// Send notifications
 	notifications := make([]websocketclient.WSAPINotificationDetails, 0, len(notification.Event.Notifications))
@@ -398,21 +406,21 @@ func (h *Haargos) sendNotifications(haConfigPath string, client *client.HaargosC
 
 		bodyString := string(bodyBytes)
 		if bodyString != "" {
-			h.Logger.Errorf("Response body: %s\n", bodyString)
+			h.Logger.Errorf("Response body: %s", bodyString)
 		}
 	}
 
 	response.Body.Close()
 
-	h.Logger.Infof("Sent notifications\n")
+	h.Logger.Infof("Sent notifications")
 }
 
-func (h *Haargos) sendNotificationsTick(haConfigPath string, client *client.HaargosClient, notificationsInterval time.Duration) {
+func (h *Haargos) sendNotificationsTick(haConfigPath string, client *client.HaargosClient, notificationsInterval time.Duration, accessToken string, endpoint string) {
 	notificationsTicker := time.NewTicker(notificationsInterval)
 	defer notificationsTicker.Stop()
 
-	h.sendNotifications(haConfigPath, client)
+	h.sendNotifications(haConfigPath, client, accessToken, endpoint)
 	for range notificationsTicker.C {
-		h.sendNotifications(haConfigPath, client)
+		h.sendNotifications(haConfigPath, client, accessToken, endpoint)
 	}
 }
