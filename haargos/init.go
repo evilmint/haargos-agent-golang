@@ -234,7 +234,14 @@ func (h *Haargos) Run(params RunParams) {
 
 	if accessToken != "" {
 		if haEndpoint == "" {
-			haEndpoint = "homeassistant.local"
+			port := 8123
+
+			configuration, err := h.readConfiguration(params.HaConfigPath)
+			if err != nil && configuration.Http.ServerPort != nil {
+				port = *configuration.Http.ServerPort
+			}
+
+			haEndpoint = fmt.Sprintf("homeassistant.local:%d", port)
 		}
 
 		go h.sendNotificationsTick(params.HaConfigPath, client, interval, accessToken, haEndpoint)
