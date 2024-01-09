@@ -51,8 +51,6 @@ type RunParams struct {
 	Z2MPath      string
 	ZHAPath      string
 	Stage        string
-	AccessToken  string
-	HAEndpoint   string
 }
 
 func (h *Haargos) fetchLogs(haConfigPath string, ch chan string, wg *sync.WaitGroup) {
@@ -231,14 +229,15 @@ func (h *Haargos) Run(params RunParams) {
 
 	go h.sendLogsTick(params.HaConfigPath, client, interval)
 
-	if params.AccessToken != "" {
-		var haEndpoint = params.HAEndpoint
+	accessToken := os.Getenv("HA_ACCESS_TOKEN")
+	haEndpoint := os.Getenv("HA_ENDPOINT")
 
+	if accessToken != "" {
 		if haEndpoint == "" {
 			haEndpoint = "homeassistant.local"
 		}
 
-		go h.sendNotificationsTick(params.HaConfigPath, client, interval, params.AccessToken, params.HAEndpoint)
+		go h.sendNotificationsTick(params.HaConfigPath, client, interval, accessToken, haEndpoint)
 	}
 
 	ticker := time.NewTicker(interval)
