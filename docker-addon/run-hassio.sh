@@ -4,6 +4,7 @@ set -e
 # Configuration
 CONFIG_PATH=/data/options.json
 declare agent_token
+declare ha_access_tokens
 
 agent_token=$(bashio::config 'agent_token')
 ha_access_token=$(bashio::config 'ha_access_token')
