@@ -370,14 +370,14 @@ func (h *Haargos) readConfiguration(haConfigPath string) (*Configuration, error)
 }
 
 func (h *Haargos) sendNotifications(haConfigPath string, client *client.HaargosClient, accessToken string, endpoint string) {
-	port := 8123
+	// port := 8123
 
-	configuration, err := h.readConfiguration(haConfigPath)
-	if err != nil && configuration.Http.ServerPort != nil {
-		port = *configuration.Http.ServerPort
-	}
+	// configuration, err := h.readConfiguration(haConfigPath)
+	// if err != nil && configuration.Http.ServerPort != nil {
+	// 	port = *configuration.Http.ServerPort
+	// }
 
-	wsClient := websocketclient.NewWebSocketClient(fmt.Sprintf("ws://%s:%d/api/websocket", endpoint, port))
+	wsClient := websocketclient.NewWebSocketClient(fmt.Sprintf("ws://%s/api/websocket", endpoint))
 
 	notification, err := wsClient.FetchNotifications(accessToken)
 	if err != nil {
