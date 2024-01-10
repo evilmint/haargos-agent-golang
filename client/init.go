@@ -48,6 +48,8 @@ func (c *HaargosClient) sendRequest(method, url string, data interface{}) (*http
 	var buf *bytes.Buffer = nil
 
 	if hasPayload {
+		buf = new(bytes.Buffer)
+
 		g := gzip.NewWriter(buf)
 		if _, err = g.Write(jsonData); err != nil {
 			c.Logger.Error(err)
