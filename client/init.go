@@ -5,6 +5,7 @@ import (
 	"compress/gzip"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 
@@ -44,11 +45,10 @@ func (c *HaargosClient) sendRequest(method, url string, data interface{}) (*http
 	c.Logger.Debugf("Sending %s", string(jsonData))
 
 	hasPayload := strings.ToLower(method) == "put" || strings.ToLower(method) == "post"
-
-	var buf *bytes.Buffer = nil
+	var body io.Reader = nil // Initialize body as nil
 
 	if hasPayload {
-		buf = new(bytes.Buffer)
+		buf := new(bytes.Buffer)
 
 		g := gzip.NewWriter(buf)
 		if _, err = g.Write(jsonData); err != nil {
@@ -59,9 +59,10 @@ func (c *HaargosClient) sendRequest(method, url string, data interface{}) (*http
 			c.Logger.Error(err)
 			return nil, fmt.Errorf("error compressing JSON: %v", err)
 		}
+		body = buf
 	}
 
-	req, err := http.NewRequest(method, c.BaseURL+url, buf)
+	req, err := http.NewRequest(method, c.BaseURL+url, body)
 	if err != nil {
 		return nil, fmt.Errorf("error creating request: %v", err)
 	}
