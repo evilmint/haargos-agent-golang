@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/evilmint/haargos-agent-golang/types"
 	websocketclient "github.com/evilmint/haargos-agent-golang/websocket-client"
@@ -93,8 +94,11 @@ func (c *HaargosClient) sendRequest(method, url string, data interface{}) (*http
 		return nil, fmt.Errorf("error creating request: %v", err)
 	}
 
-	req.Header.Set("Content-Encoding", "gzip")
-	req.Header.Set("Content-Type", "application/json")
+	if strings.ToLower(method) == "post" || strings.ToLower(method) == "put" {
+		req.Header.Set("Content-Encoding", "gzip")
+		req.Header.Set("Content-Type", "application/json")
+	}
+
 	req.Header.Set("x-agent-token", c.AgentToken)
 
 	client := &http.Client{}
