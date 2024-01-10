@@ -36,7 +36,7 @@ func NewClient(apiURL string, agentToken string) *HaargosClient {
 	}
 }
 
-func (c *HaargosClient) sendRequest(method, url string, data interface{}) (*http.Response, error) {
+func (c *HaargosClient) sendRequest(method, url string, data interface{}, headers map[string]string) (*http.Response, error) {
 	jsonData, err := json.Marshal(data)
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling JSON: %v", err)
@@ -63,6 +63,11 @@ func (c *HaargosClient) sendRequest(method, url string, data interface{}) (*http
 	}
 
 	req, err := http.NewRequest(method, c.BaseURL+url, body)
+
+	for key, value := range headers {
+		req.Header.Add(key, value)
+	}
+
 	if err != nil {
 		return nil, fmt.Errorf("error creating request: %v", err)
 	}
@@ -84,8 +89,8 @@ func (c *HaargosClient) sendRequest(method, url string, data interface{}) (*http
 	return resp, nil
 }
 
-func (c *HaargosClient) FetchText(url string) (string, error) {
-	resp, err := c.sendRequest("GET", url, nil)
+func (c *HaargosClient) FetchText(url string, headers map[string]string) (string, error) {
+	resp, err := c.sendRequest("GET", url, nil, headers)
 	if err != nil {
 		return "", err
 	}
@@ -106,7 +111,7 @@ func (c *HaargosClient) FetchText(url string) (string, error) {
 }
 
 func (c *HaargosClient) FetchAgentConfig() (*AgentConfig, error) {
-	resp, err := c.sendRequest("GET", "agent-config", nil)
+	resp, err := c.sendRequest("GET", "agent-config", nil, make(map[string]string))
 	if err != nil {
 		return nil, err
 	}
@@ -130,13 +135,13 @@ type NotificationRequest struct {
 
 func (c *HaargosClient) SendNotifications(notifications []websocketclient.WSAPINotificationDetails) (*http.Response, error) {
 	requestData := NotificationRequest{Notifications: notifications}
-	return c.sendRequest("PUT", "installations/notifications", requestData)
+	return c.sendRequest("PUT", "installations/notifications", requestData, make(map[string]string))
 }
 
 func (c *HaargosClient) SendLogs(logs types.Logs) (*http.Response, error) {
-	return c.sendRequest("PUT", "installations/logs", logs)
+	return c.sendRequest("PUT", "installations/logs", logs, make(map[string]string))
 }
 
 func (c *HaargosClient) SendObservation(observation types.Observation) (*http.Response, error) {
-	return c.sendRequest("POST", "observations", observation)
+	return c.sendRequest("POST", "observations", observation, make(map[string]string))
 }

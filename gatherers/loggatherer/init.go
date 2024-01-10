@@ -36,7 +36,7 @@ func (l *LogGatherer) GatherCoreLogs(haConfigPath string) string {
 }
 
 func (l *LogGatherer) GatherSupervisorLogs(client *client.HaargosClient, supervisorToken string) (string, error) {
-	logs, err := client.FetchText("supervisor/logs")
+	logs, err := client.FetchText("supervisor/logs", map[string]string{"Authorization": fmt.Sprintf("Bearer %s", supervisorToken)})
 
 	if err != nil {
 		return "", err
