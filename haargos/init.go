@@ -304,7 +304,7 @@ func (h *Haargos) Run(params RunParams) {
 
 		response, err := haargosClient.SendObservation(observation)
 
-		if err != nil || response.Status != "200 OK" {
+		if err != nil || !strings.HasPrefix(response.Status, "2") {
 			h.Logger.Errorf("Error sending request request: %v", err)
 
 			bodyBytes, err := io.ReadAll(response.Body)
@@ -366,7 +366,10 @@ func (h *Haargos) sendLogs(haConfigPath string, client *client.HaargosClient, su
 func (h *Haargos) sendLogsToClient(client *client.HaargosClient, logs types.Logs) {
 	// Send the logs
 	response, err := client.SendLogs(logs)
-	if err != nil || response.Status != "200 OK" {
+
+	h.Logger.Infof(fmt.Sprintf("Sending logs of type %s to %s", logs.Type, logs.Content))
+
+	if err != nil || !strings.HasPrefix(response.Status, "2") {
 		h.Logger.Errorf("Error sending request request: %v", err)
 
 		bodyBytes, err := io.ReadAll(response.Body)
@@ -432,7 +435,7 @@ func (h *Haargos) sendNotifications(haConfigPath string, client *client.HaargosC
 		}
 
 		response, err := client.SendNotifications(notifications)
-		if err != nil || response.Status != "200 OK" {
+		if err != nil || !strings.HasPrefix(response.Status, "2") {
 			h.Logger.Errorf("Error sending request request: %v", err)
 
 			bodyBytes, err := io.ReadAll(response.Body)
