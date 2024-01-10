@@ -96,7 +96,7 @@ func (c *HaargosClient) FetchText(url string) (string, error) {
 	}
 
 	buf := new(strings.Builder)
-	n, err := io.Copy(buf, resp.Body)
+	_, err = io.Copy(buf, resp.Body)
 
 	if err != nil {
 		return "", err
