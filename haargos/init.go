@@ -241,7 +241,7 @@ func (h *Haargos) Run(params RunParams) {
 				port = *configuration.Http.ServerPort
 			}
 
-			haEndpoint = fmt.Sprintf("homeassistant.local:%d", port)
+			haEndpoint = fmt.Sprintf("homeassistant:%d", port)
 		}
 
 		go h.sendNotificationsTick(params.HaConfigPath, client, interval, accessToken, haEndpoint)
@@ -377,48 +377,41 @@ func (h *Haargos) readConfiguration(haConfigPath string) (*Configuration, error)
 }
 
 func (h *Haargos) sendNotifications(haConfigPath string, client *client.HaargosClient, accessToken string, endpoint string) {
-	// port := 8123
-
-	// configuration, err := h.readConfiguration(haConfigPath)
-	// if err != nil && configuration.Http.ServerPort != nil {
-	// 	port = *configuration.Http.ServerPort
-	// }
-
 	wsClient := websocketclient.NewWebSocketClient(fmt.Sprintf("ws://%s/api/websocket", endpoint))
-
 	notification, err := wsClient.FetchNotifications(accessToken)
+
 	if err != nil {
 		h.Logger.Fatalf("Error fetching notifications: %v", err)
-	}
+	} else {
+		h.Logger.Infof("Read %d notifications", len(notification.Event.Notifications))
 
-	h.Logger.Infof("Read %d notifications", len(notification.Event.Notifications))
+		// Send notifications
+		notifications := make([]websocketclient.WSAPINotificationDetails, 0, len(notification.Event.Notifications))
 
-	// Send notifications
-	notifications := make([]websocketclient.WSAPINotificationDetails, 0, len(notification.Event.Notifications))
-
-	for _, notification := range notification.Event.Notifications {
-		notifications = append(notifications, notification)
-	}
-
-	response, err := client.SendNotifications(notifications)
-	if err != nil || response.Status != "200 OK" {
-		h.Logger.Errorf("Error sending request request: %v", err)
-
-		bodyBytes, err := io.ReadAll(response.Body)
-		if err != nil {
-			h.Logger.Errorf("Sending request failed: %v", err)
-			return
+		for _, notification := range notification.Event.Notifications {
+			notifications = append(notifications, notification)
 		}
 
-		bodyString := string(bodyBytes)
-		if bodyString != "" {
-			h.Logger.Errorf("Response body: %s", bodyString)
+		response, err := client.SendNotifications(notifications)
+		if err != nil || response.Status != "200 OK" {
+			h.Logger.Errorf("Error sending request request: %v", err)
+
+			bodyBytes, err := io.ReadAll(response.Body)
+			if err != nil {
+				h.Logger.Errorf("Sending request failed: %v", err)
+				return
+			}
+
+			bodyString := string(bodyBytes)
+			if bodyString != "" {
+				h.Logger.Errorf("Response body: %s", bodyString)
+			}
 		}
+
+		response.Body.Close()
+
+		h.Logger.Infof("Sent notifications")
 	}
-
-	response.Body.Close()
-
-	h.Logger.Infof("Sent notifications")
 }
 
 func (h *Haargos) sendNotificationsTick(haConfigPath string, client *client.HaargosClient, notificationsInterval time.Duration, accessToken string, endpoint string) {
