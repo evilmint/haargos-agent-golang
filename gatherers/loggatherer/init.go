@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/evilmint/haargos-agent-golang/client"
 	"github.com/sirupsen/logrus"
 )
 
@@ -19,9 +20,9 @@ func NewLogGatherer(logger *logrus.Logger) *LogGatherer {
 	}
 }
 
-// GatherLogs retrieves the log entries with WARNING or ERROR levels.
+// GatherCoreLogs retrieves the log entries with WARNING or ERROR levels.
 // It returns the last 200 such lines as a single string.
-func (l *LogGatherer) GatherLogs(haConfigPath string) string {
+func (l *LogGatherer) GatherCoreLogs(haConfigPath string) string {
 	logFile := haConfigPath + "home-assistant.log"
 	lines, err := readLogLines(logFile)
 	if err != nil {
@@ -32,6 +33,26 @@ func (l *LogGatherer) GatherLogs(haConfigPath string) string {
 	logLines := filterLogLines(lines)
 	logContent := strings.Join(logLines, "\n")
 	return logContent
+}
+
+func (l *LogGatherer) GatherSupervisorLogs(client *client.HaargosClient, supervisorToken string) (string, error) {
+	logs, err := client.FetchText("supervisor/logs")
+
+	if err != nil {
+		return "", err
+	}
+
+	return logs, nil
+}
+
+func (l *LogGatherer) GatherHostLogs(client *client.HaargosClient, supervisorToken string) (string, error) {
+	logs, err := client.FetchText("host/logs")
+
+	if err != nil {
+		return "", err
+	}
+
+	return logs, nil
 }
 
 func readLogLines(filePath string) ([]string, error) {

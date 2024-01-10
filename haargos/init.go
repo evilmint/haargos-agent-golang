@@ -57,7 +57,7 @@ func (h *Haargos) fetchLogs(haConfigPath string, ch chan string, wg *sync.WaitGr
 	defer wg.Done()
 
 	gatherer := loggatherer.NewLogGatherer(h.Logger)
-	logContent := gatherer.GatherLogs(haConfigPath)
+	logContent := gatherer.GatherCoreLogs(haConfigPath)
 	h.Logger.Debugf("Collected logs.")
 	ch <- logContent
 }
@@ -208,8 +208,19 @@ func (h *Haargos) Run(params RunParams) {
 		apiURL = "https://api.haargos.com/"
 	}
 
-	client := client.NewClient(apiURL, params.AgentToken)
-	agentConfig, err := client.FetchAgentConfig()
+	supervisorEndpoint := "http://supervisor/"
+
+	supervisorToken := os.Getenv("SUPERVISOR_TOKEN")
+	haargosClient := client.NewClient(apiURL, params.AgentToken)
+	supervisorClient := client.NewClient(supervisorEndpoint, params.AgentToken)
+
+	if supervisorToken != "" {
+		h.Logger.Info("Supervisor token is set.")
+	} else {
+		h.Logger.Info("Supervisor token is not set.")
+	}
+
+	agentConfig, err := haargosClient.FetchAgentConfig()
 
 	if err != nil {
 		h.Logger.Fatalf("Failed to fetch agent config: %s", err)
@@ -227,7 +238,7 @@ func (h *Haargos) Run(params RunParams) {
 
 	interval = time.Duration(agentConfig.CycleInterval) * time.Second
 
-	go h.sendLogsTick(params.HaConfigPath, client, interval)
+	go h.sendLogsTick(params.HaConfigPath, haargosClient, supervisorClient, supervisorToken, interval)
 
 	accessToken := os.Getenv("HA_ACCESS_TOKEN")
 	haEndpoint := os.Getenv("HA_ENDPOINT")
@@ -244,7 +255,7 @@ func (h *Haargos) Run(params RunParams) {
 			haEndpoint = fmt.Sprintf("homeassistant:%d", port)
 		}
 
-		go h.sendNotificationsTick(params.HaConfigPath, client, interval, accessToken, haEndpoint)
+		go h.sendNotificationsTick(params.HaConfigPath, haargosClient, interval, accessToken, haEndpoint)
 	}
 
 	ticker := time.NewTicker(interval)
@@ -291,7 +302,7 @@ func (h *Haargos) Run(params RunParams) {
 		observation.AgentVersion = "Release 1.0.0"
 		observation.AgentType = params.AgentType
 
-		response, err := client.SendObservation(observation)
+		response, err := haargosClient.SendObservation(observation)
 
 		if err != nil || response.Status != "200 OK" {
 			h.Logger.Errorf("Error sending request request: %v", err)
@@ -318,13 +329,41 @@ func (h *Haargos) Run(params RunParams) {
 	}
 }
 
-func (h *Haargos) sendLogs(haConfigPath string, client *client.HaargosClient) {
+func (h *Haargos) sendLogs(haConfigPath string, client *client.HaargosClient, supervisorClient *client.HaargosClient, supervisorToken string) {
+
 	gatherer := loggatherer.NewLogGatherer(h.Logger)
-	logContent := gatherer.GatherLogs(haConfigPath)
+	logContent := gatherer.GatherCoreLogs(haConfigPath)
 	h.Logger.Debugf("Collected core logs.")
 
-	logs := types.Logs{Type: "core", Content: logContent}
+	coreLogs := types.Logs{Type: "core", Content: logContent}
+	h.sendLogsToClient(client, coreLogs)
 
+	if supervisorToken != "" {
+		supervisorLogContent, err := gatherer.GatherSupervisorLogs(supervisorClient, supervisorToken)
+
+		if err != nil {
+			h.Logger.Errorf("Failed collecting supervisor logs")
+		} else {
+			h.Logger.Debugf("Collected supervisor logs.")
+
+			supervisorLogs := types.Logs{Type: "supervisor", Content: supervisorLogContent}
+			h.sendLogsToClient(client, supervisorLogs)
+		}
+
+		hostLogContent, err := gatherer.GatherHostLogs(supervisorClient, supervisorToken)
+
+		if err != nil {
+			h.Logger.Errorf("Failed collecting host logs")
+		} else {
+			h.Logger.Debugf("Collected host logs.")
+
+			hostLogs := types.Logs{Type: "host", Content: hostLogContent}
+			h.sendLogsToClient(client, hostLogs)
+		}
+	}
+}
+
+func (h *Haargos) sendLogsToClient(client *client.HaargosClient, logs types.Logs) {
 	// Send the logs
 	response, err := client.SendLogs(logs)
 	if err != nil || response.Status != "200 OK" {
@@ -345,13 +384,13 @@ func (h *Haargos) sendLogs(haConfigPath string, client *client.HaargosClient) {
 	response.Body.Close()
 }
 
-func (h *Haargos) sendLogsTick(haConfigPath string, client *client.HaargosClient, logInterval time.Duration) {
+func (h *Haargos) sendLogsTick(haConfigPath string, client *client.HaargosClient, supervisorClient *client.HaargosClient, supervisorToken string, logInterval time.Duration) {
 	logTicker := time.NewTicker(logInterval)
 	defer logTicker.Stop()
 
-	h.sendLogs(haConfigPath, client)
+	h.sendLogs(haConfigPath, client, supervisorClient, supervisorToken)
 	for range logTicker.C {
-		h.sendLogs(haConfigPath, client)
+		h.sendLogs(haConfigPath, client, supervisorClient, supervisorToken)
 	}
 }
 

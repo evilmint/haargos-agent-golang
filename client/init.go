@@ -84,6 +84,27 @@ func (c *HaargosClient) sendRequest(method, url string, data interface{}) (*http
 	return resp, nil
 }
 
+func (c *HaargosClient) FetchText(url string) (string, error) {
+	resp, err := c.sendRequest("GET", url, nil)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("received non-OK response status: %s", resp.Status)
+	}
+
+	buf := new(strings.Builder)
+	n, err := io.Copy(buf, resp.Body)
+
+	if err != nil {
+		return "", err
+	}
+
+	return buf.String(), nil
+}
+
 func (c *HaargosClient) FetchAgentConfig() (*AgentConfig, error) {
 	resp, err := c.sendRequest("GET", "agent-config", nil)
 	if err != nil {
