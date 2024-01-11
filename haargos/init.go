@@ -329,6 +329,10 @@ func (h *Haargos) Run(params RunParams) {
 	}
 }
 
+type LogFetchType struct {
+	logType string
+}
+
 func (h *Haargos) sendLogs(haConfigPath string, client *client.HaargosClient, supervisorClient *client.HaargosClient, supervisorToken string) {
 
 	gatherer := loggatherer.NewLogGatherer(h.Logger)
@@ -339,26 +343,26 @@ func (h *Haargos) sendLogs(haConfigPath string, client *client.HaargosClient, su
 	h.sendLogsToClient(client, coreLogs)
 
 	if supervisorToken != "" {
-		supervisorLogContent, err := gatherer.GatherSupervisorLogs(supervisorClient, supervisorToken)
-
-		if err != nil {
-			h.Logger.Errorf("Failed collecting supervisor logs")
-		} else {
-			h.Logger.Debugf("Collected supervisor logs.")
-
-			supervisorLogs := types.Logs{Type: "supervisor", Content: supervisorLogContent}
-			h.sendLogsToClient(client, supervisorLogs)
+		var fetchTypes = [6]LogFetchType{
+			{logType: "core"},
+			{logType: "host"},
+			{logType: "supervisor"},
+			{logType: "multicast"},
+			{logType: "audio"},
+			{logType: "dns"},
 		}
 
-		hostLogContent, err := gatherer.GatherHostLogs(supervisorClient, supervisorToken)
+		for _, fetchType := range fetchTypes {
+			supervisorLogContent, err := gatherer.GatherHassioLogs(supervisorClient, supervisorToken, fetchType.logType)
 
-		if err != nil {
-			h.Logger.Errorf("Failed collecting host logs")
-		} else {
-			h.Logger.Debugf("Collected host logs.")
+			if err != nil {
+				h.Logger.Errorf("Failed collecting %s logs", fetchType.logType)
+			} else {
+				h.Logger.Debugf("Collected %s logs.", fetchType.logType)
 
-			hostLogs := types.Logs{Type: "host", Content: hostLogContent}
-			h.sendLogsToClient(client, hostLogs)
+				logs := types.Logs{Type: fetchType.logType, Content: supervisorLogContent}
+				h.sendLogsToClient(client, logs)
+			}
 		}
 	}
 }

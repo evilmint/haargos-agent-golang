@@ -35,18 +35,8 @@ func (l *LogGatherer) GatherCoreLogs(haConfigPath string) string {
 	return logContent
 }
 
-func (l *LogGatherer) GatherSupervisorLogs(client *client.HaargosClient, supervisorToken string) (string, error) {
-	logs, err := client.FetchText("supervisor/logs", map[string]string{"Authorization": fmt.Sprintf("Bearer %s", supervisorToken)})
-
-	if err != nil {
-		return "", err
-	}
-
-	return logs, nil
-}
-
-func (l *LogGatherer) GatherHostLogs(client *client.HaargosClient, supervisorToken string) (string, error) {
-	logs, err := client.FetchText("host/logs", map[string]string{"Authorization": fmt.Sprintf("Bearer %s", supervisorToken)})
+func (l *LogGatherer) GatherHassioLogs(client *client.HaargosClient, supervisorToken string, logSource string) (string, error) {
+	logs, err := client.FetchText(fmt.Sprintf("%s/logs", logSource), map[string]string{"Authorization": fmt.Sprintf("Bearer %s", supervisorToken)})
 
 	if err != nil {
 		return "", err
