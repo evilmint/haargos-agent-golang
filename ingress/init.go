@@ -2,8 +2,9 @@ package ingress
 
 import (
 	"fmt"
-	"io"
+	"html/template"
 	"net/http"
+	"path/filepath"
 )
 
 type Ingress struct {
@@ -14,10 +15,17 @@ func NewIngress() *Ingress {
 }
 
 func (i *Ingress) Run() error {
-	http.HandleFunc("/", getRoot)
-	http.HandleFunc("/hello", getHello)
+	fs := http.FileServer(http.Dir("./static"))
+	http.Handle("/static/", http.StripPrefix("/static/", fs))
 
 	defaultIngressPort := 8099
+
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		renderTemplate(w, "index.html", map[string]string{
+			"Title":   "Haargos",
+			"Heading": "Haargos main",
+		})
+	})
 
 	err := http.ListenAndServe(fmt.Sprintf(":%d", defaultIngressPort), nil)
 
@@ -28,12 +36,16 @@ func (i *Ingress) Run() error {
 	return nil
 }
 
-func getRoot(w http.ResponseWriter, r *http.Request) {
-	fmt.Printf("got / request\n")
-	io.WriteString(w, "<html><head></head><body><h1>This is my website! <b>test</b> <a href=\"/hello\">hello</a></h1></body></html>\n")
-}
+func renderTemplate(w http.ResponseWriter, tmpl string, data interface{}) {
+	tmplPath := filepath.Join("templates", tmpl)
+	t, err := template.ParseFiles(tmplPath)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
-func getHello(w http.ResponseWriter, r *http.Request) {
-	fmt.Printf("got /hello request\n")
-	io.WriteString(w, "Hello, HTTP!\n")
+	err = t.Execute(w, data)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }
