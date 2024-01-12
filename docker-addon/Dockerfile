@@ -60,8 +60,7 @@ COPY --chmod=755 "docker-addon/templates" ./templates
 COPY --chmod=755 "docker-addon/static" ./static
 COPY --from=builder /app/haargos-out ./haargos
 
-RUN echo "HAARGOS_VERSION is '$HAARGOS_VERSION'"
-RUN echo "$HAARGOS_VERSION" > ./VERSION
+RUN ["/bin/sh", "-c", "echo \"$HAARGOS_VERSION\" > ./VERSION"]
 
 LABEL \
   io.hass.version="$HAARGOS_VERSION" \
