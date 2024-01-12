@@ -238,6 +238,15 @@ func (h *Haargos) Run(params RunParams) {
 
 	// log.Errorf("cycle interval: %d", agentConfig.CycleInterval)
 
+	// Read the entire file as a byte slice.
+	data, err := os.ReadFile("VERSION")
+	if err != nil {
+		h.Logger.Fatalf("Failed to read agent version.")
+	}
+
+	// Convert the byte slice to a string and print it.
+	version := string(data)
+
 	interval = time.Duration(agentConfig.CycleInterval) * time.Second
 
 	go h.sendLogsTick(params.HaConfigPath, haargosClient, supervisorClient, supervisorToken, interval)
@@ -304,7 +313,7 @@ func (h *Haargos) Run(params RunParams) {
 		observation.Automations = <-automationsCh
 		observation.Scripts = <-scriptsCh
 		observation.Scenes = <-scenesCh
-		observation.AgentVersion = "Release 1.0.0"
+		observation.AgentVersion = version
 		observation.AgentType = params.AgentType
 
 		response, err := haargosClient.SendObservation(observation)
