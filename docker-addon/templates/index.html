@@ -5,7 +5,17 @@
     <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
-    <h1>{{.Heading}}</h1>
-    <!-- more content -->
+    <header>
+        <h1>{{.Title}}</h1>
+    </header>
+    <div class="container">
+        <h2>{{.Heading}}</h2>
+        <table>
+            <tr>
+                <th>Uptime</th>
+                <td>{{.Uptime}}</td>
+            </tr>
+        </table>
+    </div>
 </body>
 </html>

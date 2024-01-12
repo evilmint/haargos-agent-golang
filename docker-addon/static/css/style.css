@@ -1,0 +1,58 @@
+/* Base settings */
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: white;
+    color: #333;
+    line-height: 1.6;
+    padding: 0;
+    margin: 0;
+}
+
+/* Header settings */
+header {
+    background: #f4f4f4;
+    padding: 20px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+/* Main content and layout */
+.container {
+    width: 80%;
+    margin: auto;
+    overflow: hidden;
+}
+
+/* Styling for headings within the container */
+.container h2 {
+    color: #333;
+    margin-bottom: 20px;
+}
+
+/* Styling for statistical data display */
+.statistic {
+    background: #e7e7e7;
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 5px;
+}
+
+/* Table styling */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+
+table, th, td {
+    border: 1px solid #ddd;
+}
+
+th, td {
+    padding: 10px;
+    text-align: left;
+}
+
+th {
+    background-color: #f4f4f4;
+}

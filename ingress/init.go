@@ -5,9 +5,11 @@ import (
 	"html/template"
 	"net/http"
 	"path/filepath"
+	"time"
 )
 
 type Ingress struct {
+	StartTime time.Time
 }
 
 func NewIngress() *Ingress {
@@ -15,15 +17,26 @@ func NewIngress() *Ingress {
 }
 
 func (i *Ingress) Run() error {
+	i.StartTime = time.Now()
+
 	fs := http.FileServer(http.Dir("./static"))
 	http.Handle("/static/", http.StripPrefix("/static/", fs))
 
 	defaultIngressPort := 8099
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		currentTime := time.Now()
+		uptimeDuration := currentTime.Sub(i.StartTime)
+
+		// Extracting hours, minutes, and seconds
+		hours := int(uptimeDuration.Hours())
+		minutes := int(uptimeDuration.Minutes()) % 60
+		seconds := int(uptimeDuration.Seconds()) % 60
+
 		renderTemplate(w, "index.html", map[string]string{
 			"Title":   "Haargos",
 			"Heading": "Haargos main",
+			"Uptime":  fmt.Sprintf("Uptime: %d hours, %d minutes, %d seconds\n", hours, minutes, seconds),
 		})
 	})
 
