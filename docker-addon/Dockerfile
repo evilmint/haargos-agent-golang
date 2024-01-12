@@ -58,9 +58,8 @@ ARG RUN_SCRIPT_NAME
 COPY --chmod=755 "docker-addon/$RUN_SCRIPT_NAME" ./run.sh
 COPY --chmod=755 "docker-addon/templates" ./templates
 COPY --chmod=755 "docker-addon/static" ./static
+COPY --chmod=755 "VERSION" ./VERSION
 COPY --from=builder /app/haargos-out ./haargos
-
-RUN ["/bin/bash", "-c", "echo \"$HAARGOS_VERSION\" > ./VERSION"]
 
 LABEL \
   io.hass.version="$HAARGOS_VERSION" \
