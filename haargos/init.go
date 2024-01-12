@@ -19,6 +19,7 @@ import (
 	"github.com/evilmint/haargos-agent-golang/gatherers/scenegatherer"
 	"github.com/evilmint/haargos-agent-golang/gatherers/scriptgatherer"
 	"github.com/evilmint/haargos-agent-golang/gatherers/zigbeedevicegatherer"
+	"github.com/evilmint/haargos-agent-golang/ingress"
 	"github.com/evilmint/haargos-agent-golang/registry"
 	"github.com/evilmint/haargos-agent-golang/repositories/commandrepository"
 	"github.com/evilmint/haargos-agent-golang/types"
@@ -30,6 +31,7 @@ import (
 type Haargos struct {
 	EnvironmentGatherer *environmentgatherer.EnvironmentGatherer
 	Logger              *logrus.Logger
+	Ingress             *ingress.Ingress
 }
 
 func NewHaargos(logger *logrus.Logger, debugEnabled bool) *Haargos {
@@ -327,6 +329,9 @@ func (h *Haargos) Run(params RunParams) {
 	for range ticker.C {
 		handleTick()
 	}
+
+	h.Ingress = ingress.NewIngress()
+	go h.Ingress.Run()
 }
 
 type LogFetchType struct {
@@ -370,8 +375,6 @@ func (h *Haargos) sendLogs(haConfigPath string, client *client.HaargosClient, su
 func (h *Haargos) sendLogsToClient(client *client.HaargosClient, logs types.Logs) {
 	// Send the logs
 	response, err := client.SendLogs(logs)
-
-	h.Logger.Infof(fmt.Sprintf("Sending logs of type %s to %s", logs.Type, logs.Content))
 
 	if err != nil || !strings.HasPrefix(response.Status, "2") {
 		h.Logger.Errorf("Error sending request request: %v", err)
