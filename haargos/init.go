@@ -260,6 +260,9 @@ func (h *Haargos) Run(params RunParams) {
 		go h.sendNotificationsTick(params.HaConfigPath, haargosClient, interval, accessToken, haEndpoint)
 	}
 
+	h.Ingress = ingress.NewIngress()
+	go h.Ingress.Run()
+
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 
@@ -329,9 +332,6 @@ func (h *Haargos) Run(params RunParams) {
 	for range ticker.C {
 		handleTick()
 	}
-
-	h.Ingress = ingress.NewIngress()
-	go h.Ingress.Run()
 }
 
 type LogFetchType struct {
