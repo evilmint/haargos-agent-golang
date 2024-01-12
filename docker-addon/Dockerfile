@@ -56,6 +56,8 @@ ARG HAARGOS_VERSION
 ARG RUN_SCRIPT_NAME
 
 COPY --chmod=755 "docker-addon/$RUN_SCRIPT_NAME" ./run.sh
+COPY --chmod=755 "docker-addon/templates" ./templates
+COPY --chmod=755 "docker-addon/style" ./style
 COPY --from=builder /app/haargos-out ./haargos
 
 LABEL \
