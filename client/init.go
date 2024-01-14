@@ -42,7 +42,7 @@ func (c *HaargosClient) sendRequest(method, url string, data interface{}, header
 		return nil, fmt.Errorf("error marshaling JSON: %v", err)
 	}
 
-	c.Logger.Debugf("Sending %s", string(jsonData))
+	c.Logger.Infof("Sending %s", string(jsonData))
 
 	hasPayload := strings.ToLower(method) == "put" || strings.ToLower(method) == "post"
 	var body io.Reader = nil // Initialize body as nil
@@ -130,10 +130,23 @@ func (c *HaargosClient) FetchAgentConfig() (*AgentConfig, error) {
 }
 
 type Addon struct {
-	Name        string `json:"name"`
-	Version     string `json:"version"`
-	UpdateState string `json:"update_state"`
-	// Add other relevant fields here
+	Name            string `json:"name"`
+	Slug            string `json:"slug"`
+	Description     string `json:"description"`
+	Advanced        bool   `json:"advanced"`
+	Stage           string `json:"stage"`
+	Version         string `json:"version"`
+	VersionLatest   string `json:"version_latest"`
+	UpdateAvailable bool   `json:"update_available"`
+	Available       bool   `json:"available"`
+	Detached        bool   `json:"detached"`
+	Homeassistant   string `json:"homeassistant"`
+	State           string `json:"state"`
+	Repository      string `json:"repository"`
+	Build           bool   `json:"build"`
+	URL             string `json:"url"`
+	Icon            bool   `json:"icon"`
+	Logo            bool   `json:"logo"`
 }
 
 type SupervisorResponse struct {
