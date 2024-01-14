@@ -429,7 +429,7 @@ func (h *Haargos) sendAddons(haConfigPath string, client *client.HaargosClient, 
 	addonContent, err := supervisorClient.FetchAddons()
 
 	if err != nil || addonContent == nil {
-		h.Logger.Errorf("Failed collecting addons")
+		h.Logger.Errorf("Failed collecting addons %s", err)
 	} else {
 		h.Logger.Debugf("Collected %d addons.", len(*addonContent))
 
