@@ -129,6 +129,38 @@ func (c *HaargosClient) FetchAgentConfig() (*AgentConfig, error) {
 	return &config.Body, nil
 }
 
+type Addon struct {
+	Name        string `json:"name"`
+	Version     string `json:"version"`
+	UpdateState string `json:"update_state"`
+	// Add other relevant fields here
+}
+
+type SupervisorResponse struct {
+	Data struct {
+		Addons []Addon `json:"addons"`
+	} `json:"data"`
+}
+
+func (c *HaargosClient) FetchAddons() (*[]Addon, error) {
+	resp, err := c.sendRequest("GET", "addons", nil, make(map[string]string))
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("received non-OK response status: %s", resp.Status)
+	}
+
+	var response SupervisorResponse
+	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
+		return nil, fmt.Errorf("error unmarshaling response: %v", err)
+	}
+
+	return &response.Data.Addons, nil
+}
+
 type NotificationRequest struct {
 	Notifications []websocketclient.WSAPINotificationDetails `json:"notifications"`
 }
@@ -140,6 +172,10 @@ func (c *HaargosClient) SendNotifications(notifications []websocketclient.WSAPIN
 
 func (c *HaargosClient) SendLogs(logs types.Logs) (*http.Response, error) {
 	return c.sendRequest("PUT", "installations/logs", logs, make(map[string]string))
+}
+
+func (c *HaargosClient) SendAddons(addons []Addon) (*http.Response, error) {
+	return c.sendRequest("PUT", "installations/addons", addons, make(map[string]string))
 }
 
 func (c *HaargosClient) SendObservation(observation types.Observation) (*http.Response, error) {

@@ -250,6 +250,7 @@ func (h *Haargos) Run(params RunParams) {
 	interval = time.Duration(agentConfig.CycleInterval) * time.Second
 
 	go h.sendLogsTick(params.HaConfigPath, haargosClient, supervisorClient, supervisorToken, interval)
+	go h.sendAddonsTick(params.HaConfigPath, haargosClient, supervisorClient, supervisorToken, interval)
 
 	accessToken := os.Getenv("HA_ACCESS_TOKEN")
 	haEndpoint := os.Getenv("HA_ENDPOINT")
@@ -381,6 +382,27 @@ func (h *Haargos) sendLogs(haConfigPath string, client *client.HaargosClient, su
 	}
 }
 
+func (h *Haargos) sendAddonsToClient(client *client.HaargosClient, addons []client.Addon) {
+	response, err := client.SendAddons(addons)
+
+	if err != nil || !strings.HasPrefix(response.Status, "2") {
+		h.Logger.Errorf("Error sending request request: %v", err)
+
+		bodyBytes, err := io.ReadAll(response.Body)
+		if err != nil {
+			h.Logger.Errorf("Sending request failed: %v", err)
+			return
+		}
+
+		bodyString := string(bodyBytes)
+		if bodyString != "" {
+			h.Logger.Errorf("Response body: %s\n", bodyString)
+		}
+	}
+
+	response.Body.Close()
+}
+
 func (h *Haargos) sendLogsToClient(client *client.HaargosClient, logs types.Logs) {
 	// Send the logs
 	response, err := client.SendLogs(logs)
@@ -401,6 +423,28 @@ func (h *Haargos) sendLogsToClient(client *client.HaargosClient, logs types.Logs
 	}
 
 	response.Body.Close()
+}
+
+func (h *Haargos) sendAddons(haConfigPath string, client *client.HaargosClient, supervisorClient *client.HaargosClient, supervisorToken string) {
+	addonContent, err := supervisorClient.FetchAddons()
+
+	if err != nil || addonContent == nil {
+		h.Logger.Errorf("Failed collecting addons")
+	} else {
+		h.Logger.Debugf("Collected %d addons.", len(*addonContent))
+
+		h.sendAddonsToClient(client, *addonContent)
+	}
+}
+
+func (h *Haargos) sendAddonsTick(haConfigPath string, client *client.HaargosClient, supervisorClient *client.HaargosClient, supervisorToken string, addonInterval time.Duration) {
+	addonTicker := time.NewTicker(addonInterval)
+	defer addonTicker.Stop()
+
+	h.sendAddons(haConfigPath, client, supervisorClient, supervisorToken)
+	for range addonTicker.C {
+		h.sendAddons(haConfigPath, client, supervisorClient, supervisorToken)
+	}
 }
 
 func (h *Haargos) sendLogsTick(haConfigPath string, client *client.HaargosClient, supervisorClient *client.HaargosClient, supervisorToken string, logInterval time.Duration) {
