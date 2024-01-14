@@ -142,8 +142,8 @@ type SupervisorResponse struct {
 	} `json:"data"`
 }
 
-func (c *HaargosClient) FetchAddons() (*[]Addon, error) {
-	resp, err := c.sendRequest("GET", "addons", nil, make(map[string]string))
+func (c *HaargosClient) FetchAddons(headers map[string]string) (*[]Addon, error) {
+	resp, err := c.sendRequest("GET", "addons", nil, headers)
 	if err != nil {
 		return nil, err
 	}

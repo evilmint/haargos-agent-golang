@@ -426,7 +426,7 @@ func (h *Haargos) sendLogsToClient(client *client.HaargosClient, logs types.Logs
 }
 
 func (h *Haargos) sendAddons(haConfigPath string, client *client.HaargosClient, supervisorClient *client.HaargosClient, supervisorToken string) {
-	addonContent, err := supervisorClient.FetchAddons()
+	addonContent, err := supervisorClient.FetchAddons(map[string]string{"Authorization": fmt.Sprintf("Bearer %s", supervisorToken)})
 
 	if err != nil || addonContent == nil {
 		h.Logger.Errorf("Failed collecting addons %s", err)
