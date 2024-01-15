@@ -42,7 +42,7 @@ func (c *HaargosClient) sendRequest(method, url string, data interface{}, header
 		return nil, fmt.Errorf("error marshaling JSON: %v", err)
 	}
 
-	c.Logger.Infof("Sending %s", string(jsonData))
+	c.Logger.Debugf("Sending %s", string(jsonData))
 
 	hasPayload := strings.ToLower(method) == "put" || strings.ToLower(method) == "post"
 	var body io.Reader = nil // Initialize body as nil
