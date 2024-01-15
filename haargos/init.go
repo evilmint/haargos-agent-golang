@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"path"
 	"strings"
@@ -249,8 +250,12 @@ func (h *Haargos) Run(params RunParams) {
 
 	interval = time.Duration(agentConfig.CycleInterval) * time.Second
 
-	go h.sendLogsTick(params.HaConfigPath, haargosClient, supervisorClient, supervisorToken, interval)
-	go h.sendAddonsTick(params.HaConfigPath, haargosClient, supervisorClient, supervisorToken, interval)
+	runTicker(interval, func() {
+		h.sendLogs(params.HaConfigPath, haargosClient, supervisorClient, supervisorToken)
+	})
+	runTicker(interval, func() {
+		h.sendAddons(params.HaConfigPath, haargosClient, supervisorClient, supervisorToken)
+	})
 
 	accessToken := os.Getenv("HA_ACCESS_TOKEN")
 	haEndpoint := os.Getenv("HA_ENDPOINT")
@@ -267,7 +272,9 @@ func (h *Haargos) Run(params RunParams) {
 			haEndpoint = fmt.Sprintf("homeassistant:%d", port)
 		}
 
-		go h.sendNotificationsTick(params.HaConfigPath, haargosClient, interval, accessToken, haEndpoint)
+		runTicker(interval, func() {
+			h.sendNotifications(params.HaConfigPath, haargosClient, accessToken, haEndpoint)
+		})
 	}
 
 	h.Ingress = ingress.NewIngress()
@@ -318,23 +325,7 @@ func (h *Haargos) Run(params RunParams) {
 		observation.AgentType = params.AgentType
 
 		response, err := haargosClient.SendObservation(observation)
-
-		if err != nil || !strings.HasPrefix(response.Status, "2") {
-			h.Logger.Errorf("Error sending request request: %v", err)
-
-			bodyBytes, err := io.ReadAll(response.Body)
-			if err != nil {
-				h.Logger.Errorf("Sending request failed: %v", err)
-				return
-			}
-
-			bodyString := string(bodyBytes)
-			if bodyString != "" {
-				h.Logger.Errorf("Response body: %s\n", bodyString)
-			}
-		}
-
-		response.Body.Close()
+		handleHttpResponse(response, err, h.Logger, "sending observation")
 	}
 
 	handleTick()
@@ -382,47 +373,9 @@ func (h *Haargos) sendLogs(haConfigPath string, client *client.HaargosClient, su
 	}
 }
 
-func (h *Haargos) sendAddonsToClient(client *client.HaargosClient, addons []client.Addon) {
-	response, err := client.SendAddons(addons)
-
-	if err != nil || !strings.HasPrefix(response.Status, "2") {
-		h.Logger.Errorf("Error sending request request: %v", err)
-
-		bodyBytes, err := io.ReadAll(response.Body)
-		if err != nil {
-			h.Logger.Errorf("Sending request failed: %v", err)
-			return
-		}
-
-		bodyString := string(bodyBytes)
-		if bodyString != "" {
-			h.Logger.Errorf("Response body: %s\n", bodyString)
-		}
-	}
-
-	response.Body.Close()
-}
-
 func (h *Haargos) sendLogsToClient(client *client.HaargosClient, logs types.Logs) {
-	// Send the logs
 	response, err := client.SendLogs(logs)
-
-	if err != nil || !strings.HasPrefix(response.Status, "2") {
-		h.Logger.Errorf("Error sending request request: %v", err)
-
-		bodyBytes, err := io.ReadAll(response.Body)
-		if err != nil {
-			h.Logger.Errorf("Sending request failed: %v", err)
-			return
-		}
-
-		bodyString := string(bodyBytes)
-		if bodyString != "" {
-			h.Logger.Errorf("Response body: %s\n", bodyString)
-		}
-	}
-
-	response.Body.Close()
+	handleHttpResponse(response, err, h.Logger, "sending logs")
 }
 
 func (h *Haargos) sendAddons(haConfigPath string, client *client.HaargosClient, supervisorClient *client.HaargosClient, supervisorToken string) {
@@ -433,27 +386,8 @@ func (h *Haargos) sendAddons(haConfigPath string, client *client.HaargosClient, 
 	} else {
 		h.Logger.Debugf("Collected %d addons.", len(*addonContent))
 
-		h.sendAddonsToClient(client, *addonContent)
-	}
-}
-
-func (h *Haargos) sendAddonsTick(haConfigPath string, client *client.HaargosClient, supervisorClient *client.HaargosClient, supervisorToken string, addonInterval time.Duration) {
-	addonTicker := time.NewTicker(addonInterval)
-	defer addonTicker.Stop()
-
-	h.sendAddons(haConfigPath, client, supervisorClient, supervisorToken)
-	for range addonTicker.C {
-		h.sendAddons(haConfigPath, client, supervisorClient, supervisorToken)
-	}
-}
-
-func (h *Haargos) sendLogsTick(haConfigPath string, client *client.HaargosClient, supervisorClient *client.HaargosClient, supervisorToken string, logInterval time.Duration) {
-	logTicker := time.NewTicker(logInterval)
-	defer logTicker.Stop()
-
-	h.sendLogs(haConfigPath, client, supervisorClient, supervisorToken)
-	for range logTicker.C {
-		h.sendLogs(haConfigPath, client, supervisorClient, supervisorToken)
+		response, err := client.SendAddons(*addonContent)
+		handleHttpResponse(response, err, h.Logger, "sending addons")
 	}
 }
 
@@ -487,7 +421,6 @@ func (h *Haargos) sendNotifications(haConfigPath string, client *client.HaargosC
 	} else {
 		h.Logger.Infof("Read %d notifications", len(notification.Event.Notifications))
 
-		// Send notifications
 		notifications := make([]websocketclient.WSAPINotificationDetails, 0, len(notification.Event.Notifications))
 
 		for _, notification := range notification.Event.Notifications {
@@ -495,33 +428,38 @@ func (h *Haargos) sendNotifications(haConfigPath string, client *client.HaargosC
 		}
 
 		response, err := client.SendNotifications(notifications)
-		if err != nil || !strings.HasPrefix(response.Status, "2") {
-			h.Logger.Errorf("Error sending request request: %v", err)
-
-			bodyBytes, err := io.ReadAll(response.Body)
-			if err != nil {
-				h.Logger.Errorf("Sending request failed: %v", err)
-				return
-			}
-
-			bodyString := string(bodyBytes)
-			if bodyString != "" {
-				h.Logger.Errorf("Response body: %s", bodyString)
-			}
-		}
-
-		response.Body.Close()
+		handleHttpResponse(response, err, h.Logger, "sending notifications")
 
 		h.Logger.Infof("Sent notifications")
 	}
 }
 
-func (h *Haargos) sendNotificationsTick(haConfigPath string, client *client.HaargosClient, notificationsInterval time.Duration, accessToken string, endpoint string) {
-	notificationsTicker := time.NewTicker(notificationsInterval)
-	defer notificationsTicker.Stop()
+func handleHttpResponse(response *http.Response, err error, logger *logrus.Logger, context string) {
+	if err != nil || !strings.HasPrefix(response.Status, "2") {
+		logger.Errorf("Error in %s: %v", context, err)
 
-	h.sendNotifications(haConfigPath, client, accessToken, endpoint)
-	for range notificationsTicker.C {
-		h.sendNotifications(haConfigPath, client, accessToken, endpoint)
+		if response != nil {
+			bodyBytes, err := io.ReadAll(response.Body)
+			if err == nil {
+				logger.Errorf("Response body in %s: %s", context, string(bodyBytes))
+			}
+		}
 	}
+
+	if response != nil {
+		response.Body.Close()
+	}
+}
+
+func runTicker(interval time.Duration, action func()) {
+	go func() {
+		ticker := time.NewTicker(interval)
+		defer ticker.Stop()
+
+		action() // Execute the action once immediately before starting the ticker loop
+
+		for range ticker.C {
+			action()
+		}
+	}()
 }
