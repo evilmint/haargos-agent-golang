@@ -18,7 +18,6 @@ func NewIngress() *Ingress {
 
 func (i *Ingress) Run() error {
 	i.StartTime = time.Now()
-
 	fs := http.FileServer(http.Dir("./static"))
 	http.Handle("/static/", http.StripPrefix("/static/", fs))
 
