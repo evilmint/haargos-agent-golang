@@ -30,19 +30,19 @@ func (i *Ingress) Run() error {
 
 		lastConnection := i.Stats.GetLastSuccessfulConnection()
 		renderTemplate(w, "index.html", map[string]string{
-			"Title":              "Haargos",
-			"Heading":            "Haargos main",
-			"Uptime":             uptime,
-			"DataSentInKb":       fmt.Sprintf("%d", i.Stats.GetDataSentInKB()),
-			"FailedRequestCount": fmt.Sprintf("%d", i.Stats.GetFailedRequestCount()),
-			"ObservationCount":   fmt.Sprintf("%d", i.Stats.GetObservationsSentCount()),
-			"LastSuccessfulConnection": fmt.Sprintf("%d-%d-%d %d:%d:%d\n",
+			"Title":   "Haargos",
+			"Heading": "Haargos main",
+			"Uptime":  uptime,
+			"LastSuccessfulConnection": fmt.Sprintf("%d-%02d-%02d %02d:%02d:%02d\n",
 				lastConnection.Year(),
 				lastConnection.Month(),
 				lastConnection.Day(),
 				lastConnection.Hour(),
 				lastConnection.Hour(),
 				lastConnection.Second()),
+			"FailedRequestCount": fmt.Sprintf("%d", i.Stats.GetFailedRequestCount()),
+			"DataSentInKb":       fmt.Sprintf("%.1f", float32(i.Stats.GetDataSentInKB())/1024),
+			"ObservationCount":   fmt.Sprintf("%d", i.Stats.GetObservationsSentCount()),
 		})
 	})
 
