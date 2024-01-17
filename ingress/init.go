@@ -29,6 +29,15 @@ func (i *Ingress) Run() error {
 		uptime := i.Stats.GetUptime()
 
 		lastConnection := i.Stats.GetLastSuccessfulConnection()
+
+		var isTokenSet string
+
+		if i.Stats.GetHAAccessTokenSet() {
+			isTokenSet = "Yes"
+		} else {
+			isTokenSet = "No"
+		}
+
 		renderTemplate(w, "index.html", map[string]string{
 			"Title":   "Haargos",
 			"Heading": "Haargos main",
@@ -38,8 +47,9 @@ func (i *Ingress) Run() error {
 				lastConnection.Month(),
 				lastConnection.Day(),
 				lastConnection.Hour(),
-				lastConnection.Hour(),
+				lastConnection.Minute(),
 				lastConnection.Second()),
+			"HAAccessTokenSet":   isTokenSet,
 			"FailedRequestCount": fmt.Sprintf("%d", i.Stats.GetFailedRequestCount()),
 			"DataSentInKb":       fmt.Sprintf("%.1f", float32(i.Stats.GetDataSentInKB())/1024),
 			"ObservationCount":   fmt.Sprintf("%d", i.Stats.GetObservationsSentCount()),

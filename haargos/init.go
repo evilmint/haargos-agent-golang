@@ -268,7 +268,10 @@ func (h *Haargos) Run(params RunParams) {
 	accessToken := os.Getenv("HA_ACCESS_TOKEN")
 	haEndpoint := os.Getenv("HA_ENDPOINT")
 
-	if accessToken != "" {
+	isAccessTokenSet := accessToken != ""
+	h.Statistics.SetHAAccessTokenSet(isAccessTokenSet)
+
+	if isAccessTokenSet {
 		if haEndpoint == "" {
 			port := 8123
 

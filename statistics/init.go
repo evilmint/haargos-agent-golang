@@ -13,6 +13,7 @@ type Statistics struct {
 	observationsSentCount    int
 	dataSentInKB             int
 	lastSuccessfulConnection time.Time
+	haAccessTokenSet         bool
 }
 
 func NewStatistics() *Statistics {
@@ -72,6 +73,20 @@ func (s *Statistics) AddDataSentInKB(data int) {
 	defer s.lock.Unlock()
 
 	s.dataSentInKB += data
+}
+
+func (s *Statistics) GetHAAccessTokenSet() bool {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
+	return s.haAccessTokenSet
+}
+
+func (s *Statistics) SetHAAccessTokenSet(value bool) {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
+	s.haAccessTokenSet = value
 }
 
 func (s *Statistics) GetLastSuccessfulConnection() time.Time {
