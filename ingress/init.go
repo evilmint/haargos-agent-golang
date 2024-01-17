@@ -5,37 +5,33 @@ import (
 	"html/template"
 	"net/http"
 	"path/filepath"
-	"time"
+
+	"github.com/evilmint/haargos-agent-golang/statistics"
 )
 
 type Ingress struct {
-	StartTime time.Time
+	Stats *statistics.Statistics
 }
 
-func NewIngress() *Ingress {
-	return &Ingress{}
+func NewIngress(stats *statistics.Statistics) *Ingress {
+	return &Ingress{
+		Stats: stats,
+	}
 }
 
 func (i *Ingress) Run() error {
-	i.StartTime = time.Now()
 	fs := http.FileServer(http.Dir("./static"))
 	http.Handle("/static/", http.StripPrefix("/static/", fs))
 
 	defaultIngressPort := 8099
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		currentTime := time.Now()
-		uptimeDuration := currentTime.Sub(i.StartTime)
-
-		// Extracting hours, minutes, and seconds
-		hours := int(uptimeDuration.Hours())
-		minutes := int(uptimeDuration.Minutes()) % 60
-		seconds := int(uptimeDuration.Seconds()) % 60
+		uptime := i.Stats.GetUptime()
 
 		renderTemplate(w, "index.html", map[string]string{
 			"Title":   "Haargos",
 			"Heading": "Haargos main",
-			"Uptime":  fmt.Sprintf("Uptime: %d hours, %d minutes, %d seconds\n", hours, minutes, seconds),
+			"Uptime":  uptime,
 		})
 	})
 

@@ -23,6 +23,7 @@ import (
 	"github.com/evilmint/haargos-agent-golang/ingress"
 	"github.com/evilmint/haargos-agent-golang/registry"
 	"github.com/evilmint/haargos-agent-golang/repositories/commandrepository"
+	"github.com/evilmint/haargos-agent-golang/statistics"
 	"github.com/evilmint/haargos-agent-golang/types"
 	websocketclient "github.com/evilmint/haargos-agent-golang/websocket-client"
 	"github.com/sirupsen/logrus"
@@ -33,12 +34,14 @@ type Haargos struct {
 	EnvironmentGatherer *environmentgatherer.EnvironmentGatherer
 	Logger              *logrus.Logger
 	Ingress             *ingress.Ingress
+	Statistics          *statistics.Statistics
 }
 
 func NewHaargos(logger *logrus.Logger, debugEnabled bool) *Haargos {
 	return &Haargos{
 		EnvironmentGatherer: environmentgatherer.NewEnvironmentGatherer(logger, commandrepository.NewCommandRepository(logger)),
 		Logger:              logger,
+		Statistics:          statistics.NewStatistics(),
 	}
 }
 
@@ -214,8 +217,13 @@ func (h *Haargos) Run(params RunParams) {
 	supervisorEndpoint := "http://supervisor/"
 
 	supervisorToken := os.Getenv("SUPERVISOR_TOKEN")
-	haargosClient := client.NewClient(apiURL, params.AgentToken)
-	supervisorClient := client.NewClient(supervisorEndpoint, params.AgentToken)
+	haargosClient := client.NewClient(apiURL, params.AgentToken, func(number int) {
+		h.Statistics.AddDataSentInKB(number)
+	})
+	supervisorClient := client.NewClient(supervisorEndpoint, params.AgentToken, func(number int) {
+		h.Statistics.AddDataSentInKB(number)
+
+	})
 
 	if supervisorToken != "" {
 		h.Logger.Info("Supervisor token is set.")
@@ -276,8 +284,7 @@ func (h *Haargos) Run(params RunParams) {
 			h.sendNotifications(params.HaConfigPath, haargosClient, accessToken, haEndpoint)
 		})
 	}
-
-	h.Ingress = ingress.NewIngress()
+	h.Ingress = ingress.NewIngress(h.Statistics)
 	go h.Ingress.Run()
 
 	ticker := time.NewTicker(interval)
@@ -325,7 +332,13 @@ func (h *Haargos) Run(params RunParams) {
 		observation.AgentType = params.AgentType
 
 		response, err := haargosClient.SendObservation(observation)
-		handleHttpResponse(response, err, h.Logger, "sending observation")
+		h.handleHttpResponse(response, err, h.Logger, "sending observation")
+
+		if err == nil {
+			h.Statistics.IncrementObservationsSentCount()
+		} else {
+			h.Statistics.IncrementFailedRequestCount()
+		}
 	}
 
 	handleTick()
@@ -375,7 +388,11 @@ func (h *Haargos) sendLogs(haConfigPath string, client *client.HaargosClient, su
 
 func (h *Haargos) sendLogsToClient(client *client.HaargosClient, logs types.Logs) {
 	response, err := client.SendLogs(logs)
-	handleHttpResponse(response, err, h.Logger, "sending logs")
+	h.handleHttpResponse(response, err, h.Logger, "sending logs")
+
+	if err != nil {
+		h.Statistics.IncrementFailedRequestCount()
+	}
 }
 
 func (h *Haargos) sendAddons(haConfigPath string, client *client.HaargosClient, supervisorClient *client.HaargosClient, supervisorToken string) {
@@ -387,7 +404,11 @@ func (h *Haargos) sendAddons(haConfigPath string, client *client.HaargosClient, 
 		h.Logger.Debugf("Collected %d addons.", len(*addonContent))
 
 		response, err := client.SendAddons(*addonContent)
-		handleHttpResponse(response, err, h.Logger, "sending addons")
+		h.handleHttpResponse(response, err, h.Logger, "sending addons")
+
+		if err != nil {
+			h.Statistics.IncrementFailedRequestCount()
+		}
 	}
 }
 
@@ -428,13 +449,17 @@ func (h *Haargos) sendNotifications(haConfigPath string, client *client.HaargosC
 		}
 
 		response, err := client.SendNotifications(notifications)
-		handleHttpResponse(response, err, h.Logger, "sending notifications")
+		h.handleHttpResponse(response, err, h.Logger, "sending notifications")
+
+		if err != nil {
+			h.Statistics.IncrementFailedRequestCount()
+		}
 
 		h.Logger.Infof("Sent notifications")
 	}
 }
 
-func handleHttpResponse(response *http.Response, err error, logger *logrus.Logger, context string) {
+func (h *Haargos) handleHttpResponse(response *http.Response, err error, logger *logrus.Logger, context string) {
 	if err != nil || !strings.HasPrefix(response.Status, "2") {
 		logger.Errorf("Error in %s: %v", context, err)
 
@@ -444,6 +469,8 @@ func handleHttpResponse(response *http.Response, err error, logger *logrus.Logge
 				logger.Errorf("Response body in %s: %s", context, string(bodyBytes))
 			}
 		}
+	} else {
+		h.Statistics.SetLastSuccessfulConnection(time.Now())
 	}
 
 	if response != nil {

@@ -15,9 +15,10 @@ import (
 )
 
 type HaargosClient struct {
-	BaseURL    string
-	AgentToken string
-	Logger     *logrus.Logger
+	BaseURL        string
+	AgentToken     string
+	Logger         *logrus.Logger
+	OnDataSentInKb func(int)
 }
 
 type AgentConfigResponse struct {
@@ -28,11 +29,12 @@ type AgentConfig struct {
 	CycleInterval int `json:"cycle_interval"`
 }
 
-func NewClient(apiURL string, agentToken string) *HaargosClient {
+func NewClient(apiURL string, agentToken string, dataSentInKb func(int)) *HaargosClient {
 	return &HaargosClient{
-		BaseURL:    apiURL,
-		AgentToken: agentToken,
-		Logger:     logrus.New(),
+		BaseURL:        apiURL,
+		AgentToken:     agentToken,
+		Logger:         logrus.New(),
+		OnDataSentInKb: dataSentInKb,
 	}
 }
 
