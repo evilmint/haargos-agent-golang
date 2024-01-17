@@ -28,10 +28,21 @@ func (i *Ingress) Run() error {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		uptime := i.Stats.GetUptime()
 
+		lastConnection := i.Stats.GetLastSuccessfulConnection()
 		renderTemplate(w, "index.html", map[string]string{
-			"Title":   "Haargos",
-			"Heading": "Haargos main",
-			"Uptime":  uptime,
+			"Title":              "Haargos",
+			"Heading":            "Haargos main",
+			"Uptime":             uptime,
+			"DataSentInKb":       fmt.Sprintf("%d", i.Stats.GetDataSentInKB()),
+			"FailedRequestCount": fmt.Sprintf("%d", i.Stats.GetFailedRequestCount()),
+			"ObservationCount":   fmt.Sprintf("%d", i.Stats.GetObservationsSentCount()),
+			"LastSuccessfulConnection": fmt.Sprintf("%d-%d-%d %d:%d:%d\n",
+				lastConnection.Year(),
+				lastConnection.Month(),
+				lastConnection.Day(),
+				lastConnection.Hour(),
+				lastConnection.Hour(),
+				lastConnection.Second()),
 		})
 	})
 

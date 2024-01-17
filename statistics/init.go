@@ -60,7 +60,7 @@ func (s *Statistics) IncrementObservationsSentCount() {
 	s.observationsSentCount++
 }
 
-func (s *Statistics) GetDataSentInKB() float64 {
+func (s *Statistics) GetDataSentInKB() int {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
 

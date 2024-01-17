@@ -62,6 +62,8 @@ func (c *HaargosClient) sendRequest(method, url string, data interface{}, header
 			return nil, fmt.Errorf("error compressing JSON: %v", err)
 		}
 		body = buf
+
+		c.OnDataSentInKb(buf.Len())
 	}
 
 	req, err := http.NewRequest(method, c.BaseURL+url, body)
