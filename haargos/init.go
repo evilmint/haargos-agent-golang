@@ -264,6 +264,12 @@ func (h *Haargos) Run(params RunParams) {
 	runTicker(interval, func() {
 		h.sendAddons(params.HaConfigPath, haargosClient, supervisorClient, supervisorToken)
 	})
+	runTicker(interval, func() {
+		h.sendOS(params.HaConfigPath, haargosClient, supervisorClient, supervisorToken)
+	})
+	runTicker(interval, func() {
+		h.sendSupervisor(params.HaConfigPath, haargosClient, supervisorClient, supervisorToken)
+	})
 
 	accessToken := os.Getenv("HA_ACCESS_TOKEN")
 	haEndpoint := os.Getenv("HA_ENDPOINT")
