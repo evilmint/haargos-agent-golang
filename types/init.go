@@ -137,7 +137,7 @@ type OSInfo struct {
 }
 
 type OSInfoResponse struct {
-	Body OSInfo `json:"body"`
+	Data OSInfo `json:"data"`
 }
 
 type SupervisorInfo struct {
@@ -159,9 +159,8 @@ type SupervisorInfo struct {
 	AutoUpdate         bool             `json:"auto_update"`
 }
 
-// SupervisorInfoResponse maps to the TypeScript interface SupervisorInfoResponse
 type SupervisorInfoResponse struct {
-	Body *SupervisorInfo `json:"body"`
+	Data SupervisorInfo `json:"data"`
 }
 
 type Automation struct {

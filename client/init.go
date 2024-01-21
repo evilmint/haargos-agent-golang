@@ -194,7 +194,7 @@ func (c *HaargosClient) FetchSupervisor(headers map[string]string) (*types.Super
 		return nil, fmt.Errorf("error unmarshaling response: %v", err)
 	}
 
-	return response.Body, nil
+	return &response.Data, nil
 }
 
 func (c *HaargosClient) FetchOS(headers map[string]string) (*types.OSInfo, error) {
@@ -213,7 +213,7 @@ func (c *HaargosClient) FetchOS(headers map[string]string) (*types.OSInfo, error
 		return nil, fmt.Errorf("error unmarshaling response: %v", err)
 	}
 
-	return &response.Body, nil
+	return &response.Data, nil
 }
 
 type NotificationRequest struct {
