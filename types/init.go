@@ -127,6 +127,43 @@ type HAConfig struct {
 	Version string `json:"version"`
 }
 
+type OSInfo struct {
+	Version         string `json:"version"`
+	VersionLatest   string `json:"version_latest"`
+	UpdateAvailable bool   `json:"update_available"`
+	Board           string `json:"board"`
+	Boot            string `json:"boot"`
+	DataDisk        string `json:"data_disk"`
+}
+
+type OSInfoResponse struct {
+	Body OSInfo `json:"body"`
+}
+
+type SupervisorInfo struct {
+	Version            string           `json:"version"`
+	VersionLatest      string           `json:"version_latest"`
+	UpdateAvailable    bool             `json:"update_available"`
+	Arch               string           `json:"arch"`
+	Channel            string           `json:"channel"`
+	Timezone           string           `json:"timezone"`
+	Healthy            bool             `json:"healthy"`
+	Supported          bool             `json:"supported"`
+	Logging            string           `json:"logging"`
+	IPAddress          string           `json:"ip_address"`
+	WaitBoot           int              `json:"wait_boot"`
+	Debug              bool             `json:"debug"`
+	DebugBlock         bool             `json:"debug_block"`
+	Diagnostics        *json.RawMessage `json:"diagnostics,omitempty"` // Use json.RawMessage for arbitrary JSON
+	AddonsRepositories []string         `json:"addons_repositories"`
+	AutoUpdate         bool             `json:"auto_update"`
+}
+
+// SupervisorInfoResponse maps to the TypeScript interface SupervisorInfoResponse
+type SupervisorInfoResponse struct {
+	Body *SupervisorInfo `json:"body"`
+}
+
 type Automation struct {
 	LastTriggered time.Time `json:"last_triggered" yaml:"last_triggered"`
 	Description   string    `json:"description"    yaml:"description"`

@@ -178,6 +178,44 @@ func (c *HaargosClient) FetchAddons(headers map[string]string) (*[]Addon, error)
 	return &response.Data.Addons, nil
 }
 
+func (c *HaargosClient) FetchSupervisor(headers map[string]string) (*types.SupervisorInfo, error) {
+	resp, err := c.sendRequest("GET", "supervisor/info", nil, headers)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("received non-OK response status: %s", resp.Status)
+	}
+
+	var response types.SupervisorInfoResponse
+	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
+		return nil, fmt.Errorf("error unmarshaling response: %v", err)
+	}
+
+	return response.Body, nil
+}
+
+func (c *HaargosClient) FetchOS(headers map[string]string) (*types.OSInfo, error) {
+	resp, err := c.sendRequest("GET", "os/info", nil, headers)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("received non-OK response status: %s", resp.Status)
+	}
+
+	var response types.OSInfoResponse
+	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
+		return nil, fmt.Errorf("error unmarshaling response: %v", err)
+	}
+
+	return &response.Body, nil
+}
+
 type NotificationRequest struct {
 	Notifications []websocketclient.WSAPINotificationDetails `json:"notifications"`
 }
@@ -193,6 +231,14 @@ func (c *HaargosClient) SendLogs(logs types.Logs) (*http.Response, error) {
 
 func (c *HaargosClient) SendAddons(addons []Addon) (*http.Response, error) {
 	return c.sendRequest("PUT", "installations/addons", addons, make(map[string]string))
+}
+
+func (c *HaargosClient) SendSupervisor(supervisor types.SupervisorInfo) (*http.Response, error) {
+	return c.sendRequest("PUT", "installations/supervisor", supervisor, make(map[string]string))
+}
+
+func (c *HaargosClient) SendOS(os types.OSInfo) (*http.Response, error) {
+	return c.sendRequest("PUT", "installations/os", os, make(map[string]string))
 }
 
 func (c *HaargosClient) SendObservation(observation types.Observation) (*http.Response, error) {

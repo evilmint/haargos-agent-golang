@@ -398,6 +398,40 @@ func (h *Haargos) sendLogsToClient(client *client.HaargosClient, logs types.Logs
 	}
 }
 
+func (h *Haargos) sendSupervisor(haConfigPath string, client *client.HaargosClient, supervisorClient *client.HaargosClient, supervisorToken string) {
+	supervisor, err := supervisorClient.FetchSupervisor(map[string]string{"Authorization": fmt.Sprintf("Bearer %s", supervisorToken)})
+
+	if err != nil || supervisor == nil {
+		h.Logger.Errorf("Failed collecting supervisor %s", err)
+	} else {
+		h.Logger.Debugf("Collected supervisor.")
+
+		response, err := client.SendSupervisor(*supervisor)
+		h.handleHttpResponse(response, err, h.Logger, "sending supervisor")
+
+		if err != nil {
+			h.Statistics.IncrementFailedRequestCount()
+		}
+	}
+}
+
+func (h *Haargos) sendOS(haConfigPath string, client *client.HaargosClient, supervisorClient *client.HaargosClient, supervisorToken string) {
+	osContent, err := supervisorClient.FetchOS(map[string]string{"Authorization": fmt.Sprintf("Bearer %s", supervisorToken)})
+
+	if err != nil || osContent == nil {
+		h.Logger.Errorf("Failed collecting os %s", err)
+	} else {
+		h.Logger.Debugf("Collected os.")
+
+		response, err := client.SendOS(*osContent)
+		h.handleHttpResponse(response, err, h.Logger, "sending os")
+
+		if err != nil {
+			h.Statistics.IncrementFailedRequestCount()
+		}
+	}
+}
+
 func (h *Haargos) sendAddons(haConfigPath string, client *client.HaargosClient, supervisorClient *client.HaargosClient, supervisorToken string) {
 	addonContent, err := supervisorClient.FetchAddons(map[string]string{"Authorization": fmt.Sprintf("Bearer %s", supervisorToken)})
 
