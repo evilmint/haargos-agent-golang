@@ -141,22 +141,27 @@ type OSInfoResponse struct {
 }
 
 type SupervisorInfo struct {
-	Version            string           `json:"version"`
-	VersionLatest      string           `json:"version_latest"`
-	UpdateAvailable    bool             `json:"update_available"`
-	Arch               string           `json:"arch"`
-	Channel            string           `json:"channel"`
-	Timezone           string           `json:"timezone"`
-	Healthy            bool             `json:"healthy"`
-	Supported          bool             `json:"supported"`
-	Logging            string           `json:"logging"`
-	IPAddress          string           `json:"ip_address"`
-	WaitBoot           int              `json:"wait_boot"`
-	Debug              bool             `json:"debug"`
-	DebugBlock         bool             `json:"debug_block"`
-	Diagnostics        *json.RawMessage `json:"diagnostics,omitempty"` // Use json.RawMessage for arbitrary JSON
-	AddonsRepositories []string         `json:"addons_repositories"`
-	AutoUpdate         bool             `json:"auto_update"`
+	Version            string                      `json:"version"`
+	VersionLatest      string                      `json:"version_latest"`
+	UpdateAvailable    bool                        `json:"update_available"`
+	Arch               string                      `json:"arch"`
+	Channel            string                      `json:"channel"`
+	Timezone           string                      `json:"timezone"`
+	Healthy            bool                        `json:"healthy"`
+	Supported          bool                        `json:"supported"`
+	Logging            string                      `json:"logging"`
+	IPAddress          string                      `json:"ip_address"`
+	WaitBoot           int                         `json:"wait_boot"`
+	Debug              bool                        `json:"debug"`
+	DebugBlock         bool                        `json:"debug_block"`
+	Diagnostics        *json.RawMessage            `json:"diagnostics,omitempty"` // Use json.RawMessage for arbitrary JSON
+	AddonsRepositories []SupervisorAddonRepository `json:"addons_repositories"`
+	AutoUpdate         bool                        `json:"auto_update"`
+}
+
+type SupervisorAddonRepository struct {
+	Name string `json:"name"`
+	Slug string `json:"slug"`
 }
 
 type SupervisorInfoResponse struct {
