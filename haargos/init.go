@@ -270,6 +270,9 @@ func (h *Haargos) Run(params RunParams) {
 	runTicker(interval, func() {
 		h.sendSupervisor(params.HaConfigPath, haargosClient, supervisorClient, supervisorToken)
 	})
+	runTicker(interval, func() {
+		h.handleJobs(params.HaConfigPath, haargosClient, supervisorClient, supervisorToken)
+	})
 
 	accessToken := os.Getenv("HA_ACCESS_TOKEN")
 	haEndpoint := os.Getenv("HA_ENDPOINT")
@@ -418,6 +421,27 @@ func (h *Haargos) sendSupervisor(haConfigPath string, client *client.HaargosClie
 		if err != nil {
 			h.Statistics.IncrementFailedRequestCount()
 		}
+	}
+}
+
+func (h *Haargos) handleJobs(haConfigPath string, client *client.HaargosClient, supervisorClient *client.HaargosClient, supervisorToken string) {
+	jobs, err := client.FetchJobs()
+
+	if err != nil || jobs == nil {
+		h.Logger.Errorf("Failed collecting jobs %s", err)
+	} else {
+		var jobNames = ""
+		h.Logger.Infof("Collected %d jobs. %s", len(*jobs), jobNames)
+
+		for _, job := range *jobs {
+			if job.Type == "update_os" {
+				h.Logger.Infof("I should update core")
+			}
+		}
+	}
+
+	if err != nil {
+		h.Statistics.IncrementFailedRequestCount()
 	}
 }
 

@@ -110,6 +110,18 @@ type ZigbeeStatus struct {
 	Devices []ZigbeeDevice `json:"devices"`
 }
 
+type GenericJob struct {
+	CreatedAt            string `json:"created_at"`
+	StatusInstallationID string `json:"status_installation_id"`
+	InstallationID       string `json:"installation_id"`
+	ID                   string `json:"id"`
+	Type                 string `json:"type"`
+}
+
+type JobsResponse struct {
+	Body []GenericJob `json:"body"`
+}
+
 type ZigbeeDevice struct {
 	Ieee            string    `json:"ieee"`
 	Lqi             int       `json:"lqi"`

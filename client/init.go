@@ -216,6 +216,25 @@ func (c *HaargosClient) FetchOS(headers map[string]string) (*types.OSInfo, error
 	return &response.Data, nil
 }
 
+func (c *HaargosClient) FetchJobs() (*[]types.GenericJob, error) {
+	resp, err := c.sendRequest("GET", "installation/jobs", nil, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("received non-OK response status: %s", resp.Status)
+	}
+
+	var response types.JobsResponse
+	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
+		return nil, fmt.Errorf("error unmarshaling response: %v", err)
+	}
+
+	return &response.Body, nil
+}
+
 type NotificationRequest struct {
 	Notifications []websocketclient.WSAPINotificationDetails `json:"notifications"`
 }
