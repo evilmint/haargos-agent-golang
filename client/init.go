@@ -217,7 +217,7 @@ func (c *HaargosClient) FetchOS(headers map[string]string) (*types.OSInfo, error
 }
 
 func (c *HaargosClient) FetchJobs() (*[]types.GenericJob, error) {
-	resp, err := c.sendRequest("GET", "installation/jobs", nil, nil)
+	resp, err := c.sendRequest("GET", "installations/jobs/pending", nil, nil)
 	if err != nil {
 		return nil, err
 	}
