@@ -46,7 +46,7 @@ func (c *HaargosClient) sendRequest(method, url string, data interface{}, header
 
 	c.Logger.Debugf("Sending %s", string(jsonData))
 
-	hasPayload := strings.ToLower(method) == "put" || strings.ToLower(method) == "post"
+	hasPayload := data != nil && (strings.ToLower(method) == "put" || strings.ToLower(method) == "post")
 	var body io.Reader = nil // Initialize body as nil
 
 	if hasPayload {
@@ -84,6 +84,7 @@ func (c *HaargosClient) sendRequest(method, url string, data interface{}, header
 	req.Header.Set("x-agent-token", c.AgentToken)
 
 	client := &http.Client{}
+
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("error sending request: %v", err)
@@ -214,6 +215,39 @@ func (c *HaargosClient) FetchOS(headers map[string]string) (*types.OSInfo, error
 	}
 
 	return &response.Data, nil
+}
+
+func (c *HaargosClient) UpdateCore(headers map[string]string) (*http.Response, error) {
+	resp, err := c.sendRequest("POST", "core/update", nil, headers)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("received non-OK response status: %s", resp.Status)
+	}
+
+	return resp, nil
+}
+
+func (c *HaargosClient) CompleteJob(job types.GenericJob) (*[]types.GenericJob, error) {
+	resp, err := c.sendRequest("POST", fmt.Sprintf("installations/jobs/%s/complete", job.ID), nil, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("received non-OK response status: %s", resp.Status)
+	}
+
+	var response types.JobsResponse
+	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
+		return nil, fmt.Errorf("error unmarshaling response: %v", err)
+	}
+
+	return &response.Body, nil
 }
 
 func (c *HaargosClient) FetchJobs() (*[]types.GenericJob, error) {

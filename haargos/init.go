@@ -434,8 +434,19 @@ func (h *Haargos) handleJobs(haConfigPath string, client *client.HaargosClient, 
 		h.Logger.Infof("Collected %d jobs. %s", len(*jobs), jobNames)
 
 		for _, job := range *jobs {
-			if job.Type == "update_os" {
+			if job.Type == "update_core" {
 				h.Logger.Infof("I should update core")
+
+				supervisorClient.UpdateCore(map[string]string{"Authorization": fmt.Sprintf("Bearer %s", supervisorToken)})
+				h.Logger.Infof("Core updated I guess")
+
+				_, err := client.CompleteJob(job)
+
+				if err != nil {
+					h.Logger.Infof("Failed to complete job")
+				} else {
+					h.Logger.Infof("Completed job")
+				}
 			}
 		}
 	}
