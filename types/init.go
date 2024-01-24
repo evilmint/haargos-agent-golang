@@ -111,11 +111,12 @@ type ZigbeeStatus struct {
 }
 
 type GenericJob struct {
-	CreatedAt            string `json:"created_at"`
-	StatusInstallationID string `json:"status_installation_id"`
-	InstallationID       string `json:"installation_id"`
-	ID                   string `json:"id"`
-	Type                 string `json:"type"`
+	CreatedAt            string      `json:"created_at"`
+	StatusInstallationID string      `json:"status_installation_id"`
+	InstallationID       string      `json:"installation_id"`
+	ID                   string      `json:"id"`
+	Type                 string      `json:"type"`
+	Context              interface{} `json:"context"`
 }
 
 type JobsResponse struct {

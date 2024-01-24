@@ -435,24 +435,54 @@ func (h *Haargos) handleJobs(haConfigPath string, client *client.HaargosClient, 
 
 		for _, job := range *jobs {
 			if job.Type == "update_core" {
-				h.Logger.Infof("I should update core")
-
-				supervisorClient.UpdateCore(map[string]string{"Authorization": fmt.Sprintf("Bearer %s", supervisorToken)})
-				h.Logger.Infof("Core updated I guess")
-
-				_, err := client.CompleteJob(job)
-
-				if err != nil {
-					h.Logger.Infof("Failed to complete job")
-				} else {
-					h.Logger.Infof("Completed job")
-				}
+				h.updateCore(job, client, supervisorClient, supervisorToken)
+			} else if job.Type == "update_addon" {
+				h.updateAddon(job, client, supervisorClient, supervisorToken)
+			} else {
+				h.Logger.Warningf("Unsupported job encountered [type=%s]", job.Type)
 			}
 		}
 	}
 
 	if err != nil {
 		h.Statistics.IncrementFailedRequestCount()
+	}
+}
+
+type AddonContext struct {
+	Slug string `json:"addon_id"`
+}
+
+func (h *Haargos) updateAddon(job types.GenericJob, client *client.HaargosClient, supervisorClient *client.HaargosClient, supervisorToken string) {
+	addonContext, ok := job.Context.(AddonContext)
+	if ok == false {
+		h.Logger.Errorf("Wrong context in job %s", job.Type)
+	}
+
+	h.Logger.Infof("Updating addon [slug=%s]", addonContext.Slug)
+	//supervisorClient.UpdateAddon(map[string]string{"Authorization": fmt.Sprintf("Bearer %s", supervisorToken)}, addonContext.Slug)
+	h.Logger.Infof("Updating addon")
+
+	// _, err := client.CompleteJob(job)
+
+	// if err != nil {
+	// 	h.Logger.Infof("Failed to update addon")
+	// } else {
+	// 	h.Logger.Infof("Updating addon successful")
+	// }
+}
+
+func (h *Haargos) updateCore(job types.GenericJob, client *client.HaargosClient, supervisorClient *client.HaargosClient, supervisorToken string) {
+	h.Logger.Infof("Updating core")
+	supervisorClient.UpdateCore(map[string]string{"Authorization": fmt.Sprintf("Bearer %s", supervisorToken)})
+	h.Logger.Infof("Updating core scheduled")
+
+	_, err := client.CompleteJob(job)
+
+	if err != nil {
+		h.Logger.Infof("Failed to update core")
+	} else {
+		h.Logger.Infof("Updating core successful")
 	}
 }
 
