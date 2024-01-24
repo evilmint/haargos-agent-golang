@@ -87,7 +87,7 @@ func (c *HaargosClient) sendRequest(method, url string, data interface{}, header
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("error sending request: %v", err)
+		return resp, fmt.Errorf("error sending request: %v", err)
 	}
 
 	c.Logger.Debugf("Response status: %s", resp.Status)
