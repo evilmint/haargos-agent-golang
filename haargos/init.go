@@ -479,7 +479,7 @@ func (h *Haargos) updateAddon(job types.GenericJob, client *client.HaargosClient
 		h.Logger.Errorf("Job failure [type=%s, slug=%s, err=%s%s]", job.Type, addonContext.Slug, err, resString)
 	}
 
-	if res != nil && (res.StatusCode < 400 && res.StatusCode >= 200) {
+	if res != nil && (res.StatusCode < 500 && res.StatusCode >= 200) {
 		h.Logger.Infof("x4")
 
 		_, err = client.CompleteJob(job)
