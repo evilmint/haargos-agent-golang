@@ -101,7 +101,7 @@ func (c *HaargosClient) FetchText(url string, headers map[string]string) (string
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return "", fmt.Errorf("received non-OK response status: %s", resp.Status)
 	}
 
@@ -167,7 +167,7 @@ func (c *HaargosClient) FetchAddons(headers map[string]string) (*[]Addon, error)
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return nil, fmt.Errorf("received non-OK response status: %s", resp.Status)
 	}
 
@@ -186,7 +186,7 @@ func (c *HaargosClient) FetchSupervisor(headers map[string]string) (*types.Super
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return nil, fmt.Errorf("received non-OK response status: %s", resp.Status)
 	}
 
@@ -205,7 +205,7 @@ func (c *HaargosClient) FetchOS(headers map[string]string) (*types.OSInfo, error
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return nil, fmt.Errorf("received non-OK response status: %s", resp.Status)
 	}
 
@@ -224,7 +224,7 @@ func (c *HaargosClient) UpdateCore(headers map[string]string) (*http.Response, e
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return nil, fmt.Errorf("received non-OK response status: %s", resp.Status)
 	}
 
@@ -238,7 +238,7 @@ func (c *HaargosClient) UpdateAddon(headers map[string]string, slug string) (*ht
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return resp, fmt.Errorf("received non-OK response status: %s", resp.Status)
 	}
 
@@ -252,7 +252,7 @@ func (c *HaargosClient) CompleteJob(job types.GenericJob) (*[]types.GenericJob, 
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return nil, fmt.Errorf("received non-OK response status: %s", resp.Status)
 	}
 
@@ -271,7 +271,7 @@ func (c *HaargosClient) FetchJobs() (*[]types.GenericJob, error) {
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return nil, fmt.Errorf("received non-OK response status: %s", resp.Status)
 	}
 
