@@ -239,7 +239,7 @@ func (c *HaargosClient) UpdateAddon(headers map[string]string, slug string) (*ht
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("received non-OK response status: %s", resp.Status)
+		return resp, fmt.Errorf("received non-OK response status: %s", resp.Status)
 	}
 
 	return resp, nil
