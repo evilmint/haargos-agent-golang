@@ -465,9 +465,13 @@ func (h *Haargos) updateAddon(job types.GenericJob, client *client.HaargosClient
 	res, err := supervisorClient.UpdateAddon(map[string]string{"Authorization": fmt.Sprintf("Bearer %s", supervisorToken)}, addonContext.Slug)
 	h.Logger.Infof("x1")
 
-	if err != nil || (res != nil && !strings.HasPrefix(res.Status, "2")) {
+	if err != nil {
 		h.Logger.Errorf("Job failure [type=%s, slug=%s, status=%s, err=%s]", job.Type, addonContext.Slug, res.Status, err)
 		h.Logger.Infof("x2")
+	}
+	h.Logger.Infof("x2.5")
+	if res != nil && !strings.HasPrefix(res.Status, "2") {
+		h.Logger.Errorf("Job failure [type=%s, slug=%s, status=%s, err=%s]", job.Type, addonContext.Slug, res.Status, err)
 	}
 	h.Logger.Infof("x3")
 
