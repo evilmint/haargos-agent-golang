@@ -477,9 +477,9 @@ func (h *Haargos) updateAddon(job types.GenericJob, client *client.HaargosClient
 	}
 
 	if err != nil {
-		h.Logger.Infof("Job error [type=%s, slug=%s]", job.Type, addonContext.Slug.S)
+		h.Logger.Infof("Job error [type=%s, slug=%s]", job.Type, addonContext.Slug)
 	} else {
-		h.Logger.Infof("Job completed [type=%s, slug=%s]", job.Type, addonContext.Slug.S)
+		h.Logger.Infof("Job completed [type=%s, slug=%s]", job.Type, addonContext.Slug)
 	}
 }
 
