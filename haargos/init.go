@@ -438,6 +438,8 @@ func (h *Haargos) handleJobs(haConfigPath string, client *client.HaargosClient, 
 				h.updateCore(job, client, supervisorClient, supervisorToken)
 			} else if job.Type == "update_addon" {
 				h.updateAddon(job, client, supervisorClient, supervisorToken)
+			} else if job.Type == "update_os" {
+				h.updateOS(job, client, supervisorClient, supervisorToken)
 			} else {
 				h.Logger.Warningf("Unsupported job encountered [type=%s]", job.Type)
 			}
@@ -464,6 +466,18 @@ func (h *Haargos) updateAddon(job types.GenericJob, client *client.HaargosClient
 
 	res, err := supervisorClient.UpdateAddon(map[string]string{"Authorization": fmt.Sprintf("Bearer %s", supervisorToken)}, addonContext.Slug)
 
+	h.finalizeUpdate(res, err, addonContext, job, client)
+}
+
+func (h *Haargos) updateOS(job types.GenericJob, client *client.HaargosClient, supervisorClient *client.HaargosClient, supervisorToken string) {
+	h.Logger.Infof("Job scheduled [type=%s]", job.Type)
+
+	res, err := supervisorClient.UpdateOS(map[string]string{"Authorization": fmt.Sprintf("Bearer %s", supervisorToken)})
+
+	h.finalizeUpdate(res, err, "", job, client)
+}
+
+func (h *Haargos) finalizeUpdate(res *http.Response, err error, context interface{}, job types.GenericJob, client *client.HaargosClient) {
 	if err != nil {
 		resString := ""
 
@@ -476,18 +490,14 @@ func (h *Haargos) updateAddon(job types.GenericJob, client *client.HaargosClient
 			h.Logger.Infof("Res is nil")
 		}
 
-		h.Logger.Errorf("Job failure [type=%s, slug=%s, err=%s%s]", job.Type, addonContext.Slug, err, resString)
+		h.Logger.Errorf("Job failure [type=%s, context=%s, err=%s%s]", job.Type, context, err, resString)
 	}
 
 	if res != nil && (res.StatusCode < 500 && res.StatusCode >= 200) {
-		h.Logger.Infof("x4")
-
 		_, err = client.CompleteJob(job)
 
 		if err != nil {
-			h.Logger.Infof("x5")
-
-			h.Logger.Errorf("Job dequeue failed [type=%s, slug=%s, err=%s]", job.Type, addonContext.Slug, err)
+			h.Logger.Errorf("Job dequeue failed [type=%s, context=%s, err=%s]", job.Type, context, err)
 		} else {
 			h.Logger.Infof("Job dequeue successful.")
 		}
@@ -509,16 +519,10 @@ func UnmarshalContext(context interface{}, target interface{}) error {
 
 func (h *Haargos) updateCore(job types.GenericJob, client *client.HaargosClient, supervisorClient *client.HaargosClient, supervisorToken string) {
 	h.Logger.Infof("Updating core")
-	supervisorClient.UpdateCore(map[string]string{"Authorization": fmt.Sprintf("Bearer %s", supervisorToken)})
+	res, err := supervisorClient.UpdateCore(map[string]string{"Authorization": fmt.Sprintf("Bearer %s", supervisorToken)})
 	h.Logger.Infof("Updating core scheduled")
 
-	_, err := client.CompleteJob(job)
-
-	if err != nil {
-		h.Logger.Infof("Failed to update core")
-	} else {
-		h.Logger.Infof("Updating core successful")
-	}
+	h.finalizeUpdate(res, err, "", job, client)
 }
 
 func (h *Haargos) sendOS(haConfigPath string, client *client.HaargosClient, supervisorClient *client.HaargosClient, supervisorToken string) {
