@@ -450,11 +450,7 @@ func (h *Haargos) handleJobs(haConfigPath string, client *client.HaargosClient, 
 }
 
 type AddonContext struct {
-	Slug AddonContextSlugValue `json:"addon_id"`
-}
-
-type AddonContextSlugValue struct {
-	S string `json:"S"`
+	Slug string `json:"addon_id"`
 }
 
 func (h *Haargos) updateAddon(job types.GenericJob, client *client.HaargosClient, supervisorClient *client.HaargosClient, supervisorToken string) {
@@ -464,10 +460,10 @@ func (h *Haargos) updateAddon(job types.GenericJob, client *client.HaargosClient
 		return
 	}
 
-	h.Logger.Infof("Job scheduled [type=%s, slug=%s]", job.Type, addonContext.Slug.S)
+	h.Logger.Infof("Job scheduled [type=%s, slug=%s]", job.Type, addonContext.Slug)
 	//supervisorClient.UpdateAddon(map[string]string{"Authorization": fmt.Sprintf("Bearer %s", supervisorToken)}, addonContext.Slug)
 
-	h.Logger.Infof("Job running [type=%s, slug=%s]", job.Type, addonContext.Slug.S)
+	h.Logger.Infof("Job running [type=%s, slug=%s]", job.Type, addonContext.Slug)
 
 	// _, err := client.CompleteJob(job)
 
