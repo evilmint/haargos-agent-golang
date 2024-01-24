@@ -231,6 +231,20 @@ func (c *HaargosClient) UpdateCore(headers map[string]string) (*http.Response, e
 	return resp, nil
 }
 
+func (c *HaargosClient) UpdateAddon(headers map[string]string, slug string) (*http.Response, error) {
+	resp, err := c.sendRequest("POST", fmt.Sprintf("store/addons/%s/update", slug), nil, headers)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("received non-OK response status: %s", resp.Status)
+	}
+
+	return resp, nil
+}
+
 func (c *HaargosClient) CompleteJob(job types.GenericJob) (*[]types.GenericJob, error) {
 	resp, err := c.sendRequest("POST", fmt.Sprintf("installations/jobs/%s/complete", job.ID), nil, nil)
 	if err != nil {

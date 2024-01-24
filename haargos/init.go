@@ -461,17 +461,26 @@ func (h *Haargos) updateAddon(job types.GenericJob, client *client.HaargosClient
 	}
 
 	h.Logger.Infof("Job scheduled [type=%s, slug=%s]", job.Type, addonContext.Slug)
-	//supervisorClient.UpdateAddon(map[string]string{"Authorization": fmt.Sprintf("Bearer %s", supervisorToken)}, addonContext.Slug)
 
-	h.Logger.Infof("Job running [type=%s, slug=%s]", job.Type, addonContext.Slug)
+	res, err := supervisorClient.UpdateAddon(map[string]string{"Authorization": fmt.Sprintf("Bearer %s", supervisorToken)}, addonContext.Slug)
 
-	// _, err := client.CompleteJob(job)
+	if !strings.HasPrefix(res.Status, "2") || err != nil {
+		h.Logger.Errorf("Job failure [type=%s, slug=%s, status=%s, err=%s]", job.Type, addonContext.Slug, res.Status, err)
+	}
 
-	// if err != nil {
-	//   h.Logger.Infof("Job error [type=%s, slug=%s]", job.Type, addonContext.Slug.S)
-	// } else {
-	// 	 h.Logger.Infof("Job completed [type=%s, slug=%s]", job.Type, addonContext.Slug.S)
-	// }
+	if strings.HasPrefix(res.Status, "4") || strings.HasPrefix(res.Status, "2") {
+		_, err = client.CompleteJob(job)
+
+		if err != nil {
+			h.Logger.Errorf("Job dequeue failed [type=%s, slug=%s, err=%s]", job.Type, addonContext.Slug, err)
+		}
+	}
+
+	if err != nil {
+		h.Logger.Infof("Job error [type=%s, slug=%s]", job.Type, addonContext.Slug.S)
+	} else {
+		h.Logger.Infof("Job completed [type=%s, slug=%s]", job.Type, addonContext.Slug.S)
+	}
 }
 
 func UnmarshalContext(context interface{}, target interface{}) error {
