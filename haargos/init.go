@@ -463,23 +463,23 @@ func (h *Haargos) updateAddon(job types.GenericJob, client *client.HaargosClient
 	h.Logger.Infof("Job scheduled [type=%s, slug=%s]", job.Type, addonContext.Slug)
 
 	res, err := supervisorClient.UpdateAddon(map[string]string{"Authorization": fmt.Sprintf("Bearer %s", supervisorToken)}, addonContext.Slug)
-	h.Logger.Infof("x1")
 
 	if err != nil {
 		resString := ""
 
-		if res != nil && !strings.HasPrefix(res.Status, "2") {
+		if res != nil && res.StatusCode >= 200 && res.StatusCode < 300 {
 			resString += fmt.Sprintf(", status=%s", res.Status)
+		}
+		if res != nil {
+			h.Logger.Infof("Res is not nil [status=%s]", res.Status)
+		} else {
+			h.Logger.Infof("Res is nil")
 		}
 
 		h.Logger.Errorf("Job failure [type=%s, slug=%s, err=%s%s]", job.Type, addonContext.Slug, err, resString)
-		h.Logger.Infof("x2")
 	}
-	h.Logger.Infof("x2.5")
 
-	h.Logger.Infof("x3")
-
-	if res != nil && (strings.HasPrefix(res.Status, "4") || strings.HasPrefix(res.Status, "2")) {
+	if res != nil && res.StatusCode < 200 && res.StatusCode >= 300 {
 		h.Logger.Infof("x4")
 
 		_, err = client.CompleteJob(job)
