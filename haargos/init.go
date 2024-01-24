@@ -458,9 +458,10 @@ type AddonContextSlugValue struct {
 }
 
 func (h *Haargos) updateAddon(job types.GenericJob, client *client.HaargosClient, supervisorClient *client.HaargosClient, supervisorToken string) {
-	addonContext, ok := job.Context.(AddonContext)
-	if ok == false {
+	var addonContext AddonContext
+	if err := UnmarshalContext(job.Context, &addonContext); err != nil {
 		h.Logger.Errorf("Wrong context in job %s", job.Type)
+		return
 	}
 
 	h.Logger.Infof("Job scheduled [type=%s, slug=%s]", job.Type, addonContext.Slug.S)
@@ -475,6 +476,19 @@ func (h *Haargos) updateAddon(job types.GenericJob, client *client.HaargosClient
 	// } else {
 	// 	 h.Logger.Infof("Job completed [type=%s, slug=%s]", job.Type, addonContext.Slug.S)
 	// }
+}
+
+func UnmarshalContext(context interface{}, target interface{}) error {
+	contextJSON, err := json.Marshal(context)
+	if err != nil {
+		return fmt.Errorf("error marshaling context: %w", err)
+	}
+
+	if err := json.Unmarshal(contextJSON, target); err != nil {
+		return fmt.Errorf("error unmarshaling context into target struct: %w", err)
+	}
+
+	return nil
 }
 
 func (h *Haargos) updateCore(job types.GenericJob, client *client.HaargosClient, supervisorClient *client.HaargosClient, supervisorToken string) {
