@@ -233,7 +233,7 @@ func (c *HaargosClient) UpdateCore(headers map[string]string) (*http.Response, e
 
 func (c *HaargosClient) UpdateAddon(headers map[string]string, slug string) (*http.Response, error) {
 	resp, err := c.sendRequest("POST", fmt.Sprintf("store/addons/%s/update", slug), nil, headers)
-	if err != nil {
+	if err != nil || resp == nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
