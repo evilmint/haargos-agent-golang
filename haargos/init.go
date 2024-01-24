@@ -450,7 +450,11 @@ func (h *Haargos) handleJobs(haConfigPath string, client *client.HaargosClient, 
 }
 
 type AddonContext struct {
-	Slug string `json:"addon_id"`
+	Slug AddonContextSlugValue `json:"addon_id"`
+}
+
+type AddonContextSlugValue struct {
+	S string `json:"S"`
 }
 
 func (h *Haargos) updateAddon(job types.GenericJob, client *client.HaargosClient, supervisorClient *client.HaargosClient, supervisorToken string) {
@@ -459,16 +463,17 @@ func (h *Haargos) updateAddon(job types.GenericJob, client *client.HaargosClient
 		h.Logger.Errorf("Wrong context in job %s", job.Type)
 	}
 
-	h.Logger.Infof("Updating addon [slug=%s]", addonContext.Slug)
+	h.Logger.Infof("Job scheduled [type=%s, slug=%s]", job.Type, addonContext.Slug.S)
 	//supervisorClient.UpdateAddon(map[string]string{"Authorization": fmt.Sprintf("Bearer %s", supervisorToken)}, addonContext.Slug)
-	h.Logger.Infof("Updating addon")
+
+	h.Logger.Infof("Job running [type=%s, slug=%s]", job.Type, addonContext.Slug.S)
 
 	// _, err := client.CompleteJob(job)
 
 	// if err != nil {
-	// 	h.Logger.Infof("Failed to update addon")
+	//   h.Logger.Infof("Job error [type=%s, slug=%s]", job.Type, addonContext.Slug.S)
 	// } else {
-	// 	h.Logger.Infof("Updating addon successful")
+	// 	 h.Logger.Infof("Job completed [type=%s, slug=%s]", job.Type, addonContext.Slug.S)
 	// }
 }
 
