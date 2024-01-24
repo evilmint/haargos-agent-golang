@@ -479,7 +479,7 @@ func (h *Haargos) updateAddon(job types.GenericJob, client *client.HaargosClient
 		h.Logger.Errorf("Job failure [type=%s, slug=%s, err=%s%s]", job.Type, addonContext.Slug, err, resString)
 	}
 
-	if res != nil && res.StatusCode < 200 && res.StatusCode >= 300 {
+	if res != nil && (res.StatusCode < 400 && res.StatusCode >= 200) {
 		h.Logger.Infof("x4")
 
 		_, err = client.CompleteJob(job)
@@ -488,13 +488,9 @@ func (h *Haargos) updateAddon(job types.GenericJob, client *client.HaargosClient
 			h.Logger.Infof("x5")
 
 			h.Logger.Errorf("Job dequeue failed [type=%s, slug=%s, err=%s]", job.Type, addonContext.Slug, err)
+		} else {
+			h.Logger.Infof("Job dequeue successful.")
 		}
-	}
-
-	if err != nil {
-		h.Logger.Infof("Job error [type=%s, slug=%s]", job.Type, addonContext.Slug)
-	} else {
-		h.Logger.Infof("Job completed [type=%s, slug=%s]", job.Type, addonContext.Slug)
 	}
 }
 
