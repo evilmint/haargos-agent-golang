@@ -79,7 +79,7 @@ func (j *JobRunner) stopAddon(job types.GenericJob, client *client.HaargosClient
 
 	res, err := supervisorClient.GenericPOST(
 		map[string]string{"Authorization": fmt.Sprintf("Bearer %s", supervisorToken)},
-		fmt.Sprintf("/addons/%s/stop", addonContext.Slug),
+		fmt.Sprintf("addons/%s/stop", addonContext.Slug),
 	)
 
 	j.finalizeUpdate(res, err, addonContext, job, client)
@@ -96,7 +96,7 @@ func (j *JobRunner) restartAddon(job types.GenericJob, client *client.HaargosCli
 
 	res, err := supervisorClient.GenericPOST(
 		map[string]string{"Authorization": fmt.Sprintf("Bearer %s", supervisorToken)},
-		fmt.Sprintf("/addons/%s/restart", addonContext.Slug),
+		fmt.Sprintf("addons/%s/restart", addonContext.Slug),
 	)
 
 	j.finalizeUpdate(res, err, addonContext, job, client)
@@ -113,7 +113,7 @@ func (j *JobRunner) startAddon(job types.GenericJob, client *client.HaargosClien
 
 	res, err := supervisorClient.GenericPOST(
 		map[string]string{"Authorization": fmt.Sprintf("Bearer %s", supervisorToken)},
-		fmt.Sprintf("/addons/%s/start", addonContext.Slug),
+		fmt.Sprintf("addons/%s/start", addonContext.Slug),
 	)
 
 	j.finalizeUpdate(res, err, addonContext, job, client)
@@ -130,7 +130,7 @@ func (j *JobRunner) uninstallAddon(job types.GenericJob, client *client.HaargosC
 
 	res, err := supervisorClient.GenericPOST(
 		map[string]string{"Authorization": fmt.Sprintf("Bearer %s", supervisorToken)},
-		fmt.Sprintf("/addons/%s/uninstall", addonContext.Slug),
+		fmt.Sprintf("addons/%s/uninstall", addonContext.Slug),
 	)
 
 	j.finalizeUpdate(res, err, addonContext, job, client)
@@ -147,7 +147,7 @@ func (j *JobRunner) updateAddon(job types.GenericJob, client *client.HaargosClie
 
 	res, err := supervisorClient.GenericPOST(
 		map[string]string{"Authorization": fmt.Sprintf("Bearer %s", supervisorToken)},
-		fmt.Sprintf("/addons/%s/update", addonContext.Slug),
+		fmt.Sprintf("addons/%s/update", addonContext.Slug),
 	)
 
 	j.finalizeUpdate(res, err, addonContext, job, client)
