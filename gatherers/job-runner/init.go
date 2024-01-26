@@ -53,6 +53,22 @@ func (j *JobRunner) HandleJobs(haConfigPath string, supervisorToken string) {
 				j.restartAddon(job, j.haargosClient, j.supervisorClient, supervisorToken)
 			} else if job.Type == "addon_update" {
 				j.updateAddon(job, j.haargosClient, j.supervisorClient, supervisorToken)
+			} else if job.Type == "supervisor_update" {
+				j.genericJobPOSTAction(job, j.haargosClient, j.supervisorClient, supervisorToken, "supervisor/update")
+			} else if job.Type == "supervisor_restart" {
+				j.genericJobPOSTAction(job, j.haargosClient, j.supervisorClient, supervisorToken, "supervisor/restart")
+			} else if job.Type == "supervisor_repair" {
+				j.genericJobPOSTAction(job, j.haargosClient, j.supervisorClient, supervisorToken, "supervisor/repair")
+			} else if job.Type == "supervisor_reload" {
+				j.genericJobPOSTAction(job, j.haargosClient, j.supervisorClient, supervisorToken, "supervisor/reload")
+			} else if job.Type == "core_stop" {
+				j.genericJobPOSTAction(job, j.haargosClient, j.supervisorClient, supervisorToken, "core/stop")
+			} else if job.Type == "core_restart" {
+				j.genericJobPOSTAction(job, j.haargosClient, j.supervisorClient, supervisorToken, "core/restart")
+			} else if job.Type == "core_start" {
+				j.genericJobPOSTAction(job, j.haargosClient, j.supervisorClient, supervisorToken, "core/start")
+			} else if job.Type == "core_update" {
+				j.genericJobPOSTAction(job, j.haargosClient, j.supervisorClient, supervisorToken, "core/update")
 			} else {
 				j.logger.Warningf("Unsupported job encountered [type=%s]", job.Type)
 			}
@@ -64,11 +80,31 @@ func (j *JobRunner) HandleJobs(haConfigPath string, supervisorToken string) {
 	}
 }
 
+func (j *JobRunner) stopAddon(job types.GenericJob, client *client.HaargosClient, supervisorClient *client.HaargosClient, supervisorToken string) {
+	j.genericJobPOSTAction(job, client, supervisorClient, supervisorToken, "addons/%s/stop")
+}
+
+func (j *JobRunner) restartAddon(job types.GenericJob, client *client.HaargosClient, supervisorClient *client.HaargosClient, supervisorToken string) {
+	j.genericJobPOSTAction(job, client, supervisorClient, supervisorToken, "addons/%s/restart")
+}
+
+func (j *JobRunner) startAddon(job types.GenericJob, client *client.HaargosClient, supervisorClient *client.HaargosClient, supervisorToken string) {
+	j.genericJobPOSTAction(job, client, supervisorClient, supervisorToken, "addons/%s/start")
+}
+
+func (j *JobRunner) uninstallAddon(job types.GenericJob, client *client.HaargosClient, supervisorClient *client.HaargosClient, supervisorToken string) {
+	j.genericJobPOSTAction(job, client, supervisorClient, supervisorToken, "addons/%s/uninstall")
+}
+
+func (j *JobRunner) updateAddon(job types.GenericJob, client *client.HaargosClient, supervisorClient *client.HaargosClient, supervisorToken string) {
+	j.genericJobPOSTAction(job, client, supervisorClient, supervisorToken, "addons/%s/update")
+}
+
 type AddonContext struct {
 	Slug string `json:"addon_id"`
 }
 
-func (j *JobRunner) stopAddon(job types.GenericJob, client *client.HaargosClient, supervisorClient *client.HaargosClient, supervisorToken string) {
+func (j *JobRunner) genericJobPOSTAction(job types.GenericJob, client *client.HaargosClient, supervisorClient *client.HaargosClient, supervisorToken string, pathWithSlug string) {
 	var addonContext AddonContext
 	if err := UnmarshalContext(job.Context, &addonContext); err != nil {
 		j.logger.Errorf("Wrong context in job %s", job.Type)
@@ -79,75 +115,7 @@ func (j *JobRunner) stopAddon(job types.GenericJob, client *client.HaargosClient
 
 	res, err := supervisorClient.GenericPOST(
 		map[string]string{"Authorization": fmt.Sprintf("Bearer %s", supervisorToken)},
-		fmt.Sprintf("addons/%s/stop", addonContext.Slug),
-	)
-
-	j.finalizeUpdate(res, err, addonContext, job, client)
-}
-
-func (j *JobRunner) restartAddon(job types.GenericJob, client *client.HaargosClient, supervisorClient *client.HaargosClient, supervisorToken string) {
-	var addonContext AddonContext
-	if err := UnmarshalContext(job.Context, &addonContext); err != nil {
-		j.logger.Errorf("Wrong context in job %s", job.Type)
-		return
-	}
-
-	j.logger.Infof("Job scheduled [type=%s, slug=%s]", job.Type, addonContext.Slug)
-
-	res, err := supervisorClient.GenericPOST(
-		map[string]string{"Authorization": fmt.Sprintf("Bearer %s", supervisorToken)},
-		fmt.Sprintf("addons/%s/restart", addonContext.Slug),
-	)
-
-	j.finalizeUpdate(res, err, addonContext, job, client)
-}
-
-func (j *JobRunner) startAddon(job types.GenericJob, client *client.HaargosClient, supervisorClient *client.HaargosClient, supervisorToken string) {
-	var addonContext AddonContext
-	if err := UnmarshalContext(job.Context, &addonContext); err != nil {
-		j.logger.Errorf("Wrong context in job %s", job.Type)
-		return
-	}
-
-	j.logger.Infof("Job scheduled [type=%s, slug=%s]", job.Type, addonContext.Slug)
-
-	res, err := supervisorClient.GenericPOST(
-		map[string]string{"Authorization": fmt.Sprintf("Bearer %s", supervisorToken)},
-		fmt.Sprintf("addons/%s/start", addonContext.Slug),
-	)
-
-	j.finalizeUpdate(res, err, addonContext, job, client)
-}
-
-func (j *JobRunner) uninstallAddon(job types.GenericJob, client *client.HaargosClient, supervisorClient *client.HaargosClient, supervisorToken string) {
-	var addonContext AddonContext
-	if err := UnmarshalContext(job.Context, &addonContext); err != nil {
-		j.logger.Errorf("Wrong context in job %s", job.Type)
-		return
-	}
-
-	j.logger.Infof("Job scheduled [type=%s, slug=%s]", job.Type, addonContext.Slug)
-
-	res, err := supervisorClient.GenericPOST(
-		map[string]string{"Authorization": fmt.Sprintf("Bearer %s", supervisorToken)},
-		fmt.Sprintf("addons/%s/uninstall", addonContext.Slug),
-	)
-
-	j.finalizeUpdate(res, err, addonContext, job, client)
-}
-
-func (j *JobRunner) updateAddon(job types.GenericJob, client *client.HaargosClient, supervisorClient *client.HaargosClient, supervisorToken string) {
-	var addonContext AddonContext
-	if err := UnmarshalContext(job.Context, &addonContext); err != nil {
-		j.logger.Errorf("Wrong context in job %s", job.Type)
-		return
-	}
-
-	j.logger.Infof("Job scheduled [type=%s, slug=%s]", job.Type, addonContext.Slug)
-
-	res, err := supervisorClient.GenericPOST(
-		map[string]string{"Authorization": fmt.Sprintf("Bearer %s", supervisorToken)},
-		fmt.Sprintf("addons/%s/update", addonContext.Slug),
+		fmt.Sprintf(pathWithSlug, addonContext.Slug),
 	)
 
 	j.finalizeUpdate(res, err, addonContext, job, client)
@@ -157,14 +125,6 @@ func (j *JobRunner) updateOS(job types.GenericJob, client *client.HaargosClient,
 	j.logger.Infof("Job scheduled [type=%s]", job.Type)
 
 	res, err := supervisorClient.UpdateOS(map[string]string{"Authorization": fmt.Sprintf("Bearer %s", supervisorToken)})
-
-	j.finalizeUpdate(res, err, "", job, client)
-}
-
-func (j *JobRunner) postAction(job types.GenericJob, client *client.HaargosClient, supervisorClient *client.HaargosClient, supervisorToken string, path string) {
-	j.logger.Infof("Job scheduled [type=%s]", job.Type)
-
-	res, err := supervisorClient.GenericPOST(map[string]string{"Authorization": fmt.Sprintf("Bearer %s", supervisorToken)}, path)
 
 	j.finalizeUpdate(res, err, "", job, client)
 }
