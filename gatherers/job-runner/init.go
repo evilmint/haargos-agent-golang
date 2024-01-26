@@ -153,20 +153,6 @@ func (j *JobRunner) updateAddon(job types.GenericJob, client *client.HaargosClie
 	j.finalizeUpdate(res, err, addonContext, job, client)
 }
 
-func (j *JobRunner) updateAddon(job types.GenericJob, client *client.HaargosClient, supervisorClient *client.HaargosClient, supervisorToken string) {
-	var addonContext AddonContext
-	if err := UnmarshalContext(job.Context, &addonContext); err != nil {
-		j.logger.Errorf("Wrong context in job %s", job.Type)
-		return
-	}
-
-	j.logger.Infof("Job scheduled [type=%s, slug=%s]", job.Type, addonContext.Slug)
-
-	res, err := supervisorClient.UpdateAddon(map[string]string{"Authorization": fmt.Sprintf("Bearer %s", supervisorToken)}, addonContext.Slug)
-
-	j.finalizeUpdate(res, err, addonContext, job, client)
-}
-
 func (j *JobRunner) updateOS(job types.GenericJob, client *client.HaargosClient, supervisorClient *client.HaargosClient, supervisorToken string) {
 	j.logger.Infof("Job scheduled [type=%s]", job.Type)
 
