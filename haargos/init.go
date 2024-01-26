@@ -16,6 +16,7 @@ import (
 	"github.com/evilmint/haargos-agent-golang/gatherers/automationgatherer"
 	"github.com/evilmint/haargos-agent-golang/gatherers/dockergatherer"
 	"github.com/evilmint/haargos-agent-golang/gatherers/environmentgatherer"
+	jobrunner "github.com/evilmint/haargos-agent-golang/gatherers/job-runner"
 	"github.com/evilmint/haargos-agent-golang/gatherers/loggatherer"
 	"github.com/evilmint/haargos-agent-golang/gatherers/scenegatherer"
 	"github.com/evilmint/haargos-agent-golang/gatherers/scriptgatherer"
@@ -31,17 +32,18 @@ import (
 )
 
 type Haargos struct {
-	EnvironmentGatherer *environmentgatherer.EnvironmentGatherer
-	Logger              *logrus.Logger
-	Ingress             *ingress.Ingress
-	Statistics          *statistics.Statistics
+	environmentGatherer *environmentgatherer.EnvironmentGatherer
+	logger              *logrus.Logger
+	ingress             *ingress.Ingress
+	statistics          *statistics.Statistics
+	jobRunner           *jobrunner.JobRunner
 }
 
 func NewHaargos(logger *logrus.Logger, debugEnabled bool) *Haargos {
 	return &Haargos{
-		EnvironmentGatherer: environmentgatherer.NewEnvironmentGatherer(logger, commandrepository.NewCommandRepository(logger)),
-		Logger:              logger,
-		Statistics:          statistics.NewStatistics(),
+		environmentGatherer: environmentgatherer.NewEnvironmentGatherer(logger, commandrepository.NewCommandRepository(logger)),
+		logger:              logger,
+		statistics:          statistics.NewStatistics(),
 	}
 }
 
@@ -62,15 +64,15 @@ type RunParams struct {
 func (h *Haargos) fetchLogs(haConfigPath string, ch chan string, wg *sync.WaitGroup) {
 	defer wg.Done()
 
-	gatherer := loggatherer.NewLogGatherer(h.Logger)
+	gatherer := loggatherer.NewLogGatherer(h.logger)
 	logContent := gatherer.GatherCoreLogs(haConfigPath)
-	h.Logger.Debugf("Collected logs.")
+	h.logger.Debugf("Collected logs.")
 	ch <- logContent
 }
 
 func (h *Haargos) calculateDocker(ch chan types.Docker, wg *sync.WaitGroup) {
 	defer wg.Done()
-	h.Logger.Debugf("Analyzing Docker environment.")
+	h.logger.Debugf("Analyzing Docker environment.")
 	gatherer := dockergatherer.NewDockerGatherer("/var/run/docker.sock")
 	dockerInfo := gatherer.GatherDocker()
 	ch <- dockerInfo
@@ -78,10 +80,10 @@ func (h *Haargos) calculateDocker(ch chan types.Docker, wg *sync.WaitGroup) {
 
 func (h *Haargos) calculateEnvironment(ch chan types.Environment, wg *sync.WaitGroup) {
 	defer wg.Done()
-	h.EnvironmentGatherer.PausePeriodicTasks()
-	environment := h.EnvironmentGatherer.CalculateEnvironment()
-	h.EnvironmentGatherer.ResumePeriodicTasks()
-	h.Logger.Debugf("Retrieved environment data.")
+	h.environmentGatherer.PausePeriodicTasks()
+	environment := h.environmentGatherer.CalculateEnvironment()
+	h.environmentGatherer.ResumePeriodicTasks()
+	h.logger.Debugf("Retrieved environment data.")
 	ch <- environment
 }
 
@@ -107,13 +109,13 @@ func (h *Haargos) readRestoreStateResponse(filePath string) (types.RestoreStateR
 
 func (h *Haargos) calculateZigbee(haConfigPath string, z2mPath *string, zhaPath *string, ch chan types.ZigbeeStatus, wg *sync.WaitGroup) {
 	defer wg.Done()
-	gatherer := zigbeedevicegatherer.NewZigbeeDeviceGatherer(h.Logger)
-	deviceRegistry, _ := registry.ReadDeviceRegistry(h.Logger, haConfigPath)
+	gatherer := zigbeedevicegatherer.NewZigbeeDeviceGatherer(h.logger)
+	deviceRegistry, _ := registry.ReadDeviceRegistry(h.logger, haConfigPath)
 	entityRegistry, _ := registry.ReadEntityRegistry(haConfigPath)
 	devices, err := gatherer.GatherDevices(z2mPath, zhaPath, &deviceRegistry, &entityRegistry, haConfigPath)
 
 	if err != nil {
-		h.Logger.Errorf("Error while gathering zigbee devices: %s", err)
+		h.logger.Errorf("Error while gathering zigbee devices: %s", err)
 		ch <- types.ZigbeeStatus{Devices: []types.ZigbeeDevice{}}
 		return
 	}
@@ -127,13 +129,13 @@ func (h *Haargos) calculateHAConfig(haConfigPath string, ch chan types.HAConfig,
 	versionFilePath := path.Join(haConfigPath, ".HA_VERSION")
 	versionBytes, err := os.ReadFile(versionFilePath)
 	if err != nil {
-		h.Logger.Errorf("Error reading HA_VERSION file: %v", err)
+		h.logger.Errorf("Error reading HA_VERSION file: %v", err)
 		ch <- types.HAConfig{}
 		return
 	}
 
 	haConfig := types.HAConfig{Version: strings.TrimSpace(string(versionBytes))}
-	h.Logger.Debugf("Retrieved Home Assistant configuration.")
+	h.logger.Debugf("Retrieved Home Assistant configuration.")
 	ch <- haConfig
 }
 
@@ -148,7 +150,7 @@ func (h *Haargos) calculateAutomations(
 	gatherer := automationgatherer.AutomationGatherer{}
 	automations := gatherer.GatherAutomations(configPath, restoreState)
 
-	h.Logger.Debugf("Retrieved HomeAssistant Automations (%d).", len(automations))
+	h.logger.Debugf("Retrieved HomeAssistant Automations (%d).", len(automations))
 	ch <- automations
 }
 
@@ -160,10 +162,10 @@ func (h *Haargos) calculateScripts(
 ) {
 	defer wg.Done()
 
-	gatherer := scriptgatherer.NewScriptGatherer(h.Logger)
+	gatherer := scriptgatherer.NewScriptGatherer(h.logger)
 	scripts := gatherer.GatherScripts(configPath, restoreState)
 
-	h.Logger.Debugf("Retrieved HomeAssistant Scripts (%d).", len(scripts))
+	h.logger.Debugf("Retrieved HomeAssistant Scripts (%d).", len(scripts))
 	ch <- scripts
 }
 
@@ -174,10 +176,10 @@ func (h *Haargos) calculateScenes(
 	wg *sync.WaitGroup,
 ) {
 	defer wg.Done()
-	gatherer := scenegatherer.NewSceneGatherer(h.Logger)
+	gatherer := scenegatherer.NewSceneGatherer(h.logger)
 	scenes := gatherer.GatherScenes(configPath, restoreState)
 
-	h.Logger.Debugf("Retrieved HomeAssistant Scenes (%d).", len(scenes))
+	h.logger.Debugf("Retrieved HomeAssistant Scenes (%d).", len(scenes))
 	ch <- scenes
 }
 
@@ -192,19 +194,7 @@ const (
 func (h *Haargos) Run(params RunParams) {
 	var interval time.Duration
 
-	validAgentTypes := []string{"bin", "addon", "docker"}
-
-	isAgentTypeValid := false
-	for _, t := range validAgentTypes {
-		if params.AgentType == t {
-			isAgentTypeValid = true
-			break
-		}
-	}
-
-	if !isAgentTypeValid {
-		h.Logger.Fatalf("Invalid agent type.")
-	}
+	h.validateAgentType(params.AgentType)
 
 	var apiURL string
 
@@ -218,43 +208,28 @@ func (h *Haargos) Run(params RunParams) {
 
 	supervisorToken := os.Getenv("SUPERVISOR_TOKEN")
 	haargosClient := client.NewClient(apiURL, params.AgentToken, func(number int) {
-		h.Statistics.AddDataSentInKB(number)
+		h.statistics.AddDataSentInKB(number)
 	})
 	supervisorClient := client.NewClient(supervisorEndpoint, params.AgentToken, func(number int) {
-		h.Statistics.AddDataSentInKB(number)
-
+		h.statistics.AddDataSentInKB(number)
 	})
 
+	h.jobRunner = jobrunner.NewJobRunner(h.logger, haargosClient, supervisorClient, h.statistics)
+
 	if supervisorToken != "" {
-		h.Logger.Info("Supervisor token is set.")
+		h.logger.Info("Supervisor token is set.")
 	} else {
-		h.Logger.Info("Supervisor token is not set.")
+		h.logger.Info("Supervisor token is not set.")
 	}
 
 	agentConfig, err := haargosClient.FetchAgentConfig()
 
 	if err != nil {
-		h.Logger.Fatalf("Failed to fetch agent config: %s", err)
+		h.logger.Fatalf("Failed to fetch agent config: %s", err)
 		return
 	}
 
-	// Check the environment variable for debug mode
-	// if os.Getenv("DEBUG") == "true" {
-	// 	interval = 1 * time.Minute
-	// } else {
-	// 	interval = time.Duration(agentConfig.CycleInterval) * time.Second
-	// }
-
-	// log.Errorf("cycle interval: %d", agentConfig.CycleInterval)
-
-	// Read the entire file as a byte slice.
-	data, err := os.ReadFile("VERSION")
-	if err != nil {
-		h.Logger.Fatalf("Failed to read agent version.")
-	}
-
-	// Convert the byte slice to a string and print it.
-	version := string(data)
+	version := h.getAgentVersion()
 
 	interval = time.Duration(agentConfig.CycleInterval) * time.Second
 
@@ -271,14 +246,14 @@ func (h *Haargos) Run(params RunParams) {
 		h.sendSupervisor(params.HaConfigPath, haargosClient, supervisorClient, supervisorToken)
 	})
 	runTicker(interval, func() {
-		h.handleJobs(params.HaConfigPath, haargosClient, supervisorClient, supervisorToken)
+		h.jobRunner.HandleJobs(params.HaConfigPath, supervisorToken)
 	})
 
 	accessToken := os.Getenv("HA_ACCESS_TOKEN")
 	haEndpoint := os.Getenv("HA_ENDPOINT")
 
 	isAccessTokenSet := accessToken != ""
-	h.Statistics.SetHAAccessTokenSet(isAccessTokenSet)
+	h.statistics.SetHAAccessTokenSet(isAccessTokenSet)
 
 	if isAccessTokenSet {
 		if haEndpoint == "" {
@@ -296,8 +271,8 @@ func (h *Haargos) Run(params RunParams) {
 			h.sendNotifications(params.HaConfigPath, haargosClient, accessToken, haEndpoint)
 		})
 	}
-	h.Ingress = ingress.NewIngress(h.Statistics)
-	go h.Ingress.Run()
+	h.ingress = ingress.NewIngress(h.statistics)
+	go h.ingress.Run()
 
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
@@ -344,12 +319,12 @@ func (h *Haargos) Run(params RunParams) {
 		observation.AgentType = params.AgentType
 
 		response, err := haargosClient.SendObservation(observation)
-		h.handleHttpResponse(response, err, h.Logger, "sending observation")
+		h.handleHttpResponse(response, err, h.logger, "sending observation")
 
 		if err == nil {
-			h.Statistics.IncrementObservationsSentCount()
+			h.statistics.IncrementObservationsSentCount()
 		} else {
-			h.Statistics.IncrementFailedRequestCount()
+			h.statistics.IncrementFailedRequestCount()
 		}
 	}
 
@@ -360,15 +335,41 @@ func (h *Haargos) Run(params RunParams) {
 	}
 }
 
+func (h *Haargos) getAgentVersion() string {
+	data, err := os.ReadFile("VERSION")
+	if err != nil {
+		h.logger.Fatalf("Failed to read agent version.")
+	}
+
+	version := string(data)
+	return version
+}
+
+func (h *Haargos) validateAgentType(agentType string) {
+	validAgentTypes := []string{"bin", "addon", "docker"}
+
+	isAgentTypeValid := false
+	for _, t := range validAgentTypes {
+		if agentType == t {
+			isAgentTypeValid = true
+			break
+		}
+	}
+
+	if !isAgentTypeValid {
+		h.logger.Fatalf("Invalid agent type.")
+	}
+}
+
 type LogFetchType struct {
 	logType string
 }
 
 func (h *Haargos) sendLogs(haConfigPath string, client *client.HaargosClient, supervisorClient *client.HaargosClient, supervisorToken string) {
 
-	gatherer := loggatherer.NewLogGatherer(h.Logger)
+	gatherer := loggatherer.NewLogGatherer(h.logger)
 	logContent := gatherer.GatherCoreLogs(haConfigPath)
-	h.Logger.Debugf("Collected core logs.")
+	h.logger.Debugf("Collected core logs.")
 
 	coreLogs := types.Logs{Type: "core", Content: logContent}
 	h.sendLogsToClient(client, coreLogs)
@@ -387,9 +388,9 @@ func (h *Haargos) sendLogs(haConfigPath string, client *client.HaargosClient, su
 			supervisorLogContent, err := gatherer.GatherHassioLogs(supervisorClient, supervisorToken, fetchType.logType)
 
 			if err != nil {
-				h.Logger.Errorf("Failed collecting %s logs", fetchType.logType)
+				h.logger.Errorf("Failed collecting %s logs", fetchType.logType)
 			} else {
-				h.Logger.Debugf("Collected %s logs.", fetchType.logType)
+				h.logger.Debugf("Collected %s logs.", fetchType.logType)
 
 				logs := types.Logs{Type: fetchType.logType, Content: supervisorLogContent}
 				h.sendLogsToClient(client, logs)
@@ -400,10 +401,10 @@ func (h *Haargos) sendLogs(haConfigPath string, client *client.HaargosClient, su
 
 func (h *Haargos) sendLogsToClient(client *client.HaargosClient, logs types.Logs) {
 	response, err := client.SendLogs(logs)
-	h.handleHttpResponse(response, err, h.Logger, "sending logs")
+	h.handleHttpResponse(response, err, h.logger, "sending logs")
 
 	if err != nil {
-		h.Statistics.IncrementFailedRequestCount()
+		h.statistics.IncrementFailedRequestCount()
 	}
 }
 
@@ -411,133 +412,32 @@ func (h *Haargos) sendSupervisor(haConfigPath string, client *client.HaargosClie
 	supervisor, err := supervisorClient.FetchSupervisor(map[string]string{"Authorization": fmt.Sprintf("Bearer %s", supervisorToken)})
 
 	if err != nil || supervisor == nil {
-		h.Logger.Errorf("Failed collecting supervisor %s", err)
+		h.logger.Errorf("Failed collecting supervisor %s", err)
 	} else {
-		h.Logger.Debugf("Collected supervisor.")
+		h.logger.Debugf("Collected supervisor.")
 
 		response, err := client.SendSupervisor(*supervisor)
-		h.handleHttpResponse(response, err, h.Logger, "sending supervisor")
+		h.handleHttpResponse(response, err, h.logger, "sending supervisor")
 
 		if err != nil {
-			h.Statistics.IncrementFailedRequestCount()
+			h.statistics.IncrementFailedRequestCount()
 		}
 	}
-}
-
-func (h *Haargos) handleJobs(haConfigPath string, client *client.HaargosClient, supervisorClient *client.HaargosClient, supervisorToken string) {
-	jobs, err := client.FetchJobs()
-
-	if err != nil || jobs == nil {
-		h.Logger.Errorf("Failed collecting jobs %s", err)
-	} else {
-		var jobNames = ""
-		h.Logger.Infof("Collected %d jobs. %s", len(*jobs), jobNames)
-
-		for _, job := range *jobs {
-			if job.Type == "update_core" {
-				h.updateCore(job, client, supervisorClient, supervisorToken)
-			} else if job.Type == "update_addon" {
-				h.updateAddon(job, client, supervisorClient, supervisorToken)
-			} else if job.Type == "update_os" {
-				h.updateOS(job, client, supervisorClient, supervisorToken)
-			} else {
-				h.Logger.Warningf("Unsupported job encountered [type=%s]", job.Type)
-			}
-		}
-	}
-
-	if err != nil {
-		h.Statistics.IncrementFailedRequestCount()
-	}
-}
-
-type AddonContext struct {
-	Slug string `json:"addon_id"`
-}
-
-func (h *Haargos) updateAddon(job types.GenericJob, client *client.HaargosClient, supervisorClient *client.HaargosClient, supervisorToken string) {
-	var addonContext AddonContext
-	if err := UnmarshalContext(job.Context, &addonContext); err != nil {
-		h.Logger.Errorf("Wrong context in job %s", job.Type)
-		return
-	}
-
-	h.Logger.Infof("Job scheduled [type=%s, slug=%s]", job.Type, addonContext.Slug)
-
-	res, err := supervisorClient.UpdateAddon(map[string]string{"Authorization": fmt.Sprintf("Bearer %s", supervisorToken)}, addonContext.Slug)
-
-	h.finalizeUpdate(res, err, addonContext, job, client)
-}
-
-func (h *Haargos) updateOS(job types.GenericJob, client *client.HaargosClient, supervisorClient *client.HaargosClient, supervisorToken string) {
-	h.Logger.Infof("Job scheduled [type=%s]", job.Type)
-
-	res, err := supervisorClient.UpdateOS(map[string]string{"Authorization": fmt.Sprintf("Bearer %s", supervisorToken)})
-
-	h.finalizeUpdate(res, err, "", job, client)
-}
-
-func (h *Haargos) finalizeUpdate(res *http.Response, err error, context interface{}, job types.GenericJob, client *client.HaargosClient) {
-	if err != nil {
-		resString := ""
-
-		if res != nil && res.StatusCode >= 200 && res.StatusCode < 300 {
-			resString += fmt.Sprintf(", status=%s", res.Status)
-		}
-		if res != nil {
-			h.Logger.Infof("Res is not nil [status=%s]", res.Status)
-		} else {
-			h.Logger.Infof("Res is nil")
-		}
-
-		h.Logger.Errorf("Job failure [type=%s, context=%s, err=%s%s]", job.Type, context, err, resString)
-	}
-
-	if res != nil && (res.StatusCode < 500 && res.StatusCode >= 200) {
-		_, err = client.CompleteJob(job)
-
-		if err != nil {
-			h.Logger.Errorf("Job dequeue failed [type=%s, context=%s, err=%s]", job.Type, context, err)
-		} else {
-			h.Logger.Infof("Job dequeue successful.")
-		}
-	}
-}
-
-func UnmarshalContext(context interface{}, target interface{}) error {
-	contextJSON, err := json.Marshal(context)
-	if err != nil {
-		return fmt.Errorf("error marshaling context: %w", err)
-	}
-
-	if err := json.Unmarshal(contextJSON, target); err != nil {
-		return fmt.Errorf("error unmarshaling context into target struct: %w", err)
-	}
-
-	return nil
-}
-
-func (h *Haargos) updateCore(job types.GenericJob, client *client.HaargosClient, supervisorClient *client.HaargosClient, supervisorToken string) {
-	h.Logger.Infof("Updating core")
-	res, err := supervisorClient.UpdateCore(map[string]string{"Authorization": fmt.Sprintf("Bearer %s", supervisorToken)})
-	h.Logger.Infof("Updating core scheduled")
-
-	h.finalizeUpdate(res, err, "", job, client)
 }
 
 func (h *Haargos) sendOS(haConfigPath string, client *client.HaargosClient, supervisorClient *client.HaargosClient, supervisorToken string) {
 	osContent, err := supervisorClient.FetchOS(map[string]string{"Authorization": fmt.Sprintf("Bearer %s", supervisorToken)})
 
 	if err != nil || osContent == nil {
-		h.Logger.Errorf("Failed collecting os %s", err)
+		h.logger.Errorf("Failed collecting os %s", err)
 	} else {
-		h.Logger.Debugf("Collected os.")
+		h.logger.Debugf("Collected os.")
 
 		response, err := client.SendOS(*osContent)
-		h.handleHttpResponse(response, err, h.Logger, "sending os")
+		h.handleHttpResponse(response, err, h.logger, "sending os")
 
 		if err != nil {
-			h.Statistics.IncrementFailedRequestCount()
+			h.statistics.IncrementFailedRequestCount()
 		}
 	}
 }
@@ -546,15 +446,15 @@ func (h *Haargos) sendAddons(haConfigPath string, client *client.HaargosClient, 
 	addonContent, err := supervisorClient.FetchAddons(map[string]string{"Authorization": fmt.Sprintf("Bearer %s", supervisorToken)})
 
 	if err != nil || addonContent == nil {
-		h.Logger.Errorf("Failed collecting addons %s", err)
+		h.logger.Errorf("Failed collecting addons %s", err)
 	} else {
-		h.Logger.Debugf("Collected %d addons.", len(*addonContent))
+		h.logger.Debugf("Collected %d addons.", len(*addonContent))
 
 		response, err := client.SendAddons(*addonContent)
-		h.handleHttpResponse(response, err, h.Logger, "sending addons")
+		h.handleHttpResponse(response, err, h.logger, "sending addons")
 
 		if err != nil {
-			h.Statistics.IncrementFailedRequestCount()
+			h.statistics.IncrementFailedRequestCount()
 		}
 	}
 }
@@ -585,9 +485,9 @@ func (h *Haargos) sendNotifications(haConfigPath string, client *client.HaargosC
 	notification, err := wsClient.FetchNotifications(accessToken)
 
 	if err != nil {
-		h.Logger.Fatalf("Error fetching notifications: %v", err)
+		h.logger.Fatalf("Error fetching notifications: %v", err)
 	} else {
-		h.Logger.Infof("Read %d notifications", len(notification.Event.Notifications))
+		h.logger.Infof("Read %d notifications", len(notification.Event.Notifications))
 
 		notifications := make([]websocketclient.WSAPINotificationDetails, 0, len(notification.Event.Notifications))
 
@@ -596,13 +496,13 @@ func (h *Haargos) sendNotifications(haConfigPath string, client *client.HaargosC
 		}
 
 		response, err := client.SendNotifications(notifications)
-		h.handleHttpResponse(response, err, h.Logger, "sending notifications")
+		h.handleHttpResponse(response, err, h.logger, "sending notifications")
 
 		if err != nil {
-			h.Statistics.IncrementFailedRequestCount()
+			h.statistics.IncrementFailedRequestCount()
 		}
 
-		h.Logger.Infof("Sent notifications")
+		h.logger.Infof("Sent notifications")
 	}
 }
 
@@ -617,7 +517,7 @@ func (h *Haargos) handleHttpResponse(response *http.Response, err error, logger 
 			}
 		}
 	} else {
-		h.Statistics.SetLastSuccessfulConnection(time.Now())
+		h.statistics.SetLastSuccessfulConnection(time.Now())
 	}
 
 	if response != nil {
