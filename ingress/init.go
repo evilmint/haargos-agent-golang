@@ -53,6 +53,7 @@ func (i *Ingress) Run() error {
 			"FailedRequestCount": fmt.Sprintf("%d", i.Stats.GetFailedRequestCount()),
 			"DataSentInKb":       fmt.Sprintf("%.1f", float32(i.Stats.GetDataSentInKB())/1024),
 			"ObservationCount":   fmt.Sprintf("%d", i.Stats.GetObservationsSentCount()),
+			"JobsProcessedCount": fmt.Sprintf("%d", i.Stats.GetJobsProcessedCount()),
 		})
 	})
 

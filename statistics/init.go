@@ -12,13 +12,15 @@ type Statistics struct {
 	failedRequestCount       int
 	observationsSentCount    int
 	dataSentInKB             int
+	jobsProcessedCount       int
 	lastSuccessfulConnection time.Time
 	haAccessTokenSet         bool
 }
 
 func NewStatistics() *Statistics {
 	return &Statistics{
-		StartTime: time.Now(),
+		StartTime:          time.Now(),
+		jobsProcessedCount: 0,
 	}
 }
 
@@ -101,4 +103,18 @@ func (s *Statistics) SetLastSuccessfulConnection(lastConn time.Time) {
 	defer s.lock.Unlock()
 
 	s.lastSuccessfulConnection = lastConn
+}
+
+func (s *Statistics) IncrementJobsProcessedCount() {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
+	s.jobsProcessedCount += 1
+}
+
+func (s *Statistics) GetJobsProcessedCount() int {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
+	return s.jobsProcessedCount
 }

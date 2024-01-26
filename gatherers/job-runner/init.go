@@ -72,6 +72,8 @@ func (j *JobRunner) HandleJobs(haConfigPath string, supervisorToken string) {
 			} else {
 				j.logger.Warningf("Unsupported job encountered [type=%s]", job.Type)
 			}
+
+			j.statistics.IncrementJobsProcessedCount()
 		}
 	}
 
