@@ -69,6 +69,10 @@ func (j *JobRunner) HandleJobs(haConfigPath string, supervisorToken string) {
 				j.genericJobPOSTAction(job, j.haargosClient, j.supervisorClient, supervisorToken, "core/start")
 			} else if job.Type == "core_update" {
 				j.genericJobPOSTAction(job, j.haargosClient, j.supervisorClient, supervisorToken, "core/update")
+			} else if job.Type == "host_reboot" {
+				j.genericJobPOSTAction(job, j.haargosClient, j.supervisorClient, supervisorToken, "host/reboot")
+			} else if job.Type == "host_shutdown" {
+				j.genericJobPOSTAction(job, j.haargosClient, j.supervisorClient, supervisorToken, "host/shutdown")
 			} else {
 				j.logger.Warningf("Unsupported job encountered [type=%s]", job.Type)
 			}
