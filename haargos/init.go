@@ -245,7 +245,7 @@ func (h *Haargos) Run(params RunParams) {
 	runTicker(interval, func() {
 		h.sendSupervisor(params.HaConfigPath, haargosClient, supervisorClient, supervisorToken)
 	})
-	runTicker(interval, func() {
+	runTicker(3*time.Minute, func() {
 		h.jobRunner.HandleJobs(params.HaConfigPath, supervisorToken)
 	})
 

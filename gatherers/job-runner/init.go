@@ -4,11 +4,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"sync"
 
 	"github.com/evilmint/haargos-agent-golang/client"
 	"github.com/evilmint/haargos-agent-golang/statistics"
 	"github.com/evilmint/haargos-agent-golang/types"
 	"github.com/sirupsen/logrus"
+	"golang.org/x/sync/semaphore"
 )
 
 type JobRunner struct {
@@ -16,6 +18,7 @@ type JobRunner struct {
 	supervisorClient *client.HaargosClient
 	logger           *logrus.Logger
 	statistics       *statistics.Statistics
+	lock             sync.Mutex
 }
 
 func NewJobRunner(logger *logrus.Logger, haargosClient *client.HaargosClient, supervisorClient *client.HaargosClient, statistics *statistics.Statistics) *JobRunner {
@@ -28,6 +31,13 @@ func NewJobRunner(logger *logrus.Logger, haargosClient *client.HaargosClient, su
 }
 
 func (j *JobRunner) HandleJobs(haConfigPath string, supervisorToken string) {
+	if !j.tryLock() {
+		// If the lock is already acquired by another goroutine, return immediately
+		j.logger.Info("HandleJobs is already running")
+		return
+	}
+	defer j.unlock()
+
 	jobs, err := j.haargosClient.FetchJobs()
 
 	if err != nil || jobs == nil {
@@ -181,4 +191,12 @@ func (j *JobRunner) updateCore(job types.GenericJob, client *client.HaargosClien
 	j.logger.Infof("Updating core scheduled")
 
 	j.finalizeUpdate(res, err, "", job, client)
+}
+
+func (j *JobRunner) tryLock() bool {
+	return semaphore.NewWeighted(1).TryAcquire(1)
+}
+
+func (j *JobRunner) unlock() {
+	semaphore.NewWeighted(1).Release(1)
 }
