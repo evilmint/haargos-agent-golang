@@ -230,21 +230,26 @@ func (h *Haargos) Run(params RunParams) {
 	}
 
 	version := h.getAgentVersion()
+	isSupervised := supervisorToken != "" && params.AgentType == "agent"
 
 	interval = time.Duration(agentConfig.CycleInterval) * time.Second
 
 	runTicker(interval, func() {
 		h.sendLogs(params.HaConfigPath, haargosClient, supervisorClient, supervisorToken)
 	})
-	runTicker(interval, func() {
-		h.sendAddons(params.HaConfigPath, haargosClient, supervisorClient, supervisorToken)
-	})
-	runTicker(interval, func() {
-		h.sendOS(params.HaConfigPath, haargosClient, supervisorClient, supervisorToken)
-	})
-	runTicker(interval, func() {
-		h.sendSupervisor(params.HaConfigPath, haargosClient, supervisorClient, supervisorToken)
-	})
+
+	if isSupervised {
+		runTicker(interval, func() {
+			h.sendAddons(params.HaConfigPath, haargosClient, supervisorClient, supervisorToken)
+		})
+		runTicker(interval, func() {
+			h.sendOS(params.HaConfigPath, haargosClient, supervisorClient, supervisorToken)
+		})
+		runTicker(interval, func() {
+			h.sendSupervisor(params.HaConfigPath, haargosClient, supervisorClient, supervisorToken)
+		})
+	}
+
 	runTicker(3*time.Minute, func() {
 		h.jobRunner.HandleJobs(params.HaConfigPath, supervisorToken)
 	})

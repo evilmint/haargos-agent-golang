@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"sync"
 
 	"github.com/evilmint/haargos-agent-golang/client"
 	"github.com/evilmint/haargos-agent-golang/statistics"
@@ -18,7 +17,7 @@ type JobRunner struct {
 	supervisorClient *client.HaargosClient
 	logger           *logrus.Logger
 	statistics       *statistics.Statistics
-	lock             sync.Mutex
+	lock             *semaphore.Weighted
 }
 
 func NewJobRunner(logger *logrus.Logger, haargosClient *client.HaargosClient, supervisorClient *client.HaargosClient, statistics *statistics.Statistics) *JobRunner {
@@ -194,9 +193,9 @@ func (j *JobRunner) updateCore(job types.GenericJob, client *client.HaargosClien
 }
 
 func (j *JobRunner) tryLock() bool {
-	return semaphore.NewWeighted(1).TryAcquire(1)
+	return j.lock.TryAcquire(1)
 }
 
 func (j *JobRunner) unlock() {
-	semaphore.NewWeighted(1).Release(1)
+	j.lock.Release(1)
 }
