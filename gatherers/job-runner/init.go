@@ -26,6 +26,7 @@ func NewJobRunner(logger *logrus.Logger, haargosClient *client.HaargosClient, su
 		supervisorClient: supervisorClient,
 		logger:           logger,
 		statistics:       statistics,
+		lock:             semaphore.NewWeighted(1),
 	}
 }
 
