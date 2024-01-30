@@ -137,6 +137,17 @@ func (j *JobRunner) genericJobPOSTAction(job types.GenericJob, client *client.Ha
 	j.finalizeUpdate(res, err, addonContext, job, client)
 }
 
+func (j *JobRunner) genericPOSTAction(job types.GenericJob, client *client.HaargosClient, supervisorClient *client.HaargosClient, supervisorToken string, pathWithSlug string) {
+	j.logger.Infof("Job scheduled [type=%s]", job.Type)
+
+	res, err := supervisorClient.GenericPOST(
+		map[string]string{"Authorization": fmt.Sprintf("Bearer %s", supervisorToken)},
+		fmt.Sprintf(pathWithSlug),
+	)
+
+	j.finalizeUpdate(res, err, nil, job, client)
+}
+
 func (j *JobRunner) updateOS(job types.GenericJob, client *client.HaargosClient, supervisorClient *client.HaargosClient, supervisorToken string) {
 	j.logger.Infof("Job scheduled [type=%s]", job.Type)
 
@@ -165,7 +176,11 @@ func (j *JobRunner) finalizeUpdate(res *http.Response, err error, context interf
 		err = client.CompleteJob(job)
 
 		if err != nil {
-			j.logger.Errorf("Job dequeue failed [type=%s, context=%s, err=%s]", job.Type, context, err)
+			if context != nil {
+				j.logger.Errorf("Job dequeue failed [type=%s, context=%s, err=%s]", job.Type, context, err)
+			} else {
+				j.logger.Errorf("Job dequeue failed [type=%s, err=%s]", job.Type, err)
+			}
 		} else {
 			j.logger.Infof("Job dequeue successful.")
 		}
