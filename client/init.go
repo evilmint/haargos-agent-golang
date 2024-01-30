@@ -284,11 +284,6 @@ func (c *HaargosClient) CompleteJob(job types.GenericJob) error {
 		return fmt.Errorf("received non-OK response status: %s", resp.Status)
 	}
 
-	var response types.JobsResponse
-	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
-		return fmt.Errorf("error unmarshaling response: %v", err)
-	}
-
 	return nil
 }
 
