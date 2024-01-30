@@ -278,7 +278,6 @@ func (c *HaargosClient) CompleteJob(job types.GenericJob) error {
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return fmt.Errorf("received non-OK response status: %s", resp.Status)
