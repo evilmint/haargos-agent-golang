@@ -46,7 +46,7 @@ table {
 }
 
 table, th, td {
-    border: 1px solid #ddd;
+    border: 1px solid #1c6096;
 }
 
 th, td {
@@ -55,6 +55,7 @@ th, td {
 }
 
 th {
-    background-color: #2488d7;
-    color: #fff;
+    background-color: #f3f3f3;
+    color: #444;
+    letter-spacing: 0.2px;
 }
