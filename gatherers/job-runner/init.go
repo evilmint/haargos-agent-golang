@@ -64,25 +64,25 @@ func (j *JobRunner) HandleJobs(haConfigPath string, supervisorToken string) {
 			} else if job.Type == "addon_update" {
 				j.updateAddon(job, j.haargosClient, j.supervisorClient, supervisorToken)
 			} else if job.Type == "supervisor_update" {
-				j.genericJobPOSTAction(job, j.haargosClient, j.supervisorClient, supervisorToken, "supervisor/update")
+				j.genericPOSTAction(job, j.haargosClient, j.supervisorClient, supervisorToken, "supervisor/update")
 			} else if job.Type == "supervisor_restart" {
-				j.genericJobPOSTAction(job, j.haargosClient, j.supervisorClient, supervisorToken, "supervisor/restart")
+				j.genericPOSTAction(job, j.haargosClient, j.supervisorClient, supervisorToken, "supervisor/restart")
 			} else if job.Type == "supervisor_repair" {
-				j.genericJobPOSTAction(job, j.haargosClient, j.supervisorClient, supervisorToken, "supervisor/repair")
+				j.genericPOSTAction(job, j.haargosClient, j.supervisorClient, supervisorToken, "supervisor/repair")
 			} else if job.Type == "supervisor_reload" {
-				j.genericJobPOSTAction(job, j.haargosClient, j.supervisorClient, supervisorToken, "supervisor/reload")
+				j.genericPOSTAction(job, j.haargosClient, j.supervisorClient, supervisorToken, "supervisor/reload")
 			} else if job.Type == "core_stop" {
-				j.genericJobPOSTAction(job, j.haargosClient, j.supervisorClient, supervisorToken, "core/stop")
+				j.genericPOSTAction(job, j.haargosClient, j.supervisorClient, supervisorToken, "core/stop")
 			} else if job.Type == "core_restart" {
-				j.genericJobPOSTAction(job, j.haargosClient, j.supervisorClient, supervisorToken, "core/restart")
+				j.genericPOSTAction(job, j.haargosClient, j.supervisorClient, supervisorToken, "core/restart")
 			} else if job.Type == "core_start" {
-				j.genericJobPOSTAction(job, j.haargosClient, j.supervisorClient, supervisorToken, "core/start")
+				j.genericPOSTAction(job, j.haargosClient, j.supervisorClient, supervisorToken, "core/start")
 			} else if job.Type == "core_update" {
-				j.genericJobPOSTAction(job, j.haargosClient, j.supervisorClient, supervisorToken, "core/update")
+				j.genericPOSTAction(job, j.haargosClient, j.supervisorClient, supervisorToken, "core/update")
 			} else if job.Type == "host_reboot" {
-				j.genericJobPOSTAction(job, j.haargosClient, j.supervisorClient, supervisorToken, "host/reboot")
+				j.genericPOSTAction(job, j.haargosClient, j.supervisorClient, supervisorToken, "host/reboot")
 			} else if job.Type == "host_shutdown" {
-				j.genericJobPOSTAction(job, j.haargosClient, j.supervisorClient, supervisorToken, "host/shutdown")
+				j.genericPOSTAction(job, j.haargosClient, j.supervisorClient, supervisorToken, "host/shutdown")
 			} else {
 				j.logger.Warningf("Unsupported job encountered [type=%s]", job.Type)
 			}
