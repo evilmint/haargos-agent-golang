@@ -273,23 +273,23 @@ func (c *HaargosClient) UpdateOS(headers map[string]string) (*http.Response, err
 	return resp, nil
 }
 
-func (c *HaargosClient) CompleteJob(job types.GenericJob) (*[]types.GenericJob, error) {
+func (c *HaargosClient) CompleteJob(job types.GenericJob) error {
 	resp, err := c.sendRequest("POST", fmt.Sprintf("installations/jobs/%s/complete", job.ID), nil, nil)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return nil, fmt.Errorf("received non-OK response status: %s", resp.Status)
+		return fmt.Errorf("received non-OK response status: %s", resp.Status)
 	}
 
 	var response types.JobsResponse
 	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
-		return nil, fmt.Errorf("error unmarshaling response: %v", err)
+		return fmt.Errorf("error unmarshaling response: %v", err)
 	}
 
-	return &response.Body, nil
+	return nil
 }
 
 func (c *HaargosClient) FetchJobs() (*[]types.GenericJob, error) {

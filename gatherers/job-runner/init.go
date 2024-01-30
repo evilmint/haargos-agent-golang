@@ -162,7 +162,7 @@ func (j *JobRunner) finalizeUpdate(res *http.Response, err error, context interf
 	}
 
 	if res != nil && (res.StatusCode < 500 && res.StatusCode >= 200) {
-		_, err = client.CompleteJob(job)
+		err = client.CompleteJob(job)
 
 		if err != nil {
 			j.logger.Errorf("Job dequeue failed [type=%s, context=%s, err=%s]", job.Type, context, err)
