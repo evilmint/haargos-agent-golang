@@ -10,10 +10,11 @@ body {
 
 /* Header settings */
 header {
-    background: #f4f4f4;
+    background: #4c8cfa;
     padding: 20px;
     margin-bottom: 20px;
     text-align: center;
+    color: #fff;
 }
 
 /* Main content and layout */
@@ -31,7 +32,7 @@ header {
 
 /* Styling for statistical data display */
 .statistic {
-    background: #e7e7e7;
+    background: #2488d7;;
     padding: 15px;
     margin-bottom: 20px;
     border-radius: 5px;
@@ -54,5 +55,6 @@ th, td {
 }
 
 th {
-    background-color: #f4f4f4;
+    background-color: #2488d7;
+    color: #fff;
 }
