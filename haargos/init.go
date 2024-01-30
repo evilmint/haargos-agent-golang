@@ -259,6 +259,9 @@ func (h *Haargos) Run(params RunParams) {
 
 	isAccessTokenSet := accessToken != ""
 	h.statistics.SetHAAccessTokenSet(isAccessTokenSet)
+	h.statistics.SetZ2MSet(params.Z2MPath != "")
+	h.statistics.SetZHASet(params.ZHAPath != "")
+	h.statistics.SetAgentVersion(version)
 
 	if isAccessTokenSet {
 		if haEndpoint == "" {

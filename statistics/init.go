@@ -15,6 +15,9 @@ type Statistics struct {
 	jobsProcessedCount       int
 	lastSuccessfulConnection time.Time
 	haAccessTokenSet         bool
+	z2mSet                   bool
+	zhaSet                   bool
+	agentVersion             string
 }
 
 func NewStatistics() *Statistics {
@@ -77,6 +80,20 @@ func (s *Statistics) AddDataSentInKB(data int) {
 	s.dataSentInKB += data
 }
 
+func (s *Statistics) GetAgentVersion() string {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
+	return s.agentVersion
+}
+
+func (s *Statistics) SetAgentVersion(value string) {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
+	s.agentVersion = value
+}
+
 func (s *Statistics) GetHAAccessTokenSet() bool {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
@@ -89,6 +106,34 @@ func (s *Statistics) SetHAAccessTokenSet(value bool) {
 	defer s.lock.Unlock()
 
 	s.haAccessTokenSet = value
+}
+
+func (s *Statistics) GetZ2MSet() bool {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
+	return s.z2mSet
+}
+
+func (s *Statistics) SetZ2MSet(value bool) {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
+	s.z2mSet = value
+}
+
+func (s *Statistics) GetZHASet() bool {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
+	return s.zhaSet
+}
+
+func (s *Statistics) SetZHASet(value bool) {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
+	s.zhaSet = value
 }
 
 func (s *Statistics) GetLastSuccessfulConnection() time.Time {

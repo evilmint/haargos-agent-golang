@@ -38,6 +38,22 @@ func (i *Ingress) Run() error {
 			isTokenSet = "No"
 		}
 
+		var isZHASet string
+
+		if i.Stats.GetZHASet() {
+			isZHASet = "Yes"
+		} else {
+			isZHASet = "No"
+		}
+
+		var isZ2MSet string
+
+		if i.Stats.GetZ2MSet() {
+			isZ2MSet = "Yes"
+		} else {
+			isZ2MSet = "No"
+		}
+
 		renderTemplate(w, "index.html", map[string]string{
 			"Title":   "Haargos",
 			"Heading": "Haargos main",
@@ -54,6 +70,9 @@ func (i *Ingress) Run() error {
 			"DataSentInKb":       fmt.Sprintf("%.1f", float32(i.Stats.GetDataSentInKB())/1024),
 			"ObservationCount":   fmt.Sprintf("%d", i.Stats.GetObservationsSentCount()),
 			"JobsProcessedCount": fmt.Sprintf("%d", i.Stats.GetJobsProcessedCount()),
+			"Z2MPathSet":         isZ2MSet,
+			"ZHAPathSet":         isZHASet,
+			"AgentVersion":       i.Stats.GetAgentVersion(),
 		})
 	})
 
