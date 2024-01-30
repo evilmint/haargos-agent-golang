@@ -220,12 +220,12 @@ func (c *HaargosClient) FetchOS(headers map[string]string) (*types.OSInfo, error
 func (c *HaargosClient) UpdateCore(headers map[string]string) (*http.Response, error) {
 	resp, err := c.sendRequest("POST", "core/update", nil, headers)
 	if err != nil {
-		return nil, err
+		return resp, err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return nil, fmt.Errorf("received non-OK response status: %s", resp.Status)
+		return resp, fmt.Errorf("received non-OK response status: %s", resp.Status)
 	}
 
 	return resp, nil
