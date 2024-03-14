@@ -230,7 +230,7 @@ func (h *Haargos) Run(params RunParams) {
 	}
 
 	version := h.getAgentVersion()
-	isSupervised := supervisorToken != "" && params.AgentType == "agent"
+	isSupervised := supervisorToken != "" && params.AgentType == "addon"
 
 	interval = time.Duration(agentConfig.CycleInterval) * time.Second
 
