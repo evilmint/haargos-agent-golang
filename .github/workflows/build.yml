@@ -59,7 +59,7 @@ jobs:
           echo "${GITHUB_REF#refs/tags/v}" > VERSION
 
       - name: Build and push hassio docker image
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v1
         with:
           context: .
           file: docker-addon/Dockerfile
@@ -78,7 +78,7 @@ jobs:
             RUN_SCRIPT_NAME=run-hassio.sh
 
       - name: Build and push docker image
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v1
         with:
           context: .
           file: docker-addon/Dockerfile
