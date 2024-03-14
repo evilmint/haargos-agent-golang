@@ -331,8 +331,10 @@ func (h *Haargos) Run(params RunParams) {
 
 		if err == nil {
 			h.statistics.IncrementObservationsSentCount()
+			h.logger.Infof("Successfully sent observation")
 		} else {
 			h.statistics.IncrementFailedRequestCount()
+			h.logger.Infof("Failed to send observation")
 		}
 	}
 
@@ -450,20 +452,32 @@ func (h *Haargos) sendOS(haConfigPath string, client *client.HaargosClient, supe
 	}
 }
 
-func (h *Haargos) sendAddons(haConfigPath string, client *client.HaargosClient, supervisorClient *client.HaargosClient, supervisorToken string) {
+func (h *Haargos) sendAddons(haConfigPath string, haargosClient *client.HaargosClient, supervisorClient *client.HaargosClient, supervisorToken string) {
 	addonContent, err := supervisorClient.FetchAddons(map[string]string{"Authorization": fmt.Sprintf("Bearer %s", supervisorToken)})
-
 	if err != nil || addonContent == nil {
 		h.logger.Errorf("Failed collecting addons %s", err)
-	} else {
-		h.logger.Debugf("Collected %d addons.", len(*addonContent))
+		return
+	}
 
-		response, err := client.SendAddons(*addonContent)
-		h.handleHttpResponse(response, err, h.logger, "sending addons")
+	h.logger.Debugf("Collected %d addons.", len(*addonContent))
 
+	var addonWithStatsList []client.AddonWithStats
+	for _, addon := range *addonContent {
+		stats, err := supervisorClient.FetchAddonStats(addon.Slug, map[string]string{"Authorization": fmt.Sprintf("Bearer %s", supervisorToken)})
 		if err != nil {
-			h.statistics.IncrementFailedRequestCount()
+			h.logger.Errorf("Failed collecting stats for addon %s: %s", addon.Slug, err)
+			continue
 		}
+
+		addonWithStats := client.MergeAddonAndStats(addon, *stats)
+		addonWithStatsList = append(addonWithStatsList, addonWithStats)
+	}
+
+	response, err := haargosClient.SendAddons(addonWithStatsList)
+	h.handleHttpResponse(response, err, h.logger, "sending addons")
+
+	if err != nil {
+		h.statistics.IncrementFailedRequestCount()
 	}
 }
 

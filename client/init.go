@@ -160,6 +160,33 @@ type SupervisorResponse struct {
 	} `json:"data"`
 }
 
+type SupervisorAddonStatsResponse struct {
+	Data SupervisorAddonStats `json:"data"`
+}
+
+type SupervisorAddonStats struct {
+	CPUPercent    float64 `json:"cpu_percent"`
+	MemoryUsage   int64   `json:"memory_usage"`
+	MemoryLimit   int64   `json:"memory_limit"`
+	MemoryPercent float64 `json:"memory_percent"`
+	NetworkTx     int64   `json:"network_tx"`
+	NetworkRx     int64   `json:"network_rx"`
+	BlockRead     int64   `json:"blk_read"`
+	BlockWrite    int64   `json:"blk_write"`
+}
+
+type AddonWithStats struct {
+	Addon
+	Stats SupervisorAddonStats `json:"stats"`
+}
+
+func MergeAddonAndStats(addon Addon, stats SupervisorAddonStats) AddonWithStats {
+	return AddonWithStats{
+		Addon: addon,
+		Stats: stats,
+	}
+}
+
 func (c *HaargosClient) FetchAddons(headers map[string]string) (*[]Addon, error) {
 	resp, err := c.sendRequest("GET", "addons", nil, headers)
 	if err != nil {
@@ -177,6 +204,27 @@ func (c *HaargosClient) FetchAddons(headers map[string]string) (*[]Addon, error)
 	}
 
 	return &response.Data.Addons, nil
+}
+
+func (c *HaargosClient) FetchAddonStats(addonSlug string, headers map[string]string) (*SupervisorAddonStats, error) {
+	urlPath := fmt.Sprintf("addons/%s/stats", addonSlug)
+
+	resp, err := c.sendRequest("GET", urlPath, nil, headers)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 400 {
+		return nil, fmt.Errorf("received non-OK response status: %s", resp.Status)
+	}
+
+	var statsResponse SupervisorAddonStatsResponse
+	if err := json.NewDecoder(resp.Body).Decode(&statsResponse); err != nil {
+		return nil, fmt.Errorf("error unmarshaling response: %v", err)
+	}
+
+	return &statsResponse.Data, nil
 }
 
 func (c *HaargosClient) FetchSupervisor(headers map[string]string) (*types.SupervisorInfo, error) {
@@ -318,7 +366,7 @@ func (c *HaargosClient) SendLogs(logs types.Logs) (*http.Response, error) {
 	return c.sendRequest("PUT", "installations/logs", logs, make(map[string]string))
 }
 
-func (c *HaargosClient) SendAddons(addons []Addon) (*http.Response, error) {
+func (c *HaargosClient) SendAddons(addons []AddonWithStats) (*http.Response, error) {
 	return c.sendRequest("PUT", "installations/addons", addons, make(map[string]string))
 }
 
